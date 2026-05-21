@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-// Import trực tiếp từ shared MFE — webpack resolve qua Module Federation
 import { useAuthStore } from 'shared/authStore';
 import '../styles.css';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [customerId, setCustomerId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Lấy action login từ shared store
   const login = useAuthStore((s) => s.login);
 
   const handleSubmit = async (e) => {
@@ -17,14 +15,19 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 900));
 
-    if (email === 'demo@test.com' && password === '123456') {
-      // Ghi thẳng vào store — shell và mọi MFE khác thấy ngay lập tức
-      // Không cần window.dispatchEvent, không cần callback từ shell
-      login({ name: 'Demo User', email, role: 'admin' });
+    if (customerId === '0021001' && password === '123456') {
+      login({
+        name: 'Nguyễn Văn Demo',
+        customerId: '0021001',
+        email: 'demo@vietbank.vn',
+        phone: '0901 234 567',
+        branch: 'Chi nhánh TP.HCM',
+        role: 'customer',
+      });
     } else {
-      setError('Invalid credentials. Try demo@test.com / 123456');
+      setError('Mã khách hàng hoặc mật khẩu không đúng. Thử: 0021001 / 123456');
     }
 
     setLoading(false);
@@ -33,43 +36,61 @@ export default function Login() {
   return (
     <div className="auth-card">
       <div className="auth-header">
-        <div className="auth-icon">🔐</div>
-        <h2>Welcome back</h2>
-        <p>Sign in to your account</p>
+        <div className="auth-logo">🏦</div>
+        <h2>VietBank Online</h2>
+        <p>Đăng nhập để quản lý tài khoản của bạn</p>
       </div>
 
       <form onSubmit={handleSubmit} className="auth-form">
         {error && <div className="auth-error">{error}</div>}
 
         <div className="form-group">
-          <label>Email</label>
+          <label>Mã khách hàng (CIF)</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="demo@test.com"
+            type="text"
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value.trim())}
+            placeholder="Ví dụ: 0021001"
+            autoComplete="username"
             required
           />
         </div>
 
         <div className="form-group">
-          <label>Password</label>
+          <label>Mật khẩu Internet Banking</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="123456"
+            placeholder="••••••"
+            autoComplete="current-password"
             required
           />
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 12 }}>
+          <a href="#" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}
+            onClick={(e) => { e.preventDefault(); alert('Vui lòng liên hệ 1800-xxxx để khôi phục mật khẩu.'); }}>
+            Quên mật khẩu?
+          </a>
+        </div>
+
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+              Đang đăng nhập...
+            </span>
+          ) : 'Đăng nhập'}
         </button>
       </form>
 
+      <div className="auth-otp-hint">
+        <span>🔒</span> Sau khi đăng nhập, hệ thống có thể gửi OTP về số <strong>090x xxx xxx</strong> để xác thực
+      </div>
+
       <div className="auth-hint">
-        Demo: <code>demo@test.com</code> / <code>123456</code>
+        Thử: Mã KH <code>0021001</code> · Mật khẩu <code>123456</code>
       </div>
     </div>
   );

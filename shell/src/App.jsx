@@ -3,30 +3,44 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Nav from './components/Nav';
 import './styles.css';
 
-// Lazy load từ remote MFEs
+// Remote MFE *App components — each manages its own sub-routes via <Routes>
 const Login       = lazy(() => import('mfe_auth/Login'));
-const ProductList = lazy(() => import('mfe_products/ProductList'));
-const Cart        = lazy(() => import('mfe_cart/Cart'));
-const ProfilePage = lazy(() => import('mfe_profile/ProfilePage'));
-const OrderList   = lazy(() => import('mfe_orders/OrderList'));
+const AccountsApp = lazy(() => import('mfe_accounts/AccountsApp'));
+const TransferApp = lazy(() => import('mfe_transfer/TransferApp'));
+const CardsApp    = lazy(() => import('mfe_cards/CardsApp'));
+const LoansApp    = lazy(() => import('mfe_loans/LoansApp'));
+const ProfileApp  = lazy(() => import('mfe_profile/ProfileApp'));
 
 const LoadingFallback = ({ name }) => (
   <div className="loading-box">
     <div className="spinner" />
-    <p>Loading {name}...</p>
+    <p>Đang tải {name}...</p>
   </div>
 );
 
 class ErrorBoundary extends React.Component {
-  state = { hasError: false };
-  componentDidCatch() { this.setState({ hasError: true }); }
+  state = { hasError: false, error: null };
+  componentDidCatch(err) { this.setState({ hasError: true, error: err }); }
   render() {
     if (this.state.hasError) {
-      return <div className="error-box">Failed to load MFE — is the remote running?</div>;
+      return (
+        <div className="error-box">
+          <strong>Không thể tải MFE</strong> — remote có đang chạy không?
+          <br /><small style={{ opacity: 0.7 }}>{this.state.error?.message}</small>
+        </div>
+      );
     }
     return this.props.children;
   }
 }
+
+const mfe = (name, element) => (
+  <ErrorBoundary>
+    <Suspense fallback={<LoadingFallback name={name} />}>
+      {element}
+    </Suspense>
+  </ErrorBoundary>
+);
 
 export default function App() {
   return (
@@ -35,62 +49,16 @@ export default function App() {
 
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Navigate to="/products" replace />} />
+          <Route path="/" element={<Navigate to="/accounts" replace />} />
 
-          <Route
-            path="/login"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback name="Auth" />}>
-                  <Login />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
+          <Route path="/login" element={mfe('Đăng nhập', <Login />)} />
 
-          <Route
-            path="/profile"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback name="Profile" />}>
-                  <ProfilePage />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
-
-          <Route
-            path="/orders"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback name="Orders" />}>
-                  <OrderList />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
-
-          <Route
-            path="/products"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback name="Products" />}>
-                  <ProductList />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
-
-          <Route
-            path="/cart"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback name="Cart" />}>
-                  <Cart />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
+          {/* Each MFE owns its sub-tree — shell uses /* so React Router passes the rest to the MFE's <Routes> */}
+          <Route path="/accounts/*" element={mfe('Tài khoản', <AccountsApp />)} />
+          <Route path="/transfer/*" element={mfe('Chuyển tiền', <TransferApp />)} />
+          <Route path="/cards/*"    element={mfe('Thẻ', <CardsApp />)} />
+          <Route path="/loans/*"    element={mfe('Vay vốn', <LoansApp />)} />
+          <Route path="/profile/*"  element={mfe('Hồ sơ', <ProfileApp />)} />
         </Routes>
       </main>
     </div>

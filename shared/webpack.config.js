@@ -23,9 +23,9 @@ module.exports = {
       name: 'shared',
       filename: 'remoteEntry.js',  // ← Không bị ảnh hưởng bởi output.filename
       exposes: {
-        './authStore': './src/store/authStore',
-        './cartStore': './src/store/cartStore',
-        './ui':        './src/ui/index',
+        './authStore':    './src/store/authStore',
+        './accountStore': './src/store/accountStore',
+        './ui':           './src/ui/index',
       },
       shared: {
         react:       { singleton: true, requiredVersion: '^18.2.0' },

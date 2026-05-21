@@ -1,17 +1,17 @@
 import React from 'react';
-import { ToastProvider } from 'shared/ui';
-import ProfilePage from './components/ProfilePage';
+import { Routes, Route } from 'react-router-dom';
+import ProfileApp from './components/ProfileApp';
 import './styles.css';
 
 export default function App() {
   return (
-    <ToastProvider>
-      <div style={{ padding: 24 }}>
-        <div className="standalone-banner">
-          Running standalone — <code>mfe-profile</code> on port 3005
-        </div>
-        <ProfilePage />
+    <div style={{ padding: 24 }}>
+      <div className="standalone-banner">
+        Standalone — <code>mfe-profile</code> :3005
       </div>
-    </ToastProvider>
+      <Routes>
+        <Route path="/*" element={<ProfileApp />} />
+      </Routes>
+    </div>
   );
 }

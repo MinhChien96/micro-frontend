@@ -54,28 +54,34 @@ jobs:
           PUBLIC_URL: ${{ env.BASE }}/mfe-auth/
           BASE_GH_PAGES: ${{ env.BASE }}
 
-      - name: Build mfe-products
-        run: pnpm --filter mfe-products build
+      - name: Build mfe-accounts
+        run: pnpm --filter mfe-accounts build
         env:
-          PUBLIC_URL: ${{ env.BASE }}/mfe-products/
+          PUBLIC_URL: ${{ env.BASE }}/mfe-accounts/
           BASE_GH_PAGES: ${{ env.BASE }}
 
-      - name: Build mfe-cart
-        run: pnpm --filter mfe-cart build
+      - name: Build mfe-transfer
+        run: pnpm --filter mfe-transfer build
         env:
-          PUBLIC_URL: ${{ env.BASE }}/mfe-cart/
+          PUBLIC_URL: ${{ env.BASE }}/mfe-transfer/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-cards
+        run: pnpm --filter mfe-cards build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-cards/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-loans
+        run: pnpm --filter mfe-loans build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-loans/
           BASE_GH_PAGES: ${{ env.BASE }}
 
       - name: Build mfe-profile
         run: pnpm --filter mfe-profile build
         env:
           PUBLIC_URL: ${{ env.BASE }}/mfe-profile/
-          BASE_GH_PAGES: ${{ env.BASE }}
-
-      - name: Build mfe-orders
-        run: pnpm --filter mfe-orders build
-        env:
-          PUBLIC_URL: ${{ env.BASE }}/mfe-orders/
           BASE_GH_PAGES: ${{ env.BASE }}
 
       - name: Build shell
@@ -87,13 +93,14 @@ jobs:
       - name: Assemble & Deploy tất cả
         run: |
           mkdir -p pages
-          cp -r shell/dist/. pages/
-          cp -r shared/dist       pages/shared
-          cp -r mfe-auth/dist     pages/mfe-auth
-          cp -r mfe-products/dist pages/mfe-products
-          cp -r mfe-cart/dist     pages/mfe-cart
-          cp -r mfe-profile/dist  pages/mfe-profile
-          cp -r mfe-orders/dist   pages/mfe-orders
+          cp -r shell/dist/.        pages/
+          cp -r shared/dist         pages/shared
+          cp -r mfe-auth/dist       pages/mfe-auth
+          cp -r mfe-accounts/dist   pages/mfe-accounts
+          cp -r mfe-transfer/dist   pages/mfe-transfer
+          cp -r mfe-cards/dist      pages/mfe-cards
+          cp -r mfe-loans/dist      pages/mfe-loans
+          cp -r mfe-profile/dist    pages/mfe-profile
           touch pages/.nojekyll
 
       - uses: peaceiris/actions-gh-pages@v4

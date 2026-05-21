@@ -26,10 +26,11 @@ module.exports = {
       remotes: {
         shared:       remotes.shared,
         mfe_auth:     remotes.mfe_auth,
-        mfe_products: remotes.mfe_products,
-        mfe_cart:     remotes.mfe_cart,
+        mfe_accounts: remotes.mfe_accounts,
+        mfe_transfer: remotes.mfe_transfer,
+        mfe_cards:    remotes.mfe_cards,
+        mfe_loans:    remotes.mfe_loans,
         mfe_profile:  remotes.mfe_profile,
-        mfe_orders:   remotes.mfe_orders,
       },
       shared: {
         react:              { singleton: true, requiredVersion: '^18.2.0' },

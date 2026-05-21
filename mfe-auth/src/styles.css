@@ -23,6 +23,11 @@
   margin-bottom: 28px;
 }
 
+.auth-logo {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
 .auth-icon {
   font-size: 40px;
   margin-bottom: 12px;
@@ -68,7 +73,7 @@
 }
 
 .form-group input:focus {
-  border-color: #e94560;
+  border-color: #1e3a5f;
 }
 
 .auth-error {
@@ -82,7 +87,7 @@
 
 .btn-primary {
   padding: 12px;
-  background: #e94560;
+  background: #1e3a5f;
   color: white;
   border: none;
   border-radius: 8px;
@@ -93,7 +98,7 @@
   margin-top: 4px;
 }
 
-.btn-primary:hover:not(:disabled) { background: #c53030; }
+.btn-primary:hover:not(:disabled) { background: #2563eb; }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .btn-danger {
@@ -112,8 +117,22 @@
 
 .btn-danger:hover { background: #fed7d7; }
 
+.auth-otp-hint {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #0369a1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
 .auth-hint {
-  margin-top: 20px;
+  margin-top: 16px;
   text-align: center;
   font-size: 12px;
   color: #a0aec0;
@@ -169,3 +188,5 @@
 
 .info-badge.success { background: #f0fff4; color: #276749; }
 .info-badge.mfe { background: #ebf8ff; color: #2b6cb0; font-family: monospace; }
+
+@keyframes spin { to { transform: rotate(360deg); } }

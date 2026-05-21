@@ -2,7 +2,7 @@
   "name": "micro-frontend",
   "private": true,
   "scripts": {
-    "start": "concurrently -n shared,auth,products,cart,profile,orders,shell -c magenta,blue,green,yellow,purple,orange,red \"pnpm --filter shared start\" \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-products start\" \"pnpm --filter mfe-cart start\" \"pnpm --filter mfe-profile start\" \"pnpm --filter mfe-orders start\" \"pnpm --filter shell start\"",
+    "start": "concurrently -n shared,auth,accounts,transfer,cards,loans,profile,shell -c magenta,blue,green,cyan,purple,orange,pink,red \"pnpm --filter shared start\" \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-accounts start\" \"pnpm --filter mfe-transfer start\" \"pnpm --filter mfe-cards start\" \"pnpm --filter mfe-loans start\" \"pnpm --filter mfe-profile start\" \"pnpm --filter shell start\"",
     "build": "pnpm -r run build"
   },
   "devDependencies": {
