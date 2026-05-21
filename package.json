@@ -1,0 +1,19 @@
+{
+  "name": "micro-frontend",
+  "private": true,
+  "scripts": {
+    "start": "concurrently -n shared,auth,products,cart,shell -c magenta,blue,green,yellow,red \"pnpm --filter shared start\" \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-products start\" \"pnpm --filter mfe-cart start\" \"pnpm --filter shell start\"",
+    "build": "pnpm -r run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "postcss": "^8.5.15"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "postcss"
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+packages:
+  - 'shared'
+  - 'shell'
+  - 'mfe-auth'
+  - 'mfe-products'
+  - 'mfe-cart'

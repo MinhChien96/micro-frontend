@@ -1,0 +1,112 @@
+name: Build & Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Cho phép chạy thủ công từ tab Actions
+  workflow_dispatch:
+
+# Cấp quyền cho GITHUB_TOKEN để deploy lên Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Chỉ cho phép 1 deployment chạy cùng lúc
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Base URL của GitHub Pages — mọi MFE resolve remoteEntry từ đây
+  BASE: https://minhchien96.github.io/micro-frontend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Build theo đúng thứ tự phụ thuộc ──────────────────────────────────
+
+      - name: Build shared (store layer)
+        run: pnpm --filter shared build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/shared/
+
+      - name: Build mfe-auth
+        run: pnpm --filter mfe-auth build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-auth/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-products
+        run: pnpm --filter mfe-products build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-products/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-cart
+        run: pnpm --filter mfe-cart build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-cart/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build shell (host — build cuối cùng)
+        run: pnpm --filter shell build
+        env:
+          # Shell không có PUBLIC_URL con (nó là root)
+          PUBLIC_URL: ${{ env.BASE }}/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      # ── Gộp tất cả dist vào 1 thư mục để deploy ──────────────────────────
+
+      - name: Assemble pages directory
+        run: |
+          mkdir -p pages
+
+          # Shell files ra root
+          cp -r shell/dist/. pages/
+
+          # Mỗi MFE vào subfolder riêng
+          cp -r shared/dist     pages/shared
+          cp -r mfe-auth/dist   pages/mfe-auth
+          cp -r mfe-products/dist pages/mfe-products
+          cp -r mfe-cart/dist   pages/mfe-cart
+
+          # Ngăn GitHub Pages chạy Jekyll (sẽ bỏ qua file có prefix _)
+          touch pages/.nojekyll
+
+          echo "── pages/ structure ──"
+          find pages -name "*.js" -o -name "*.html" | sort
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
