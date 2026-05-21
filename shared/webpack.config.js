@@ -25,6 +25,7 @@ module.exports = {
       exposes: {
         './authStore': './src/store/authStore',
         './cartStore': './src/store/cartStore',
+        './ui':        './src/ui/index',
       },
       shared: {
         react:       { singleton: true, requiredVersion: '^18.2.0' },

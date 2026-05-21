@@ -18,10 +18,12 @@
 const base = process.env.BASE_GH_PAGES;
 
 const URLS = {
-  shared:       process.env.SHARED_URL        || (base ? `${base}/shared/remoteEntry.js`       : 'http://localhost:3004/remoteEntry.js'),
-  mfe_auth:     process.env.MFE_AUTH_URL      || (base ? `${base}/mfe-auth/remoteEntry.js`     : 'http://localhost:3001/remoteEntry.js'),
-  mfe_products: process.env.MFE_PRODUCTS_URL  || (base ? `${base}/mfe-products/remoteEntry.js` : 'http://localhost:3002/remoteEntry.js'),
-  mfe_cart:     process.env.MFE_CART_URL      || (base ? `${base}/mfe-cart/remoteEntry.js`     : 'http://localhost:3003/remoteEntry.js'),
+  shared:       process.env.SHARED_URL          || (base ? `${base}/shared/remoteEntry.js`       : 'http://localhost:3004/remoteEntry.js'),
+  mfe_auth:     process.env.MFE_AUTH_URL        || (base ? `${base}/mfe-auth/remoteEntry.js`     : 'http://localhost:3001/remoteEntry.js'),
+  mfe_products: process.env.MFE_PRODUCTS_URL    || (base ? `${base}/mfe-products/remoteEntry.js` : 'http://localhost:3002/remoteEntry.js'),
+  mfe_cart:     process.env.MFE_CART_URL        || (base ? `${base}/mfe-cart/remoteEntry.js`     : 'http://localhost:3003/remoteEntry.js'),
+  mfe_profile:  process.env.MFE_PROFILE_URL     || (base ? `${base}/mfe-profile/remoteEntry.js` : 'http://localhost:3005/remoteEntry.js'),
+  mfe_orders:   process.env.MFE_ORDERS_URL      || (base ? `${base}/mfe-orders/remoteEntry.js`  : 'http://localhost:3006/remoteEntry.js'),
 }
 
 // Format theo chuẩn Module Federation: "name@url"
@@ -30,4 +32,6 @@ module.exports = {
   mfe_auth:     `mfe_auth@${URLS.mfe_auth}`,
   mfe_products: `mfe_products@${URLS.mfe_products}`,
   mfe_cart:     `mfe_cart@${URLS.mfe_cart}`,
+  mfe_profile:  `mfe_profile@${URLS.mfe_profile}`,
+  mfe_orders:   `mfe_orders@${URLS.mfe_orders}`,
 }

@@ -4,10 +4,11 @@ import Nav from './components/Nav';
 import './styles.css';
 
 // Lazy load từ remote MFEs
-const Login = lazy(() => import('mfe_auth/Login'));
-const UserProfile = lazy(() => import('mfe_auth/UserProfile'));
+const Login       = lazy(() => import('mfe_auth/Login'));
 const ProductList = lazy(() => import('mfe_products/ProductList'));
-const Cart = lazy(() => import('mfe_cart/Cart'));
+const Cart        = lazy(() => import('mfe_cart/Cart'));
+const ProfilePage = lazy(() => import('mfe_profile/ProfilePage'));
+const OrderList   = lazy(() => import('mfe_orders/OrderList'));
 
 const LoadingFallback = ({ name }) => (
   <div className="loading-box">
@@ -52,7 +53,18 @@ export default function App() {
             element={
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback name="Profile" />}>
-                  <UserProfile />
+                  <ProfilePage />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/orders"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback name="Orders" />}>
+                  <OrderList />
                 </Suspense>
               </ErrorBoundary>
             }

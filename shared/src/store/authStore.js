@@ -12,4 +12,5 @@ export const useAuthStore = create((set) => ({
 
   login: (user) => set({ user }),
   logout: () => set({ user: null }),
+  updateProfile: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
 }));

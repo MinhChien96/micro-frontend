@@ -9,7 +9,7 @@ module.exports = {
   output: {
     ...outputOpts,
     path: path.resolve(__dirname, 'dist'),
-    publicPath: process.env.PUBLIC_URL || 'http://localhost:3000/',
+    publicPath: process.env.PUBLIC_URL || 'http://localhost:3006/',
     clean: true,
   },
   resolve: { extensions: ['.js', '.jsx'] },
@@ -22,26 +22,24 @@ module.exports = {
   optimization,
   plugins: [
     new ModuleFederationPlugin({
-      name: 'shell',
+      name: 'mfe_orders',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './OrderList': './src/components/OrderList',
+      },
       remotes: {
-        shared:       remotes.shared,
-        mfe_auth:     remotes.mfe_auth,
-        mfe_products: remotes.mfe_products,
-        mfe_cart:     remotes.mfe_cart,
-        mfe_profile:  remotes.mfe_profile,
-        mfe_orders:   remotes.mfe_orders,
+        shared: remotes.shared,
       },
       shared: {
-        react:              { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
-        'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
-        zustand:            { singleton: true, requiredVersion: '^4.5.0' },
+        react:       { singleton: true, requiredVersion: '^18.2.0' },
+        'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
+        zustand:     { singleton: true, requiredVersion: '^4.5.0' },
       },
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),
   ],
   devServer: {
-    port: 3000,
+    port: 3006,
     historyApiFallback: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
   },

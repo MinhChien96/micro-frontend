@@ -63,6 +63,18 @@ jobs:
           PUBLIC_URL: ${{ env.BASE }}/mfe-cart/
           BASE_GH_PAGES: ${{ env.BASE }}
 
+      - name: Build mfe-profile
+        run: pnpm --filter mfe-profile build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-profile/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-orders
+        run: pnpm --filter mfe-orders build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-orders/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
       - name: Build shell
         run: pnpm --filter shell build
         env:
@@ -77,6 +89,8 @@ jobs:
           cp -r mfe-auth/dist     pages/mfe-auth
           cp -r mfe-products/dist pages/mfe-products
           cp -r mfe-cart/dist     pages/mfe-cart
+          cp -r mfe-profile/dist  pages/mfe-profile
+          cp -r mfe-orders/dist   pages/mfe-orders
           touch pages/.nojekyll
 
       - uses: peaceiris/actions-gh-pages@v4

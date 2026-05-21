@@ -63,6 +63,10 @@ export default function Nav() {
           Cart {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           <span className="mfe-tag">mfe-cart</span>
         </Link>
+        <Link to="/orders" className={`nav-link ${isActive('/orders') ? 'active' : ''}`}>
+          Orders
+          <span className="mfe-tag">mfe-orders</span>
+        </Link>
       </div>
 
       <div className="navbar-user">
