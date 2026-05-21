@@ -1,0 +1,7 @@
+# File này không chạy trực tiếp — chỉ để document shared config
+# Mỗi team workflow đều dùng peaceiris/actions-gh-pages với:
+#   destination_dir: <tên-team>/   ← chỉ cập nhật subfolder của team mình
+#   keep_files: true                ← KHÔNG xóa subfolder của team khác
+#
+# Tất cả workflow dùng cùng concurrency group "deploy-pages"
+# với cancel-in-progress: false → queue thay vì cancel khi 2 team push cùng lúc

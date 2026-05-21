@@ -1,0 +1,52 @@
+name: Deploy mfe-cart
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mfe-cart/**'
+      - 'remotes.config.js'
+      - 'webpack.optimization.js'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false
+
+env:
+  BASE: https://minhchien96.github.io/micro-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared
+        run: pnpm --filter shared build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/shared/
+
+      - name: Build mfe-cart
+        run: pnpm --filter mfe-cart build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-cart/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./mfe-cart/dist
+          destination_dir: mfe-cart
+          keep_files: true

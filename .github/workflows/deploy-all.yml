@@ -1,0 +1,86 @@
+name: Deploy All (full rebuild)
+
+# Dùng cho:
+#   - Lần deploy đầu tiên
+#   - Khi thay đổi infrastructure (webpack.optimization.js, remotes.config.js, pnpm-lock.yaml)
+#   - Khi cần full rebuild khẩn cấp
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'webpack.optimization.js'
+      - 'remotes.config.js'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false
+
+env:
+  BASE: https://minhchien96.github.io/micro-frontend
+
+jobs:
+  deploy-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build shared
+        run: pnpm --filter shared build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/shared/
+
+      - name: Build mfe-auth
+        run: pnpm --filter mfe-auth build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-auth/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-products
+        run: pnpm --filter mfe-products build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-products/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build mfe-cart
+        run: pnpm --filter mfe-cart build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/mfe-cart/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Build shell
+        run: pnpm --filter shell build
+        env:
+          PUBLIC_URL: ${{ env.BASE }}/
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - name: Assemble & Deploy tất cả
+        run: |
+          mkdir -p pages
+          cp -r shell/dist/. pages/
+          cp -r shared/dist       pages/shared
+          cp -r mfe-auth/dist     pages/mfe-auth
+          cp -r mfe-products/dist pages/mfe-products
+          cp -r mfe-cart/dist     pages/mfe-cart
+          touch pages/.nojekyll
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pages
+          # keep_files: false (default) — full replace khi deploy-all
