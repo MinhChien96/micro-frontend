@@ -32,9 +32,10 @@ module.exports = {
         shared: remotes.shared,
       },
       shared: {
-        react:       { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
-        zustand:     { singleton: true, requiredVersion: '^4.5.0' },
+        react:              { singleton: true, requiredVersion: '^18.2.0' },
+        'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
+        'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
+        zustand:            { singleton: true, requiredVersion: '^4.5.0' },
       },
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),

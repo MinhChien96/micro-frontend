@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from 'shared/authStore';
 import '../styles.css';
 
@@ -9,6 +10,10 @@ const DEMO_ROLES = [
 ];
 
 export default function Login() {
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const from      = location.state?.from?.pathname || '/accounts';
+
   const [customerId, setCustomerId] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('CUSTOMER');
@@ -33,6 +38,7 @@ export default function Login() {
         branch: 'Chi nhánh TP.HCM',
         role: selectedRole,
       });
+      navigate(from, { replace: true });
     } else {
       setError('Mã khách hàng hoặc mật khẩu không đúng. Thử: 0021001 / 123456');
     }

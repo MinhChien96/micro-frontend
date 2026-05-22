@@ -1,12 +1,13 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from 'shared/authStore';
 
 export default function ProtectedRoute({ children, permission }) {
   const user        = useAuthStore((s) => s.user);
   const permissions = useAuthStore((s) => s.permissions);
+  const location    = useLocation();
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   if (permission && !permissions.includes(permission)) {
     return (
