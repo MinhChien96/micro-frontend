@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, StatusBadge } from 'shared/ui';
+
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -33,13 +42,21 @@ export default function TransferHistory() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
 
-  const filtered = ALL_HISTORY.filter((h) => {
-    if (statusFilter !== 'all' && h.status !== statusFilter) return false;
-    if (dateFilter && !h.date.startsWith(dateFilter)) return false;
-    return true;
-  });
+  // Debounce date input — avoid re-filtering on every keystroke
+  const debouncedDate = useDebounce(dateFilter, 300);
 
-  const totalSuccess = ALL_HISTORY.filter((h) => h.status === 'success').reduce((s, h) => s + h.amount, 0);
+  const handleStatus = useCallback((key) => setStatusFilter(key), []);
+
+  const filtered = useMemo(() => ALL_HISTORY.filter((h) => {
+    if (statusFilter !== 'all' && h.status !== statusFilter) return false;
+    if (debouncedDate && !h.date.startsWith(debouncedDate)) return false;
+    return true;
+  }), [statusFilter, debouncedDate]);
+
+  const totalSuccess = useMemo(
+    () => ALL_HISTORY.filter((h) => h.status === 'success').reduce((s, h) => s + h.amount, 0),
+    []
+  );
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -65,7 +82,7 @@ export default function TransferHistory() {
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.key}
-            onClick={() => setStatusFilter(f.key)}
+            onClick={() => handleStatus(f.key)}
             style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
               background: statusFilter === f.key ? '#1e3a5f' : '#f1f5f9',

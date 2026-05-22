@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, StatusBadge } from 'shared/ui';
 
@@ -51,7 +51,11 @@ export default function PaymentSchedule() {
     );
   }
 
-  const schedule = generateSchedule(meta.principal, meta.interestRate, meta.termMonths, meta.startDate, meta.paidMonths);
+  // useMemo — amortization table is expensive; only recompute when loan metadata changes
+  const schedule = useMemo(
+    () => generateSchedule(meta.principal, meta.interestRate, meta.termMonths, meta.startDate, meta.paidMonths),
+    [meta.principal, meta.interestRate, meta.termMonths, meta.startDate, meta.paidMonths]
+  );
   const STATUS_COLOR = { paid: 'green', current: 'blue', upcoming: 'default' };
   const STATUS_LABEL = { paid: 'Đã trả', current: 'Kỳ hiện tại', upcoming: 'Sắp đến' };
 

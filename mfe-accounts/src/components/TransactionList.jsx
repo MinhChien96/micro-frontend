@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAccountStore } from 'shared/accountStore';
 import { Card, CardHeader, Divider, StatusBadge } from 'shared/ui';
@@ -49,6 +49,37 @@ const FILTERS = [
   { key: 'debit',  label: 'Tiền ra' },
 ];
 
+// Memoized row — only re-renders when the tx object changes
+const TransactionRow = memo(function TransactionRow({ tx }) {
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: tx.type === 'credit' ? '#dcfce7' : '#fee2e2',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, flexShrink: 0,
+        }}>
+          {tx.type === 'credit' ? '↓' : '↑'}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>{tx.desc}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{fmtDate(tx.date)}</div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: tx.type === 'credit' ? '#16a34a' : '#dc2626' }}>
+            {tx.type === 'credit' ? '+' : ''}{fmt(tx.amount)}
+          </div>
+          <StatusBadge
+            label={tx.type === 'credit' ? 'Vào' : 'Ra'}
+            color={tx.type === 'credit' ? 'green' : 'red'}
+          />
+        </div>
+      </div>
+    </Card>
+  );
+});
+
 export default function TransactionList() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -59,12 +90,17 @@ export default function TransactionList() {
   const [page, setPage] = useState(1);
 
   const allTxns = ALL_TRANSACTIONS[id] || [];
-  const filtered = filter === 'all' ? allTxns : allTxns.filter((t) => t.type === filter);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const totalIn  = allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-  const totalOut = allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0);
+  // Memoize expensive derivations — only recompute when source data changes
+  const totalIn  = useMemo(() => allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0), [allTxns]);
+  const totalOut = useMemo(() => allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0), [allTxns]);
+  const filtered   = useMemo(() => filter === 'all' ? allTxns : allTxns.filter((t) => t.type === filter), [allTxns, filter]);
+  const totalPages = useMemo(() => Math.ceil(filtered.length / PAGE_SIZE), [filtered]);
+  const visible    = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+
+  // Stable callbacks — avoids re-creating function on every render
+  const handleFilter = useCallback((key) => { setFilter(key); setPage(1); }, []);
+  const handlePage   = useCallback((p) => setPage(p), []);
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -101,7 +137,7 @@ export default function TransactionList() {
         {FILTERS.map((f) => (
           <button
             key={f.key}
-            onClick={() => { setFilter(f.key); setPage(1); }}
+            onClick={() => handleFilter(f.key)}
             style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
               background: filter === f.key ? '#1e3a5f' : '#f1f5f9',
@@ -121,38 +157,14 @@ export default function TransactionList() {
         {visible.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8' }}>Không có giao dịch nào</div>
         ) : visible.map((tx) => (
-          <Card key={tx.id}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: tx.type === 'credit' ? '#dcfce7' : '#fee2e2',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, flexShrink: 0,
-              }}>
-                {tx.type === 'credit' ? '↓' : '↑'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>{tx.desc}</div>
-                <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{fmtDate(tx.date)}</div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: tx.type === 'credit' ? '#16a34a' : '#dc2626' }}>
-                  {tx.type === 'credit' ? '+' : ''}{fmt(tx.amount)}
-                </div>
-                <StatusBadge
-                  label={tx.type === 'credit' ? 'Vào' : 'Ra'}
-                  color={tx.type === 'credit' ? 'green' : 'red'}
-                />
-              </div>
-            </div>
-          </Card>
+          <TransactionRow key={tx.id} tx={tx} />
         ))}
       </div>
 
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
           <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => handlePage(Math.max(1, page - 1))}
             disabled={page === 1}
             style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: page === 1 ? 'default' : 'pointer', background: '#fff', opacity: page === 1 ? 0.4 : 1 }}
           >
@@ -161,7 +173,7 @@ export default function TransactionList() {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button
               key={p}
-              onClick={() => setPage(p)}
+              onClick={() => handlePage(p)}
               style={{
                 padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
                 background: p === page ? '#1e3a5f' : '#f1f5f9',
@@ -173,7 +185,7 @@ export default function TransactionList() {
             </button>
           ))}
           <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => handlePage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
             style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: page === totalPages ? 'default' : 'pointer', background: '#fff', opacity: page === totalPages ? 0.4 : 1 }}
           >

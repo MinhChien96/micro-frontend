@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, Divider } from 'shared/ui';
+import PermissionGate from 'shared/PermissionGate';
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -154,12 +155,29 @@ export default function CardDetail() {
           <span style={{ fontSize: 20 }}>🔑</span> Đổi mã PIN
         </button>
 
-        <button
-          onClick={() => setLimitModal(true)}
-          style={{ padding: '14px 20px', borderRadius: 12, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontWeight: 600, fontSize: 15, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}
+        <PermissionGate
+          permission="cards:manage_limit"
+          requiredRole="PREMIUM"
+          fallback={
+            <div style={{
+              padding: '14px 20px', borderRadius: 12, border: '1px solid #e2e8f0',
+              background: '#f8fafc', color: '#94a3b8',
+              display: 'flex', alignItems: 'center', gap: 10,
+              cursor: 'not-allowed',
+            }}>
+              <span style={{ fontSize: 20 }}>💳</span>
+              <span style={{ fontWeight: 600, fontSize: 15 }}>Thay đổi hạn mức</span>
+              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 10 }}>PREMIUM</span>
+            </div>
+          }
         >
-          <span style={{ fontSize: 20 }}>💳</span> Thay đổi hạn mức
-        </button>
+          <button
+            onClick={() => setLimitModal(true)}
+            style={{ padding: '14px 20px', borderRadius: 12, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontWeight: 600, fontSize: 15, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}
+          >
+            <span style={{ fontSize: 20 }}>💳</span> Thay đổi hạn mức
+          </button>
+        </PermissionGate>
       </div>
 
       {/* PIN modal */}

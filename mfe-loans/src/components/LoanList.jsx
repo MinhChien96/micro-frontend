@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from 'shared/authStore';
 import { Card, StatusBadge } from 'shared/ui';
+import PermissionGate from 'shared/PermissionGate';
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -61,6 +62,35 @@ export default function LoanList() {
           Dư nợ: <strong style={{ color: '#dc2626' }}>{fmt(totalOutstanding)}</strong>
         </span>
       </div>
+
+      {/* Apply for new loan — PREMIUM+ only */}
+      <PermissionGate
+        permission="loans:apply"
+        requiredRole="PREMIUM"
+        fallback={
+          <div style={{
+            marginBottom: 20, padding: '12px 18px', borderRadius: 10,
+            border: '1px dashed #e2e8f0', background: '#f8fafc',
+            display: 'flex', alignItems: 'center', gap: 10, color: '#94a3b8',
+          }}>
+            <span style={{ fontSize: 18 }}>📋</span>
+            <span style={{ fontSize: 14 }}>Đăng ký khoản vay mới</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 10 }}>PREMIUM</span>
+          </div>
+        }
+      >
+        <button
+          onClick={() => alert('Tính năng đang phát triển — vui lòng liên hệ chi nhánh gần nhất.')}
+          style={{
+            width: '100%', marginBottom: 20, padding: '13px 20px',
+            borderRadius: 10, border: '2px dashed #2563eb',
+            background: '#eff6ff', color: '#2563eb',
+            cursor: 'pointer', fontWeight: 700, fontSize: 15,
+          }}
+        >
+          + Đăng ký khoản vay mới
+        </button>
+      </PermissionGate>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {MOCK_LOANS.map((loan) => {

@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Nav from './components/Nav';
+import ProtectedRoute from './components/ProtectedRoute';
 import './styles.css';
 
 // Remote MFE *App components — each manages its own sub-routes via <Routes>
@@ -53,12 +54,12 @@ export default function App() {
 
           <Route path="/login" element={mfe('Đăng nhập', <Login />)} />
 
-          {/* Each MFE owns its sub-tree — shell uses /* so React Router passes the rest to the MFE's <Routes> */}
-          <Route path="/accounts/*" element={mfe('Tài khoản', <AccountsApp />)} />
-          <Route path="/transfer/*" element={mfe('Chuyển tiền', <TransferApp />)} />
-          <Route path="/cards/*"    element={mfe('Thẻ', <CardsApp />)} />
-          <Route path="/loans/*"    element={mfe('Vay vốn', <LoansApp />)} />
-          <Route path="/profile/*"  element={mfe('Hồ sơ', <ProfileApp />)} />
+          {/* Protected routes — redirect to /login if unauthenticated */}
+          <Route path="/accounts/*" element={<ProtectedRoute>{mfe('Tài khoản', <AccountsApp />)}</ProtectedRoute>} />
+          <Route path="/transfer/*" element={<ProtectedRoute>{mfe('Chuyển tiền', <TransferApp />)}</ProtectedRoute>} />
+          <Route path="/cards/*"    element={<ProtectedRoute>{mfe('Thẻ', <CardsApp />)}</ProtectedRoute>} />
+          <Route path="/loans/*"    element={<ProtectedRoute>{mfe('Vay vốn', <LoansApp />)}</ProtectedRoute>} />
+          <Route path="/profile/*"  element={<ProtectedRoute>{mfe('Hồ sơ', <ProfileApp />)}</ProtectedRoute>} />
         </Routes>
       </main>
     </div>

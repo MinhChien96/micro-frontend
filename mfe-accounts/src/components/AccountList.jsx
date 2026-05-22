@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccountStore } from 'shared/accountStore';
 import { useAuthStore } from 'shared/authStore';
@@ -46,6 +46,44 @@ const MOCK_ACCOUNTS = [
 
 const ACCOUNT_ICON = { checking: '🏦', savings: '💰' };
 
+// Memoized — won't re-render unless the account object itself changes
+const AccountItem = memo(function AccountItem({ acc }) {
+  return (
+    <Link to={acc.id} style={{ textDecoration: 'none' }}>
+      <Card hoverable>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 12,
+            background: acc.type === 'checking' ? '#dbeafe' : '#fef9c3',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 24, flexShrink: 0,
+          }}>
+            {ACCOUNT_ICON[acc.type]}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>{acc.name}</span>
+              <StatusBadge label={acc.typeLabel} color={acc.type === 'checking' ? 'blue' : 'yellow'} />
+            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>{acc.number}</div>
+            {acc.interestRate && (
+              <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                Lãi suất {acc.interestRate}%/năm · Đáo hạn {acc.maturity}
+              </div>
+            )}
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 17, color: '#1e3a5f' }}>
+              {fmt(acc.balance)}
+            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Xem chi tiết →</div>
+          </div>
+        </div>
+      </Card>
+    </Link>
+  );
+});
+
 export default function AccountList() {
   const { setAccounts, accounts, getTotalBalance } = useAccountStore();
   const user = useAuthStore((s) => s.user);
@@ -78,40 +116,7 @@ export default function AccountList() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {list.map((acc) => (
-          <Link key={acc.id} to={acc.id} style={{ textDecoration: 'none' }}>
-            <Card hoverable>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12,
-                  background: acc.type === 'checking' ? '#dbeafe' : '#fef9c3',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 24, flexShrink: 0,
-                }}>
-                  {ACCOUNT_ICON[acc.type]}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>{acc.name}</span>
-                    <StatusBadge label={acc.typeLabel} color={acc.type === 'checking' ? 'blue' : 'yellow'} />
-                  </div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>{acc.number}</div>
-                  {acc.interestRate && (
-                    <div style={{ fontSize: 12, color: '#16a34a', marginTop: 2 }}>
-                      Lãi suất {acc.interestRate}%/năm · Đáo hạn {acc.maturity}
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: '#1e3a5f' }}>
-                    {fmt(acc.balance)}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Xem chi tiết →</div>
-                </div>
-              </div>
-            </Card>
-          </Link>
+          <AccountItem key={acc.id} acc={acc} />
         ))}
       </div>
     </div>

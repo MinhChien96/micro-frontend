@@ -2,9 +2,16 @@ import React, { useState } from 'react';
 import { useAuthStore } from 'shared/authStore';
 import '../styles.css';
 
+const DEMO_ROLES = [
+  { value: 'CUSTOMER', label: 'Khách hàng thường', desc: 'Chuyển trong nước, xem thẻ/vay' },
+  { value: 'PREMIUM',  label: 'Khách hàng ưu tiên', desc: '+ Chuyển quốc tế, đổi hạn mức, đăng ký vay' },
+  { value: 'BUSINESS', label: 'Doanh nghiệp', desc: '+ Chuyển hàng loạt, quản lý tài khoản' },
+];
+
 export default function Login() {
   const [customerId, setCustomerId] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState('CUSTOMER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,7 +31,7 @@ export default function Login() {
         email: 'demo@vietbank.vn',
         phone: '0901 234 567',
         branch: 'Chi nhánh TP.HCM',
-        role: 'customer',
+        role: selectedRole,
       });
     } else {
       setError('Mã khách hàng hoặc mật khẩu không đúng. Thử: 0021001 / 123456');
@@ -66,6 +73,36 @@ export default function Login() {
             autoComplete="current-password"
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label>Loại tài khoản (demo)</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+            {DEMO_ROLES.map(({ value, label, desc }) => (
+              <label
+                key={value}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+                  padding: '8px 12px', borderRadius: 8, border: '1px solid',
+                  borderColor: selectedRole === value ? '#1e3a5f' : '#e2e8f0',
+                  background: selectedRole === value ? '#f0f4ff' : '#fff',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="role"
+                  value={value}
+                  checked={selectedRole === value}
+                  onChange={() => setSelectedRole(value)}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#1e3a5f' }}>{label}</div>
+                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>{desc}</div>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 12 }}>

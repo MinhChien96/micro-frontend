@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccountStore } from 'shared/accountStore';
 import { Card, CardHeader, Divider } from 'shared/ui';
+import PermissionGate from 'shared/PermissionGate';
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const BANKS = ['Vietcombank', 'Techcombank', 'BIDV', 'Agribank', 'VPBank', 'MB Bank', 'TPBank', 'VIB'];
+
+const TRANSFER_TYPES = [
+  { key: 'domestic',      label: 'Trong nước',   permission: null },
+  { key: 'international', label: 'Quốc tế',       permission: 'transfer:international' },
+];
+
+const INTL_BANKS = ['Citibank', 'HSBC', 'Standard Chartered', 'ANZ', 'Deutsche Bank'];
+const CURRENCIES = ['USD', 'EUR', 'JPY', 'SGD', 'GBP'];
 
 const STEPS = ['Chọn tài khoản nguồn', 'Nhập thông tin', 'Xác nhận'];
 
@@ -22,13 +31,15 @@ const INITIAL_FORM = {
 export default function NewTransfer() {
   const navigate = useNavigate();
   const accounts = useAccountStore((s) => s.accounts);
+  const [transferType, setTransferType] = useState('domestic');
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(INITIAL_FORM);
+  const [intlCurrency, setIntlCurrency] = useState('USD');
   const [submitted, setSubmitted] = useState(false);
 
   const source = accounts.find((a) => a.id === form.sourceId);
 
-  const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const update = useCallback((field, value) => setForm((f) => ({ ...f, [field]: value })), []);
 
   const canNext = () => {
     if (step === 0) return !!form.sourceId;
@@ -82,7 +93,67 @@ export default function NewTransfer() {
         ← {step === 0 ? 'Quay lại' : STEPS[step - 1]}
       </button>
 
-      <h2 style={{ margin: '0 0 20px', fontSize: 20, color: '#0f172a' }}>Chuyển tiền</h2>
+      <h2 style={{ margin: '0 0 16px', fontSize: 20, color: '#0f172a' }}>Chuyển tiền</h2>
+
+      {/* Transfer type toggle */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {TRANSFER_TYPES.map(({ key, label, permission }) => {
+          const btn = (
+            <button
+              onClick={() => { setTransferType(key); setStep(0); setForm(INITIAL_FORM); }}
+              style={{
+                padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
+                background: transferType === key ? '#1e3a5f' : '#f1f5f9',
+                color: transferType === key ? '#fff' : '#64748b',
+                fontWeight: transferType === key ? 700 : 400,
+              }}
+            >
+              {label}
+            </button>
+          );
+          if (!permission) return <span key={key}>{btn}</span>;
+          return (
+            <PermissionGate
+              key={key}
+              permission={permission}
+              requiredRole="PREMIUM"
+              fallback={
+                <button
+                  disabled
+                  title="Yêu cầu tài khoản PREMIUM"
+                  style={{ padding: '8px 18px', borderRadius: 20, border: 'none', cursor: 'not-allowed', fontSize: 13, background: '#f1f5f9', color: '#cbd5e1', opacity: 0.7 }}
+                >
+                  {label} 🔒
+                </button>
+              }
+            >
+              {btn}
+            </PermissionGate>
+          );
+        })}
+      </div>
+
+      {/* International transfer extra fields (shown before step wizard) */}
+      {transferType === 'international' && step === 1 && (
+        <Card style={{ marginBottom: 14, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+          <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 600, marginBottom: 10 }}>🌐 Thông tin chuyển tiền quốc tế</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Ngân hàng quốc tế</label>
+              <select style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 13, background: '#fff' }}>
+                {INTL_BANKS.map((b) => <option key={b}>{b}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Loại tiền tệ</label>
+              <select value={intlCurrency} onChange={(e) => setIntlCurrency(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 13, background: '#fff' }}>
+                {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>SWIFT/BIC code và phí chuyển tiền quốc tế áp dụng theo biểu phí hiện hành.</div>
+        </Card>
+      )}
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 28 }}>
