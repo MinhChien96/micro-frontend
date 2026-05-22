@@ -1,8 +1,9 @@
-# Micro Frontend — Webpack 5 Module Federation
+# VietBank — Webpack 5 Module Federation
 
-> Mô hình micro frontend phổ biến nhất hiện nay, áp dụng tại Zalando, IKEA, Shopify và nhiều công ty lớn.
+> Ứng dụng ngân hàng micro frontend hoàn chỉnh — minh họa kiến trúc Webpack 5 Module Federation với RBAC authorization, intra-MFE routing, shared Zustand store, và performance optimization.
 
 **Live demo:** https://minhchien96.github.io/micro-frontend/
+**Đăng nhập:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
 
 ---
 
@@ -10,59 +11,60 @@
 
 1. [Tổng quan kiến trúc](#tổng-quan-kiến-trúc)
 2. [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-3. [Shared UI Library](#shared-ui-library)
-4. [Các khái niệm cốt lõi](#các-khái-niệm-cốt-lõi)
+3. [Module Federation — Cấu hình cốt lõi](#module-federation--cấu-hình-cốt-lõi)
+4. [Intra-MFE Routing](#intra-mfe-routing)
 5. [Shared State với Zustand](#shared-state-với-zustand)
-6. [Code Splitting & Lazy Load](#code-splitting--lazy-load)
-7. [Giao tiếp giữa các MFE](#giao-tiếp-giữa-các-mfe)
-8. [Chạy local](#chạy-local)
-9. [Build và Deploy độc lập theo team](#build-và-deploy-độc-lập-theo-team)
-10. [CI/CD với GitHub Actions](#cicd-với-github-actions)
-11. [Quy trình làm việc theo team](#quy-trình-làm-việc-theo-team)
-12. [Xử lý sự cố thường gặp](#xử-lý-sự-cố-thường-gặp)
+6. [Authorization — RBAC](#authorization--rbac)
+7. [Shared UI Library](#shared-ui-library)
+8. [Performance Optimization](#performance-optimization)
+9. [Code Splitting & Lazy Load](#code-splitting--lazy-load)
+10. [Chạy local](#chạy-local)
+11. [CI/CD với GitHub Actions](#cicd-với-github-actions)
+12. [Quy trình làm việc theo team](#quy-trình-làm-việc-theo-team)
+13. [Xử lý sự cố thường gặp](#xử-lý-sự-cố-thường-gặp)
 
 ---
 
 ## Tổng quan kiến trúc
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          BROWSER (Runtime)                               │
-│                                                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                      shell (port 3000)                            │   │
-│  │                 Host App — Orchestrator & Router                  │   │
-│  │                                                                   │   │
-│  │  ┌──────────┐  ┌────────────┐  ┌──────────┐  ┌────────────────┐  │   │
-│  │  │ mfe-auth │  │mfe-products│  │ mfe-cart │  │  mfe-profile   │  │   │
-│  │  │ :3001    │  │   :3002    │  │  :3003   │  │    :3005       │  │   │
-│  │  │          │  │            │  │          │  │                │  │   │
-│  │  │ Login    │  │ProductList │  │  Cart    │  │  ProfilePage   │  │   │
-│  │  └────┬─────┘  └─────┬──────┘  └────┬─────┘  └──────┬─────────┘  │   │
-│  │       │              │               │               │            │   │
-│  │  ┌────────────────────────────────────────────────────────────┐   │   │
-│  │  │                  mfe-orders (:3006)                        │   │   │
-│  │  │                     OrderList                              │   │   │
-│  │  └────────────────────────────────────────────────────────────┘   │   │
-│  │                                                                   │   │
-│  │       └──────────────────────┬────────────────────────┘           │   │
-│  │                              │                                    │   │
-│  │                    shared (:3004)                                 │   │
-│  │          Store: authStore | cartStore                             │   │
-│  │          UI: Button | Card | Badge | Spinner | Toast              │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              BROWSER (Runtime)                               │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                         shell  (port 3000)                              │ │
+│  │              Host App — HashRouter, ProtectedRoute, Orchestrator        │ │
+│  │                                                                         │ │
+│  │  ┌──────────┐  ┌──────────────┐  ┌─────────────┐  ┌────────────────┐   │ │
+│  │  │ mfe-auth │  │ mfe-accounts │  │ mfe-transfer│  │   mfe-cards    │   │ │
+│  │  │  :3001   │  │    :3002     │  │    :3003    │  │     :3007      │   │ │
+│  │  │  Login   │  │ AccountsApp  │  │ TransferApp │  │   CardsApp     │   │ │
+│  │  └──────────┘  └──────────────┘  └─────────────┘  └────────────────┘   │ │
+│  │                                                                         │ │
+│  │  ┌────────────────────────┐  ┌──────────────────────────────────────┐   │ │
+│  │  │      mfe-loans         │  │           mfe-profile                │   │ │
+│  │  │        :3006           │  │              :3005                   │   │ │
+│  │  │      LoansApp          │  │           ProfileApp                 │   │ │
+│  │  └────────────────────────┘  └──────────────────────────────────────┘   │ │
+│  │                                                                         │ │
+│  │  ┌─────────────────────────────────────────────────────────────────┐    │ │
+│  │  │                     shared  (:3004)                             │    │ │
+│  │  │  authStore (RBAC)  |  accountStore (persist)  |  UI Library     │    │ │
+│  │  │  PermissionGate    |  SkeletonCard/List/Row                     │    │ │
+│  │  └─────────────────────────────────────────────────────────────────┘    │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Nguyên lý hoạt động
 
 | Khái niệm | Giải thích |
-|-----------|------------|
-| **Host (Shell)** | App chính, load và compose các MFE. Quản lý routing, layout global |
-| **Remote (MFE)** | App con tự chạy được, expose component ra ngoài qua `remoteEntry.js` |
+|---|---|
+| **Host (Shell)** | App chính, compose các MFE, quản lý top-level routing và auth guard |
+| **Remote (MFE)** | App con tự chạy được, expose `*App` component ra ngoài qua `remoteEntry.js` |
 | **remoteEntry.js** | File manifest do webpack tạo — shell fetch lúc runtime để biết MFE expose gì |
-| **Shared modules** | React, Zustand được share singleton — load 1 lần duy nhất cho toàn hệ thống |
-| **`shared` MFE** | Package đặc biệt: vừa là state layer (Zustand stores) vừa là UI library |
+| **Shared modules** | React, Zustand, react-router-dom được share singleton — load 1 lần duy nhất |
+| **`shared` MFE** | Package đặc biệt: state layer (stores) + UI library + authorization gate |
 
 ---
 
@@ -71,240 +73,218 @@
 ```
 micro-frontend/
 │
-├── remotes.config.js          # Trung tâm quản lý URL của tất cả MFE
+├── remotes.config.js          # Trung tâm quản lý URL của tất cả MFE (localhost + GH Pages)
 ├── webpack.optimization.js    # Shared: contenthash, splitChunks config
-├── pnpm-workspace.yaml        # Khai báo 7 workspace packages
+├── pnpm-workspace.yaml        # Khai báo 8 workspace packages
 ├── .npmrc                     # shamefully-hoist + dedupe-peer-dependents
-├── .env.example               # Template env vars cho từng team
 ├── package.json               # Root scripts: start all, build all
 │
 ├── shared/                    # Store + UI layer (port 3004)
 │   └── src/
 │       ├── store/
-│       │   ├── authStore.js   # user, login(), logout(), updateProfile()
-│       │   └── cartStore.js   # items, addItem(), updateQty(), getCount(), getTotal()
+│       │   ├── authStore.js   # user, role, permissions[], login/logout, hasPermission()
+│       │   └── accountStore.js# accounts[], setAccounts, getTotalBalance, getAccount (+ persist)
+│       ├── utils/
+│       │   └── permissions.js # ROLES, ROLE_PERMISSIONS, getPermissionsForRole()
+│       ├── components/
+│       │   └── PermissionGate.jsx  # Gate feature theo permission — exposed từ shared
 │       └── ui/                # Shared UI Library
 │           ├── Button.jsx     # 5 variants, 3 sizes
 │           ├── Badge.jsx      # count badge + StatusBadge
 │           ├── Card.jsx       # Card, CardHeader, Divider
 │           ├── Spinner.jsx    # Spinner, PageSpinner
 │           ├── Toast.jsx      # ToastProvider + useToast hook
+│           ├── Skeleton.jsx   # SkeletonCard, SkeletonRow, SkeletonList
 │           └── index.js       # re-export tất cả
 │
 ├── shell/                     # Host app (port 3000)
 │   └── src/
-│       ├── App.jsx            # Routes: /, /login, /products, /cart, /profile, /orders
+│       ├── App.jsx            # Routes: /, /login, /accounts/*, /transfer/*, /cards/*, /loans/*, /profile/*
 │       └── components/
-│           └── Nav.jsx        # Subscribe shared store (non-hook pattern)
+│           ├── Nav.jsx        # Selective Zustand subscribe, MFE prefetch on hover
+│           └── ProtectedRoute.jsx  # Auth guard — redirect /login nếu chưa đăng nhập
 │
 ├── mfe-auth/                  # Auth team (port 3001)
 │   └── src/components/
-│       ├── Login.jsx          # Expose: gọi authStore.login()
-│       └── UserProfile.jsx    # Expose: đọc authStore.user
+│       └── Login.jsx          # CIF + password + role selector (CUSTOMER/PREMIUM/BUSINESS)
 │
-├── mfe-products/              # Products team (port 3002)
-│   └── src/
-│       ├── components/
-│       │   ├── ProductList.jsx# Expose: lazy load ProductDetail
-│       │   ├── ProductCard.jsx
-│       │   └── ProductDetail.jsx  # Lazy chunk (webpackChunkName: product-detail)
-│       └── data/products.js
-│
-├── mfe-cart/                  # Cart team (port 3003)
+├── mfe-accounts/              # Accounts team (port 3002)
 │   └── src/components/
-│       └── Cart.jsx           # Expose: subscribe cartStore.items
+│       ├── AccountsApp.jsx    # Expose: Routes cho /accounts/*
+│       ├── AccountList.jsx    # React.memo(AccountItem)
+│       ├── AccountDetail.jsx  # Lazy chunk — chi tiết + 5 giao dịch gần nhất
+│       └── TransactionList.jsx# Lazy chunk — useMemo, useCallback, React.memo(TransactionRow)
 │
-├── mfe-profile/               # Profile team (port 3005)
+├── mfe-transfer/              # Transfer team (port 3003)
 │   └── src/components/
-│       ├── ProfilePage.jsx    # Expose: dùng authStore + shared/ui
-│       └── EditProfile.jsx    # Lazy chunk (webpackChunkName: edit-profile)
+│       ├── TransferApp.jsx    # Expose: Routes cho /transfer/*
+│       ├── TransferDashboard.jsx
+│       ├── NewTransfer.jsx    # Lazy — 3-step wizard + PermissionGate quốc tế
+│       └── TransferHistory.jsx# Lazy — useDebounce filter
 │
-└── mfe-orders/                # Orders team (port 3006)
+├── mfe-cards/                 # Cards team (port 3007)
+│   └── src/components/
+│       ├── CardsApp.jsx       # Expose: Routes cho /cards/*
+│       ├── CardList.jsx       # Danh sách thẻ debit/credit
+│       └── CardDetail.jsx     # Lazy — lock/PIN/limit + PermissionGate hạn mức
+│
+├── mfe-loans/                 # Loans team (port 3006)
+│   └── src/components/
+│       ├── LoansApp.jsx       # Expose: Routes cho /loans/*
+│       ├── LoanList.jsx       # PermissionGate cho "Đăng ký vay mới"
+│       ├── LoanDetail.jsx     # Lazy chunk
+│       └── PaymentSchedule.jsx# Lazy — useMemo amortization table
+│
+└── mfe-profile/               # Profile team (port 3005)
     └── src/components/
-        ├── OrderList.jsx      # Expose: dùng shared/ui Card, Badge
-        └── OrderDetail.jsx    # Lazy chunk (webpackChunkName: order-detail)
+        ├── ProfileApp.jsx     # Expose: Routes cho /profile/*
+        ├── ProfilePage.jsx
+        ├── EditProfile.jsx    # Lazy chunk
+        └── SecuritySettings.jsx  # Lazy chunk — 2FA, đổi mật khẩu
 ```
 
 ---
 
-## Shared UI Library
+## Module Federation — Cấu hình cốt lõi
 
-Các component UI dùng chung được expose từ `shared` MFE qua Module Federation. Mọi MFE đều import trực tiếp như local module:
-
-```jsx
-import { Button, Card, CardHeader, Divider, Badge, StatusBadge,
-         Spinner, PageSpinner, ToastProvider, useToast } from 'shared/ui';
-```
-
-### Components
-
-| Component | Props | Mô tả |
-|-----------|-------|-------|
-| `Button` | `variant` (primary/secondary/danger/ghost/success), `size` (sm/md/lg), `disabled`, `fullWidth`, `icon` | Button đa năng |
-| `Badge` | `count`, `max` (default 99), `color`, `size` | Count badge với overflow (99+) |
-| `StatusBadge` | `label`, `color` (blue/green/yellow/red/gray/purple) | Status tag dạng pill |
-| `Spinner` | `size` (sm/md/lg), `color` | Loading spinner |
-| `PageSpinner` | `label` | Spinner căn giữa trang |
-| `Card` | `hoverable`, `padding` (sm/md/lg), `onClick` | Card container |
-| `CardHeader` | `title`, `subtitle`, `action` | Header của Card |
-| `Divider` | `margin` | Đường kẻ ngang |
-| `ToastProvider` | wrap component tree | Provider cho toast system |
-| `useToast` | — | Hook: `const { show } = useToast()` |
-
-### Ví dụ sử dụng
-
-```jsx
-// mfe-profile/src/components/EditProfile.jsx
-import { Card, CardHeader, Button, useToast } from 'shared/ui';
-
-export default function EditProfile({ onDone }) {
-  const { show } = useToast();
-
-  const handleSave = async () => {
-    await saveChanges();
-    show('Profile updated!', 'success');   // toast xuất hiện
-    onDone();
-  };
-
-  return (
-    <Card>
-      <CardHeader title="Edit Profile" subtitle="Lazy loaded chunk" />
-      <Button onClick={handleSave}>Save Changes</Button>
-      <Button variant="secondary" onClick={onDone}>Cancel</Button>
-    </Card>
-  );
-}
-```
-
-### Tại sao đặt UI trong `shared` thay vì package riêng?
-
-| Tiêu chí | Đặt trong `shared` | Tạo `shared-ui` riêng |
-|----------|-------------------|----------------------|
-| Số `remoteEntry.js` | 1 (shared) | 2 |
-| Complexity | Thấp | Cao hơn |
-| Phù hợp | Học tập, team nhỏ | Team lớn, lifecycle khác nhau |
-
-Trong production với nhiều team, nên tách `shared-ui` riêng để state team và UI team có thể release độc lập.
-
----
-
-## Các khái niệm cốt lõi
-
-### 1. Pattern `index.js → bootstrap.jsx` (bắt buộc với MF)
+### Pattern `index.js → bootstrap.jsx` (bắt buộc)
 
 ```js
 // src/index.js — entry point
-import('./bootstrap');   // async import — KHÔNG dùng import thường
+import('./bootstrap');  // async import — KHÔNG import thẳng
 
-// src/bootstrap.jsx — app thực sự bắt đầu từ đây
+// src/bootstrap.jsx — app thực sự khởi động ở đây
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 ```
 
-**Tại sao cần async?** Module Federation cần negotiate shared modules (React, Zustand) *trước khi* app khởi tạo. Import thẳng sẽ load React trước khi MF kịp xử lý → conflict version.
+**Tại sao cần async?** Module Federation negotiate shared modules (React, Zustand) *trước khi* app khởi tạo. Import thẳng load React trước khi MF kịp xử lý → conflict version.
 
 ---
 
-### 2. Cấu hình webpack — Remote (MFE)
+### Remote (MFE) webpack config
 
 ```js
-// mfe-profile/webpack.config.js
+// mfe-accounts/webpack.config.js
 new ModuleFederationPlugin({
-  name: 'mfe_profile',         // tên định danh — shell dùng tên này
-  filename: 'remoteEntry.js',  // file manifest, KHÔNG có contenthash
+  name: 'mfe_accounts',
+  filename: 'remoteEntry.js',   // URL cố định — KHÔNG có contenthash
 
   exposes: {
-    './ProfilePage': './src/components/ProfilePage',
+    './AccountsApp': './src/components/AccountsApp',
   },
 
   remotes: {
-    shared: remotes.shared,    // cần access store + UI từ shared
+    shared: remotes.shared,     // import store + UI + PermissionGate
   },
 
   shared: {
-    react:       { singleton: true, requiredVersion: '^18.2.0' },
-    'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
-    zustand:     { singleton: true, requiredVersion: '^4.5.0' },
-    // singleton: true — chỉ 1 instance trong toàn bộ hệ thống
+    react:              { singleton: true, requiredVersion: '^18.2.0' },
+    'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
+    'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' }, // bắt buộc — intra-MFE routing
+    zustand:            { singleton: true, requiredVersion: '^4.5.0' },
   },
 })
 ```
 
+> **Lưu ý quan trọng:** `react-router-dom` phải là singleton trong mọi MFE. Nếu thiếu, `useNavigate`/`Link`/`useParams` sẽ không hoạt động khi MFE được shell mount.
+
 ---
 
-### 3. Cấu hình webpack — Host (Shell)
+### Host (Shell) webpack config
 
 ```js
 // shell/webpack.config.js
 new ModuleFederationPlugin({
   name: 'shell',
-  // Shell KHÔNG expose gì — chỉ consume từ remotes
-
   remotes: {
-    shared:       remotes.shared,        // "shared@http://localhost:3004/remoteEntry.js"
-    mfe_auth:     remotes.mfe_auth,      // "mfe_auth@http://localhost:3001/remoteEntry.js"
-    mfe_products: remotes.mfe_products,
-    mfe_cart:     remotes.mfe_cart,
-    mfe_profile:  remotes.mfe_profile,   // "mfe_profile@http://localhost:3005/remoteEntry.js"
-    mfe_orders:   remotes.mfe_orders,    // "mfe_orders@http://localhost:3006/remoteEntry.js"
+    shared:       remotes.shared,
+    mfe_auth:     remotes.mfe_auth,
+    mfe_accounts: remotes.mfe_accounts,
+    mfe_transfer: remotes.mfe_transfer,
+    mfe_cards:    remotes.mfe_cards,
+    mfe_loans:    remotes.mfe_loans,
+    mfe_profile:  remotes.mfe_profile,
   },
-  shared: { /* react, zustand singleton */ },
+  shared: { react, 'react-dom', 'react-router-dom', zustand: singleton },
 })
 ```
 
 ---
 
-### 4. remotes.config.js — Quản lý URL tập trung
+### `shared` webpack — Exposes
 
 ```js
-// remotes.config.js
-const base = process.env.BASE_GH_PAGES;  // set khi build cho GitHub Pages
-
-const URLS = {
-  shared:      process.env.SHARED_URL        || (base ? `${base}/shared/remoteEntry.js`      : 'http://localhost:3004/remoteEntry.js'),
-  mfe_auth:    process.env.MFE_AUTH_URL      || (base ? `${base}/mfe-auth/remoteEntry.js`    : 'http://localhost:3001/remoteEntry.js'),
-  mfe_products:process.env.MFE_PRODUCTS_URL  || (base ? `${base}/mfe-products/remoteEntry.js`: 'http://localhost:3002/remoteEntry.js'),
-  mfe_cart:    process.env.MFE_CART_URL      || (base ? `${base}/mfe-cart/remoteEntry.js`    : 'http://localhost:3003/remoteEntry.js'),
-  mfe_profile: process.env.MFE_PROFILE_URL   || (base ? `${base}/mfe-profile/remoteEntry.js` : 'http://localhost:3005/remoteEntry.js'),
-  mfe_orders:  process.env.MFE_ORDERS_URL    || (base ? `${base}/mfe-orders/remoteEntry.js`  : 'http://localhost:3006/remoteEntry.js'),
-}
-
-module.exports = {
-  shared:       `shared@${URLS.shared}`,
-  mfe_auth:     `mfe_auth@${URLS.mfe_auth}`,
-  // ...
-}
+// shared/webpack.config.js
+exposes: {
+  './authStore':      './src/store/authStore',
+  './accountStore':   './src/store/accountStore',
+  './ui':             './src/ui/index',
+  './PermissionGate': './src/components/PermissionGate',
+},
 ```
-
-Tất cả webpack config import file này → đổi URL 1 chỗ, áp dụng toàn bộ.
 
 ---
 
-### 5. Lazy load MFE trong Shell
+### remotes.config.js — Quản lý URL tập trung
+
+```js
+const base = process.env.BASE_GH_PAGES; // set khi build cho GitHub Pages
+
+const URLS = {
+  shared:       base ? `${base}/shared/remoteEntry.js`        : 'http://localhost:3004/remoteEntry.js',
+  mfe_auth:     base ? `${base}/mfe-auth/remoteEntry.js`      : 'http://localhost:3001/remoteEntry.js',
+  mfe_accounts: base ? `${base}/mfe-accounts/remoteEntry.js`  : 'http://localhost:3002/remoteEntry.js',
+  mfe_transfer: base ? `${base}/mfe-transfer/remoteEntry.js`  : 'http://localhost:3003/remoteEntry.js',
+  mfe_cards:    base ? `${base}/mfe-cards/remoteEntry.js`     : 'http://localhost:3007/remoteEntry.js',
+  mfe_loans:    base ? `${base}/mfe-loans/remoteEntry.js`     : 'http://localhost:3006/remoteEntry.js',
+  mfe_profile:  base ? `${base}/mfe-profile/remoteEntry.js`   : 'http://localhost:3005/remoteEntry.js',
+};
+```
+
+Đổi URL 1 chỗ → áp dụng toàn bộ hệ thống.
+
+---
+
+## Intra-MFE Routing
+
+Mỗi MFE expose một `*App` component chứa `<Routes>` của riêng nó. Shell mount tại path prefix với `/*`.
+
+```
+Shell                          MFE
+─────────────────────────────────────────────────────
+<Route path="/accounts/*">  →  <AccountsApp>
+                                  <Routes>
+                                    <Route index />              /accounts
+                                    <Route path=":id" />         /accounts/TK001
+                                    <Route path=":id/transactions" />
+                                  </Routes>
+```
 
 ```jsx
-// shell/src/App.jsx
-import React, { Suspense, lazy } from 'react';
+// mfe-accounts/src/components/AccountsApp.jsx (exposed component)
+import { Routes, Route } from 'react-router-dom'; // NO <Router> — shell đã có HashRouter
 
-// Webpack fetch từ remoteEntry lúc runtime, không phải lúc build
-const Login       = lazy(() => import('mfe_auth/Login'));
-const ProductList = lazy(() => import('mfe_products/ProductList'));
-const Cart        = lazy(() => import('mfe_cart/Cart'));
-const ProfilePage = lazy(() => import('mfe_profile/ProfilePage'));
-const OrderList   = lazy(() => import('mfe_orders/OrderList'));
-
-function App() {
+export default function AccountsApp() {
   return (
     <Routes>
-      <Route path="/login"    element={<Suspense fallback={<Loading />}><Login /></Suspense>} />
-      <Route path="/products" element={<Suspense fallback={<Loading />}><ProductList /></Suspense>} />
-      <Route path="/profile"  element={<Suspense fallback={<Loading />}><ProfilePage /></Suspense>} />
-      <Route path="/orders"   element={<Suspense fallback={<Loading />}><OrderList /></Suspense>} />
+      <Route index element={<AccountList />} />
+      <Route path=":id" element={<Suspense><AccountDetail /></Suspense>} />
+      <Route path=":id/transactions" element={<Suspense><TransactionList /></Suspense>} />
     </Routes>
   );
 }
+```
+
+```jsx
+// shell/src/App.jsx
+<Route path="/accounts/*" element={   // /* bắt buộc — pass remaining path xuống MFE
+  <ProtectedRoute>
+    {mfe('Tài khoản', <AccountsApp />)}
+  </ProtectedRoute>
+} />
 ```
 
 ---
@@ -318,94 +298,339 @@ function App() {
 │                     JavaScript Heap                      │
 │                                                          │
 │   shared MFE expose store tại địa chỉ 0x1A2B            │
-│              ┌──────────────────┐                        │
-│              │   cartStore      │  ← 1 object duy nhất  │
-│              │   items: [...]   │                        │
-│              │   addItem()      │                        │
-│              └────────┬─────────┘                        │
+│              ┌──────────────────────┐                    │
+│              │   accountStore       │ ← 1 object duy nhất│
+│              │   accounts: [...]    │                    │
+│              │   setAccounts()      │                    │
+│              └────────┬─────────────┘                    │
 │                       │                                  │
-│      ┌────────────────┼───────────────────┐              │
-│      ↓                ↓                   ↓              │
-│  mfe-products     mfe-cart           shell/Nav            │
-│  useCartStore     useCartStore       subscribe()          │
-│  (cùng 0x1A2B)   (cùng 0x1A2B)     (cùng 0x1A2B)        │
-│                                                          │
-│  mfe-products.addItem() → items thay đổi                 │
-│  → mfe-cart re-render NGAY LẬP TỨC                       │
-│  → shell/Nav cập nhật badge NGAY LẬP TỨC                 │
+│      ┌────────────────┼─────────────────────┐            │
+│      ↓                ↓                     ↓            │
+│  mfe-accounts    mfe-transfer           shell/Nav         │
+│  setAccounts()   read accounts[]        subscribe()       │
+│  (cùng 0x1A2B)   (cùng 0x1A2B)         (cùng 0x1A2B)     │
 └──────────────────────────────────────────────────────────┘
 ```
 
-`zustand: { singleton: true }` đảm bảo MF chỉ load **một Zustand instance** duy nhất → mọi store đều là true singleton.
+`zustand: { singleton: true }` đảm bảo MF chỉ load **một Zustand instance** → mọi store đều là true singleton.
 
 ---
 
-### Store API
+### authStore — RBAC + subscribeWithSelector
 
 ```js
 // shared/src/store/authStore.js
-export const useAuthStore = create((set) => ({
-  user: null,
-  login:         (user) => set({ user }),
-  logout:        () => set({ user: null }),
-  updateProfile: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
-}));
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+import { getPermissionsForRole } from '../utils/permissions';
 
-// shared/src/store/cartStore.js
-export const useCartStore = create((set, get) => ({
-  items: [],
-  addItem:   (product) => set(...),
-  updateQty: (id, delta) => set(...),
-  getCount:  () => get().items.reduce((s, i) => s + i.qty, 0),
-  getTotal:  () => get().items.reduce((s, i) => s + i.price * i.qty, 0),
-}));
+export const useAuthStore = create(
+  subscribeWithSelector((set, get) => ({
+    user: null,
+    role: null,           // 'CUSTOMER' | 'PREMIUM' | 'BUSINESS'
+    permissions: [],      // ['accounts:view', 'transfer:domestic', ...]
+
+    login: (user) => {
+      const role = (user.role || 'CUSTOMER').toUpperCase();
+      set({ user, role, permissions: getPermissionsForRole(role) });
+    },
+
+    logout: () => set({ user: null, role: null, permissions: [] }),
+
+    hasPermission: (permission) => get().permissions.includes(permission),
+    hasRole: (role) => get().role === role?.toUpperCase(),
+  }))
+);
 ```
+
+---
+
+### accountStore — persist + subscribeWithSelector
+
+```js
+// shared/src/store/accountStore.js
+import { create } from 'zustand';
+import { persist, subscribeWithSelector } from 'zustand/middleware';
+
+export const useAccountStore = create(
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        accounts: [],
+        setAccounts: (accounts) => set({ accounts }),
+        getTotalBalance: () => get().accounts.reduce((s, a) => s + (a.balance || 0), 0),
+        getAccount: (id) => get().accounts.find((a) => a.id === id),
+      }),
+      {
+        name: 'vietbank-accounts',          // localStorage key
+        partialize: (s) => ({ accounts: s.accounts }), // chỉ cache accounts[]
+      }
+    )
+  )
+);
+```
+
+**`persist`** — accounts[] được cache vào localStorage. Khi user vào thẳng `/transfer` mà chưa qua `/accounts`, store vẫn có dữ liệu từ session trước.
 
 ---
 
 ### Dùng store trong React component (hook)
 
 ```jsx
-// mfe-products — chỉ lấy action, tránh re-render thừa
-import { useCartStore } from 'shared/cartStore';
-const addItem = useCartStore((s) => s.addItem);
+// Dùng trong bất kỳ MFE nào (static import)
+import { useAuthStore }   from 'shared/authStore';
+import { useAccountStore } from 'shared/accountStore';
 
-// mfe-cart — lấy cả items để render
-const items     = useCartStore((s) => s.items);
-const updateQty = useCartStore((s) => s.updateQty);
-
-// mfe-profile — dùng authStore
-import { useAuthStore } from 'shared/authStore';
-const user          = useAuthStore((s) => s.user);
-const updateProfile = useAuthStore((s) => s.updateProfile);
+const user       = useAuthStore((s) => s.user);
+const accounts   = useAccountStore((s) => s.accounts);
+const getAccount = useAccountStore((s) => s.getAccount);
 ```
 
 ---
 
-### Dùng store trong Shell (non-hook — dynamic import)
-
-Shell không thể dùng hook trực tiếp với remote dynamic import. Dùng Zustand subscribe API:
+### Dùng store trong Shell (dynamic import + subscribeWithSelector)
 
 ```js
 // shell/src/components/Nav.jsx
 useEffect(() => {
-  let unsubAuth, unsubCart;
+  let unsubAuth, unsubAccount;
 
   Promise.all([
     import('shared/authStore'),
-    import('shared/cartStore'),
-  ]).then(([{ useAuthStore }, { useCartStore }]) => {
-    // Sync giá trị ban đầu
+    import('shared/accountStore'),
+  ]).then(([{ useAuthStore }, { useAccountStore }]) => {
     setUser(useAuthStore.getState().user);
-    setCartCount(useCartStore.getState().getCount());
+    setTotalBalance(useAccountStore.getState().getTotalBalance());
 
-    // Subscribe — callback chạy mỗi khi bất kỳ MFE nào thay đổi store
-    unsubAuth = useAuthStore.subscribe((s) => setUser(s.user));
-    unsubCart = useCartStore.subscribe((s) => setCartCount(s.getCount()));
+    // Selective subscription — listener chỉ fire khi selector result thay đổi
+    unsubAuth = useAuthStore.subscribe(
+      (s) => [s.user, s.role],
+      ([user, role]) => { setUser(user); setRole(role); },
+      { equalityFn: (a, b) => a[0] === b[0] && a[1] === b[1] }
+    );
+    unsubAccount = useAccountStore.subscribe(
+      (s) => s.accounts.reduce((sum, a) => sum + (a.balance || 0), 0),
+      (total) => setTotalBalance(total)
+    );
   });
 
-  return () => { unsubAuth?.(); unsubCart?.(); };
+  return () => { unsubAuth?.(); unsubAccount?.(); };
 }, []);
+```
+
+---
+
+## Authorization — RBAC
+
+### Permission Matrix
+
+| Permission | CUSTOMER | PREMIUM | BUSINESS |
+|---|:---:|:---:|:---:|
+| accounts:view, accounts:download | ✅ | ✅ | ✅ |
+| transfer:domestic | ✅ | ✅ | ✅ |
+| cards:view, cards:freeze, cards:change_pin | ✅ | ✅ | ✅ |
+| loans:view | ✅ | ✅ | ✅ |
+| profile:view, profile:edit, profile:security | ✅ | ✅ | ✅ |
+| transfer:international | ❌ | ✅ | ✅ |
+| cards:manage_limit | ❌ | ✅ | ✅ |
+| loans:apply, loans:pay_early | ❌ | ✅ | ✅ |
+| transfer:bulk, accounts:manage | ❌ | ❌ | ✅ |
+
+---
+
+### ProtectedRoute — Route-level guard (shell)
+
+```jsx
+// shell/src/components/ProtectedRoute.jsx
+import { useAuthStore } from 'shared/authStore';
+import { Navigate } from 'react-router-dom';
+
+export default function ProtectedRoute({ children }) {
+  const user = useAuthStore((s) => s.user);
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+// shell/src/App.jsx
+<Route path="/accounts/*" element={
+  <ProtectedRoute>{mfe('Tài khoản', <AccountsApp />)}</ProtectedRoute>
+} />
+```
+
+---
+
+### PermissionGate — Feature-level gate (exposed từ shared)
+
+```jsx
+// Bất kỳ MFE nào
+import PermissionGate from 'shared/PermissionGate';
+
+// Ví dụ trong mfe-transfer/NewTransfer.jsx
+<PermissionGate
+  permission="transfer:international"
+  requiredRole="PREMIUM"
+  fallback={
+    <button disabled>Chuyển quốc tế 🔒 PREMIUM</button>
+  }
+>
+  <button onClick={openIntlForm}>Chuyển quốc tế</button>
+</PermissionGate>
+
+// Ví dụ trong mfe-cards/CardDetail.jsx
+<PermissionGate permission="cards:manage_limit" requiredRole="PREMIUM" fallback={<LockedButton />}>
+  <button onClick={() => setLimitModal(true)}>Thay đổi hạn mức</button>
+</PermissionGate>
+
+// Ví dụ trong mfe-loans/LoanList.jsx
+<PermissionGate permission="loans:apply" requiredRole="PREMIUM" fallback={<LockedRow />}>
+  <button>+ Đăng ký khoản vay mới</button>
+</PermissionGate>
+```
+
+**Props của PermissionGate:**
+
+| Prop | Type | Mô tả |
+|---|---|---|
+| `permission` | string | Permission cần có, ví dụ `"transfer:international"` |
+| `fallback` | ReactNode | Hiển thị khi không đủ quyền (mặc định: null) |
+| `requiredRole` | string | Label role hiển thị trong badge (mặc định: `"PREMIUM"`) |
+| `showLocked` | boolean | Khi true và không có fallback, tự render nút bị khoá |
+
+---
+
+## Shared UI Library
+
+```jsx
+import {
+  Button, Badge, StatusBadge,
+  Spinner, PageSpinner,
+  Card, CardHeader, Divider,
+  ToastProvider, useToast,
+  SkeletonCard, SkeletonRow, SkeletonList,
+} from 'shared/ui';
+```
+
+| Component | Mô tả |
+|---|---|
+| `Button` | 5 variants (primary/secondary/danger/ghost/success), 3 sizes |
+| `Badge` / `StatusBadge` | Count badge và status pill (blue/green/yellow/red/purple) |
+| `Spinner` / `PageSpinner` | Loading spinner, căn giữa trang |
+| `Card` / `CardHeader` / `Divider` | Layout container |
+| `ToastProvider` / `useToast` | Toast notification system |
+| `SkeletonCard` | Shimmer loading card — dùng trong Suspense fallback |
+| `SkeletonRow` | Shimmer loading row — cho transaction list |
+| `SkeletonList` | Nhiều SkeletonRow, nhận prop `rows` |
+
+```jsx
+// Dùng Skeleton thay PageSpinner trong Suspense
+<Suspense fallback={<SkeletonList rows={3} />}>
+  <TransactionList />
+</Suspense>
+```
+
+---
+
+## Performance Optimization
+
+### 1. MFE Prefetch on Hover
+
+Shell Nav prefetch remote chunk khi user hover link — click sẽ gần như instant vì file đã được tải.
+
+```js
+// shell/src/components/Nav.jsx
+const PREFETCHERS = {
+  'mfe-accounts': () => import('mfe_accounts/AccountsApp'),
+  'mfe-transfer': () => import('mfe_transfer/TransferApp'),
+  'mfe-cards':    () => import('mfe_cards/CardsApp'),
+  'mfe-loans':    () => import('mfe_loans/LoansApp'),
+};
+
+<Link onMouseEnter={() => PREFETCHERS[remote]?.()} to={to}>
+  {label}
+</Link>
+```
+
+`lazy()` đã cache Promise — prefetch chỉ trigger download sớm hơn, không tạo instance mới.
+
+---
+
+### 2. subscribeWithSelector (Zustand)
+
+```js
+// Nav chỉ re-render khi user hoặc totalBalance thực sự thay đổi
+// Không re-render với mọi state update của store
+unsubAuth = useAuthStore.subscribe(
+  (s) => [s.user, s.role],
+  ([user, role]) => { setUser(user); setRole(role); },
+  { equalityFn: (a, b) => a[0] === b[0] && a[1] === b[1] }
+);
+```
+
+---
+
+### 3. React.memo cho List Items
+
+```jsx
+// mfe-accounts/AccountList.jsx
+const AccountItem = memo(function AccountItem({ acc }) {
+  return <Link to={acc.id}><Card>...</Card></Link>;
+});
+
+// mfe-accounts/TransactionList.jsx
+const TransactionRow = memo(function TransactionRow({ tx }) {
+  return <Card>...</Card>;
+});
+```
+
+---
+
+### 4. useMemo cho Computed Values
+
+```jsx
+// mfe-accounts/TransactionList.jsx
+const totalIn    = useMemo(() => allTxns.filter(t => t.type === 'credit').reduce(...), [allTxns]);
+const totalOut   = useMemo(() => allTxns.filter(t => t.type === 'debit').reduce(...), [allTxns]);
+const filtered   = useMemo(() => filter === 'all' ? allTxns : allTxns.filter(t => t.type === filter), [allTxns, filter]);
+const totalPages = useMemo(() => Math.ceil(filtered.length / PAGE_SIZE), [filtered]);
+const visible    = useMemo(() => filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE), [filtered, page]);
+
+// mfe-loans/PaymentSchedule.jsx
+const schedule = useMemo(
+  () => generateSchedule(principal, rate, term, startDate, paidMonths),
+  [principal, rate, term, startDate, paidMonths]
+);
+```
+
+---
+
+### 5. useCallback cho Event Handlers
+
+```jsx
+const handleFilter = useCallback((key) => { setFilter(key); setPage(1); }, []);
+const handleLogout = useCallback(() => { import('shared/authStore').then(...); }, []);
+```
+
+---
+
+### 6. useDebounce cho Filter Input
+
+```js
+// mfe-transfer/TransferHistory.jsx — định nghĩa local, không cần expose từ shared
+function useDebounce(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+const debouncedDate = useDebounce(dateFilter, 300);
+const filtered = useMemo(() => ALL_HISTORY.filter(h => {
+  if (statusFilter !== 'all' && h.status !== statusFilter) return false;
+  if (debouncedDate && !h.date.startsWith(debouncedDate)) return false;
+  return true;
+}), [statusFilter, debouncedDate]);
 ```
 
 ---
@@ -415,100 +640,53 @@ useEffect(() => {
 ### contenthash — Cache tối ưu
 
 ```js
-// webpack.optimization.js — dùng chung cho tất cả 7 packages
+// webpack.optimization.js — dùng chung cho tất cả 8 packages
 module.exports = {
   output: {
-    filename:      '[name].[contenthash:8].js',       // main bundle
-    chunkFilename: '[name].[contenthash:8].chunk.js', // async chunks
-    // remoteEntry.js KHÔNG có hash — shell cần URL cố định để fetch
+    filename:      '[name].[contenthash:8].js',
+    chunkFilename: '[name].[contenthash:8].chunk.js',
+    // remoteEntry.js — KHÔNG có hash: shell cần URL cố định
   },
   optimization: {
     splitChunks: {
       cacheGroups: {
-        vendor: {
-          // Vendor sync: react, react-dom gom vào 1 chunk riêng
-          test: /[\\/]node_modules[\\/]/,
-          chunks: 'initial',
-          name: 'vendors',
-        },
-        asyncVendor: {
-          // Vendor async: mỗi package 1 chunk riêng tên theo package
-          test: /[\\/]node_modules[\\/]/,
-          chunks: 'async',
-          name(module) { /* "async-vendor.react-dom.abc123.chunk.js" */ },
-        },
+        vendor:      { test: /node_modules/, chunks: 'initial', name: 'vendors' },
+        asyncVendor: { test: /node_modules/, chunks: 'async',   name(module) { ... } },
       },
     },
   },
 };
 ```
 
-**Lợi ích:** Browser cache vendor chunk riêng. Khi mfe-products release mới, chỉ `main.js` thay đổi hash. `vendors.js` và `async-vendor.react-dom.js` giữ nguyên → browser dùng cache.
-
----
-
-### Intra-MFE lazy load (code splitting nội bộ)
-
-Mỗi MFE có thể lazy load component con của mình:
+### Lazy Load MFE trong Shell + Intra-MFE
 
 ```jsx
-// mfe-products/src/components/ProductList.jsx
-const ProductDetail = lazy(() =>
-  import(
-    /* webpackChunkName: "product-detail" */  // tên chunk trong dist/
-    /* webpackPrefetch: true */               // browser prefetch khi idle
-    './ProductDetail'
-  )
-);
+// shell — load MFE lúc route match
+const AccountsApp = lazy(() => import('mfe_accounts/AccountsApp'));
+const TransferApp = lazy(() => import('mfe_transfer/TransferApp'));
 
-// mfe-profile/src/components/ProfilePage.jsx
-const EditProfile = lazy(() =>
+// Trong MFE — load sub-page lúc navigate
+const AccountDetail = lazy(() =>
   import(
-    /* webpackChunkName: "edit-profile" */
+    /* webpackChunkName: "account-detail" */
     /* webpackPrefetch: true */
-    './EditProfile'
-  )
-);
-
-// mfe-orders/src/components/OrderList.jsx
-const OrderDetail = lazy(() =>
-  import(
-    /* webpackChunkName: "order-detail" */
-    /* webpackPrefetch: true */
-    './OrderDetail'
+    './AccountDetail'
   )
 );
 ```
 
-**`webpackPrefetch: true`** — browser tự động tải chunk trong thời gian idle (sau khi trang xong). Khi user click, chunk đã sẵn sàng → không phải đợi network.
+**`webpackPrefetch: true`** — browser tải chunk trong thời gian idle sau khi trang xong. Khi user click, chunk đã sẵn sàng → không chờ network.
 
----
-
-### Kết quả dist sau khi build
+### Kết quả dist
 
 ```
-mfe-products/dist/
-├── remoteEntry.js                          # URL cố định, shell fetch file này
-├── main.abc12345.js                        # Code của mfe-products
-├── vendors.def67890.js                     # react + react-dom (sync)
-├── product-detail.ghi11111.chunk.js        # Lazy chunk — load khi cần
-└── async-vendor.react-dom.jkl22222.chunk.js# react-dom async chunk
+mfe-accounts/dist/
+├── remoteEntry.js                          # URL cố định
+├── main.abc12345.js                        # Code AccountsApp + AccountList
+├── account-detail.def67890.chunk.js        # Lazy — AccountDetail
+├── transaction-list.ghi11111.chunk.js      # Lazy — TransactionList
+└── vendors.jkl22222.js                     # react + react-dom
 ```
-
----
-
-## Giao tiếp giữa các MFE
-
-Repo này dùng **Shared Store (Zustand singleton)** — pattern được ưu tiên nhất.
-
-### So sánh các pattern
-
-| Pattern | Ưu điểm | Nhược điểm | Dùng khi |
-|---------|---------|-----------|---------|
-| **Shared Store** (Zustand singleton) | Type-safe, reactive, dễ debug | Cần shared MFE chạy | State phức tạp, nhiều MFE cùng dùng |
-| **Custom Events** (window.dispatchEvent) | Đơn giản, không cần setup | String-based, khó trace | Thông báo đơn giản 1 chiều |
-| **URL / Query Params** | Bookmarkable, shareable | Giới hạn data phức tạp | Navigation state |
-| **Props qua Shell** | Rõ ràng, explicit | Shell phải biết quá nhiều | Shell-owned state nhỏ |
 
 ---
 
@@ -527,148 +705,74 @@ cd micro-frontend
 pnpm install
 ```
 
-### Chạy tất cả (khuyến nghị)
+### Chạy tất cả
 
 ```bash
 pnpm start
 ```
 
-7 app chạy song song:
+8 app chạy song song:
 
 | App | Port | Vai trò |
-|-----|------|---------|
-| shared | 3004 | Store + UI layer — **phải khởi động trước shell** |
+|---|---|---|
+| shared | 3004 | Store + UI — **phải khởi động trước shell** |
 | mfe-auth | 3001 | Auth team |
-| mfe-products | 3002 | Products team |
-| mfe-cart | 3003 | Cart team |
+| mfe-accounts | 3002 | Accounts team |
+| mfe-transfer | 3003 | Transfer team |
+| mfe-cards | 3007 | Cards team |
+| mfe-loans | 3006 | Loans team |
 | mfe-profile | 3005 | Profile team |
-| mfe-orders | 3006 | Orders team |
 | shell | 3000 | Host app — **mở trình duyệt vào đây** |
-
-> Shell cần tất cả MFE chạy mới đầy đủ chức năng. Nếu 1 MFE down, phần đó hiện lỗi qua `ErrorBoundary` — các phần khác vẫn hoạt động.
 
 ### Chạy độc lập từng team
 
 ```bash
-# Auth team — dev Login riêng lẻ
-pnpm --filter shared start       # cần shared để dùng store
-pnpm --filter mfe-auth start     # http://localhost:3001
-
-# Profile team
 pnpm --filter shared start
-pnpm --filter mfe-profile start  # http://localhost:3005
-
-# Orders team
-pnpm --filter shared start
-pnpm --filter mfe-orders start   # http://localhost:3006
-```
-
----
-
-## Build và Deploy độc lập theo team
-
-### Build tất cả
-
-```bash
-pnpm run build
-```
-
-### Build riêng từng team
-
-```bash
-pnpm --filter mfe-auth build       # Chỉ build auth
-pnpm --filter mfe-products build   # Chỉ build products
-pnpm --filter mfe-profile build    # Chỉ build profile
-pnpm --filter mfe-orders build     # Chỉ build orders
-```
-
-Các team khác **không cần rebuild** — shell load `remoteEntry.js` mới nhất lúc runtime.
-
-### Override URL khi dev/staging
-
-```bash
-# Profile team test với Auth staging
-MFE_AUTH_URL=https://auth.staging.company.com/remoteEntry.js \
-pnpm --filter mfe-profile start
-
-# Shell test tích hợp với toàn bộ staging
-BASE_GH_PAGES=https://staging.company.com \
-pnpm --filter shell build
-```
-
-### Versioning và Rollback
-
-```
-CDN:
-├── auth.company.com/v1.2.3/remoteEntry.js   ← version cũ
-├── auth.company.com/v1.2.4/remoteEntry.js   ← version mới
-└── auth.company.com/latest/remoteEntry.js   ← alias trỏ vào latest
-
-# Rollback Auth — không cần rebuild shell
-aws s3 cp s3://auth/v1.2.3/ s3://auth/latest/ --recursive
+pnpm --filter mfe-accounts start   # http://localhost:3002
+pnpm --filter mfe-transfer start   # http://localhost:3003
+pnpm --filter mfe-cards start      # http://localhost:3007
 ```
 
 ---
 
 ## CI/CD với GitHub Actions
 
-Deploy lên **GitHub Pages** với mỗi team có workflow riêng. Tất cả dùng `peaceiris/actions-gh-pages` với `keep_files: true` để không ghi đè subfolder của team khác.
+Deploy lên **GitHub Pages** (legacy mode — peaceiris/actions-gh-pages push thẳng lên gh-pages branch).
 
-### Cấu trúc GitHub Pages
-
-```
-gh-pages branch:
-├── index.html          ← shell
-├── main.xxx.js         ← shell chunks
-├── shared/
-│   └── remoteEntry.js
-├── mfe-auth/
-│   └── remoteEntry.js
-├── mfe-products/
-│   └── remoteEntry.js
-├── mfe-cart/
-│   └── remoteEntry.js
-├── mfe-profile/
-│   └── remoteEntry.js
-└── mfe-orders/
-    └── remoteEntry.js
-```
+> **Quan trọng:** Phải giữ Pages ở `legacy` mode (không phải `workflow` mode). Nếu đổi sang workflow mode, deploy sẽ không chạy dù CI thành công.
 
 ### Workflow matrix
 
-| Workflow | Trigger | Deploy |
-|----------|---------|--------|
-| `deploy-all.yml` | `pnpm-lock.yaml`, `webpack.optimization.js`, `remotes.config.js`, `.github/workflows/**` thay đổi | Toàn bộ 7 packages |
-| `deploy-shared.yml` | `shared/**` | `pages/shared/` |
-| `deploy-mfe-auth.yml` | `mfe-auth/**` | `pages/mfe-auth/` |
-| `deploy-mfe-products.yml` | `mfe-products/**` | `pages/mfe-products/` |
-| `deploy-mfe-cart.yml` | `mfe-cart/**` | `pages/mfe-cart/` |
-| `deploy-mfe-profile.yml` | `mfe-profile/**` | `pages/mfe-profile/` |
-| `deploy-mfe-orders.yml` | `mfe-orders/**` | `pages/mfe-orders/` |
-| `deploy-shell.yml` | `shell/**` | `pages/` (root) |
+| Workflow | Trigger | Builds |
+|---|---|---|
+| `deploy-all.yml` | infra files thay đổi hoặc manual dispatch | Tất cả 8 packages, full replace |
+| `deploy-mfe-accounts.yml` | `mfe-accounts/**` | shared + mfe-accounts |
+| `deploy-mfe-transfer.yml` | `mfe-transfer/**` | shared + mfe-transfer |
+| `deploy-mfe-cards.yml` | `mfe-cards/**` | shared + mfe-cards |
+| `deploy-mfe-loans.yml` | `mfe-loans/**` | shared + mfe-loans |
 
-Tất cả workflow dùng cùng `concurrency.group: deploy-pages` với `cancel-in-progress: false` → xếp hàng thay vì cancel khi 2 team push cùng lúc.
+Tất cả workflow dùng `concurrency.group: deploy-pages` với `cancel-in-progress: false` → xếp hàng, không cancel khi 2 team push cùng lúc.
 
 ### Per-team workflow (pattern)
 
 ```yaml
-name: Deploy mfe-profile
+name: Deploy mfe-transfer
 
 on:
   push:
     branches: [main]
     paths:
-      - 'mfe-profile/**'
-      - 'remotes.config.js'        # thay đổi URL → cần rebuild
-      - 'webpack.optimization.js'  # thay đổi output config → cần rebuild
-  workflow_dispatch:               # manual trigger
+      - 'mfe-transfer/**'
+      - 'remotes.config.js'
+      - 'webpack.optimization.js'
+  workflow_dispatch:
 
 concurrency:
   group: deploy-pages
-  cancel-in-progress: false        # queue, không cancel
+  cancel-in-progress: false
 
 permissions:
-  contents: write                  # cần để push lên gh-pages branch
+  contents: write
 
 env:
   BASE: https://minhchien96.github.io/micro-frontend
@@ -684,78 +788,61 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
 
-      - name: Build shared      # shared phải build trước vì mfe-profile import từ nó
+      - name: Build shared        # shared phải build trước
         run: pnpm --filter shared build
         env:
           PUBLIC_URL: ${{ env.BASE }}/shared/
 
-      - name: Build mfe-profile
-        run: pnpm --filter mfe-profile build
+      - name: Build mfe-transfer
+        run: pnpm --filter mfe-transfer build
         env:
-          PUBLIC_URL: ${{ env.BASE }}/mfe-profile/
+          PUBLIC_URL: ${{ env.BASE }}/mfe-transfer/
           BASE_GH_PAGES: ${{ env.BASE }}
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./mfe-profile/dist
-          destination_dir: mfe-profile   # chỉ update subfolder này
-          keep_files: true               # KHÔNG xóa subfolder của team khác
+          publish_dir: ./mfe-transfer/dist
+          destination_dir: mfe-transfer
+          keep_files: true        # KHÔNG xóa subfolder của team khác
 ```
 
 ---
 
 ## Quy trình làm việc theo team
 
-### Kịch bản: Profile team thêm tính năng mới
+### Kịch bản: Transfer team thêm tính năng mới
 
 ```
 1. Dev local độc lập:
    pnpm --filter shared start
-   pnpm --filter mfe-profile start
-   → Mở http://localhost:3005
+   pnpm --filter mfe-transfer start
+   → Mở http://localhost:3003
 
-2. Tạo branch và code trong mfe-profile/
+2. Code trong mfe-transfer/ — các team khác không bị ảnh hưởng
 
-3. Tạo PR vào main
-   → deploy-mfe-profile.yml trigger tự động
-   → Chỉ mfe-profile được build và deploy lên pages/mfe-profile/
-   → Các team khác KHÔNG bị ảnh hưởng
+3. Push lên main
+   → deploy-mfe-transfer.yml trigger
+   → Chỉ mfe-transfer được build và deploy
+   → Shell tự load remoteEntry.js mới lúc runtime — không cần rebuild shell
 
-4. Shell tự dùng version mới ngay lập tức
-   → Shell KHÔNG cần rebuild
-   → Shell fetch remoteEntry.js mới của mfe-profile lúc runtime
+4. RBAC — nếu thêm tính năng mới cần quyền:
+   → Thêm permission string vào shared/src/utils/permissions.js
+   → Bọc feature bằng <PermissionGate permission="transfer:newfeature">
 ```
-
-### Ownership
-
-| Team | Owns | Port | Deploy độc lập |
-|------|------|------|---------------|
-| Store Team | `shared/` | 3004 | Có (cần backward-compat) |
-| Auth Team | `mfe-auth/` | 3001 | Có |
-| Products Team | `mfe-products/` | 3002 | Có |
-| Cart Team | `mfe-cart/` | 3003 | Có |
-| Profile Team | `mfe-profile/` | 3005 | Có |
-| Orders Team | `mfe-orders/` | 3006 | Có |
-| Shell Team | `shell/` + `remotes.config.js` | 3000 | Có |
 
 ### Contract giữa các team
 
-Mỗi team phải giữ nguyên **public API** (những gì đang expose):
+Mỗi team giữ nguyên **public API** (exposes):
 
 ```js
-// mfe-auth expose — đây là CONTRACT với shell
+// Được — thêm expose mới
 exposes: {
-  './Login':       './src/components/Login',       // KHÔNG được xóa hoặc đổi tên
-  './UserProfile': './src/components/UserProfile', // KHÔNG được xóa hoặc đổi tên
+  './TransferApp':     './src/components/TransferApp',  // giữ nguyên
+  './TransferWidget':  './src/components/TransferWidget', // thêm mới OK
 }
 
-// Muốn thêm → thêm key mới, KHÔNG xóa key cũ
-exposes: {
-  './Login':          './src/components/Login',
-  './UserProfile':    './src/components/UserProfile',
-  './ForgotPassword': './src/components/ForgotPassword', // OK — thêm mới
-}
+// KHÔNG được — xóa hoặc đổi tên expose đang dùng
 ```
 
 ---
@@ -765,108 +852,124 @@ exposes: {
 ### MFE không load được
 
 ```
-Error: Failed to load module from mfe_auth@http://localhost:3001/remoteEntry.js
+Error: Failed to load module script from mfe_accounts/remoteEntry.js
 ```
 
 MFE chưa chạy hoặc sai port:
 
 ```bash
-curl http://localhost:3001/remoteEntry.js  # kiểm tra MFE có sống không
-pnpm --filter mfe-auth start               # chạy MFE còn thiếu
+curl http://localhost:3002/remoteEntry.js
+pnpm --filter mfe-accounts start
 ```
 
 ---
 
-### Multiple React instances
+### Multiple React / multiple Router instances
 
 ```
-Error: Invalid hook call. Hooks can only be called inside of a function component.
+Error: Invalid hook call.
+Error: You cannot render a <Router> inside another <Router>.
 ```
 
-Nhiều React instance đang chạy — thiếu `singleton: true`:
+Thiếu `singleton: true` trong webpack shared config. Kiểm tra tất cả MFE đều có:
 
 ```js
 shared: {
-  react:       { singleton: true, requiredVersion: '^18.2.0' },
-  'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
-  zustand:     { singleton: true, requiredVersion: '^4.5.0' },
+  react:              { singleton: true },
+  'react-dom':        { singleton: true },
+  'react-router-dom': { singleton: true }, // bắt buộc với intra-MFE routing
+  zustand:            { singleton: true },
 }
 ```
 
 ---
 
-### Hai webpack instances với pnpm
+### "Module './ui' does not exist in container"
+
+Browser đang dùng bản cache cũ của `remoteEntry.js` từ trước khi deploy mới.
 
 ```
-TypeError: The 'compilation' argument must be an instance of Compilation
+Fix: Hard refresh (Ctrl+Shift+R / Cmd+Shift+R)
 ```
 
-pnpm tạo 2 virtual webpack (1 với postcss, 1 không). Fix `.npmrc`:
+GitHub Pages CDN có `max-age=600` (10 phút) → cache tự hết hạn sau 10 phút.
 
-```
-shamefully-hoist=true
-dedupe-peer-dependents=true
-```
+---
 
-Rồi:
+### UI không cập nhật dù CI xanh
+
+GitHub Pages đang ở **workflow mode** thay vì **legacy mode**. `peaceiris/actions-gh-pages` chỉ hoạt động với legacy mode.
+
 ```bash
-pnpm install --config.confirmModulesPurge=false
+# Kiểm tra mode hiện tại
+gh api "repos/MinhChien96/micro-frontend/pages" | jq '.build_type'
+
+# Switch về legacy
+gh api --method PUT "repos/MinhChien96/micro-frontend/pages" \
+  -f build_type=legacy -f source=gh-pages
 ```
 
 ---
 
 ### Store không sync giữa các MFE
 
-`shared` MFE chưa chạy → mỗi MFE tạo store riêng → không share.
+`shared` MFE chưa chạy → mỗi MFE tạo store riêng → không share state.
 
 ```bash
 # Thứ tự khi chạy riêng lẻ
-pnpm --filter shared start       # 1. Bắt buộc chạy trước
-pnpm --filter mfe-auth start
-pnpm --filter mfe-profile start
-pnpm --filter shell start        # Shell cuối cùng
+pnpm --filter shared start     # 1. Bắt buộc chạy trước
+pnpm --filter mfe-accounts start
+pnpm --filter mfe-transfer start
+pnpm --filter shell start      # Shell cuối cùng
 ```
 
 ---
 
-### GitHub Actions lỗi 403 khi push gh-pages
+### pnpm conflict — hai webpack instances
 
 ```
-remote: Permission to denied to github-actions[bot].
+TypeError: The 'compilation' argument must be an instance of Compilation
 ```
 
-Thêm vào workflow:
+Fix `.npmrc`:
 
-```yaml
-permissions:
-  contents: write
+```
+shamefully-hoist=true
+dedupe-peer-dependents=true
+```
+
+```bash
+pnpm install --config.confirmModulesPurge=false
 ```
 
 ---
 
-## Tóm tắt luồng dữ liệu
+## Luồng dữ liệu tóm tắt
 
 ```
-User click "Add to Cart" (trong mfe-products)
+User đăng nhập với role PREMIUM (trong mfe-auth)
           ↓
-cartStore.addItem(product)      ← action trong shared/src/store/cartStore.js
+authStore.login({ role: 'PREMIUM', ... })
           ↓
-Zustand cập nhật items[]        ← 1 object duy nhất trong memory
+permissions = ['accounts:view', 'transfer:domestic', 'transfer:international', ...]
           ↓
-mfe-cart/Cart.jsx re-render     ← Zustand notify subscribers
-shell/Nav.jsx cập nhật badge    ← subscribe() callback
-
-Không có HTTP request.
-Không có event bus.
-Không có prop drilling qua shell.
+shell/Nav hiển thị badge "Ưu tiên"   ← selective subscribe
+ProtectedRoute cho phép vào /accounts
+PermissionGate trong mfe-transfer hiện nút "Chuyển quốc tế"
+PermissionGate trong mfe-cards hiện nút "Thay đổi hạn mức"
+PermissionGate trong mfe-loans hiện nút "Đăng ký vay mới"
 ```
 
 ```
-User click "Save Profile" (trong mfe-profile/EditProfile — lazy chunk)
+User vào /accounts (mfe-accounts)
           ↓
-authStore.updateProfile({ name: 'New Name' })
+AccountList render + gọi accountStore.setAccounts([...])
           ↓
-useToast().show('Profile updated!', 'success')   ← shared/ui/Toast
+accounts[] được cache vào localStorage ('vietbank-accounts')
           ↓
-shell/Nav.jsx cập nhật tên user ngay lập tức    ← subscribe authStore
+User navigate sang /transfer (mfe-transfer)
+          ↓
+TransferDashboard đọc accounts[] từ accountStore → có dữ liệu ngay
+          ↓
+Nav cập nhật total balance chip     ← selective subscribe chỉ re-render khi balance thay đổi
 ```
