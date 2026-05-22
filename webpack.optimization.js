@@ -26,16 +26,20 @@ module.exports = {
       minSize: 20_000,     // Chunk nhỏ hơn 20KB thì không split
 
       cacheGroups: {
-        // Vendor chunk: tất cả code từ node_modules
-        // Thay đổi rất ít → browser cache lâu dài
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'initial',   // Chỉ initial — tránh conflict với async MFE chunks
-          priority: 10,
-          reuseExistingChunk: true,
-          enforce: true,       // Bỏ qua minSize/minChunks cho group này
-        },
+        // Vendor chunk chỉ trong production: split initial node_modules để browser cache.
+        // Trong development, vendor chunk initial khiến MF container bị defer
+        // (`shared = __webpack_exports__` chờ vendors.js load qua __webpack_require__.O)
+        // nhưng shell chỉ fetch remoteEntry.js → container mãi undefined → ScriptExternalLoadError.
+        ...(process.env.NODE_ENV === 'production' ? {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'initial',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+        } : {}),
 
         // Async vendor chunks — khi MFE dùng dynamic import một thư viện nặng
         // Mỗi thư viện được tách thành 1 chunk riêng để cache granular hơn
