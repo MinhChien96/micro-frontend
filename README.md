@@ -486,15 +486,18 @@ import PermissionGate from 'shared/PermissionGate';
 
 ### UI Components (`shared/src/ui/`)
 
-| Component | Props chính |
+| Component | Props / API |
 |-----------|------------|
 | `<Button>` | `variant` (primary/secondary/danger/ghost), `size`, `loading`, `disabled` |
 | `<Card>` | container với shadow |
-| `<CardHeader>` | tiêu đề section trong Card |
-| `<StatusBadge>` | `status` → màu tự động (active=green, inactive=gray, …) |
+| `<CardHeader>` | `title`, `subtitle`, `action` — tiêu đề section trong Card |
+| `<Divider>` | `margin` — đường kẻ ngang ngăn cách |
+| `<Badge>` | `count`, `max`, `color`, `size` — badge số đếm |
+| `<StatusBadge>` | `label`, `color` (blue/green/yellow/purple/…) — badge trạng thái |
 | `<PageSpinner>` | `label` — full-page loading indicator |
-| `<Skeleton>` | `width`, `height` — placeholder loading |
-| `useToast()` | `{ toast, ToastContainer }` — show/dismiss notifications |
+| `<SkeletonCard>` `<SkeletonRow>` `<SkeletonList>` | placeholder loading |
+| `<ToastProvider>` | wrap component tree cần dùng `useToast` |
+| `useToast()` | `{ show }` — `show(message, type, duration)` hiển thị toast notification |
 
 ### Tại sao không dùng MF runtime remote cho shared?
 
@@ -735,7 +738,6 @@ on:
     branches: [main]
     paths:
       - 'mfe-accounts/**'
-      - 'remotes.config.js'
 
 jobs:
   deploy:
@@ -849,7 +851,17 @@ git push
 
 ### Concurrency — tránh conflict deploy
 
-Tất cả workflow dùng cùng concurrency group `deploy-pages` với `cancel-in-progress: false`. Nếu 2 push xảy ra gần nhau, workflow thứ 2 sẽ **queue** (không cancel) để đảm bảo cả 2 đều được deploy.
+Mỗi workflow có concurrency group riêng để tránh cancel nhau khi nhiều push xảy ra cùng lúc:
+
+| Workflow | Group | cancel-in-progress |
+|----------|-------|--------------------|
+| `deploy-all` | `deploy-pages` | `false` — full rebuild không bị interrupt |
+| `deploy-shell` | `deploy-shell` | `true` — push mới nhất thắng |
+| `deploy-mfe-auth` | `deploy-mfe-auth` | `true` |
+| `deploy-mfe-accounts` | `deploy-mfe-accounts` | `true` |
+| … (các MFE khác) | `deploy-mfe-{name}` | `true` |
+
+`remotes.config.js` thay đổi chỉ trigger `deploy-all` (không trigger per-MFE), tránh tình huống 9 workflows race nhau cùng một push.
 
 ---
 
