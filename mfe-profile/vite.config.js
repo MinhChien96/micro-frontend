@@ -30,7 +30,7 @@ export default defineConfig({
       'shared/PermissionGate': `${sharedSrc}/components/PermissionGate.jsx`,
     },
   },
-  server:  { port: 3005, cors: true },
+  server:  { port: 3005, cors: true, origin: 'http://localhost:3005' },
   preview: { port: 3005, cors: true },
   build:   { target: 'esnext' },
 });
