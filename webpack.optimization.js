@@ -26,6 +26,12 @@ module.exports = {
       minSize: 20_000,     // Chunk nhỏ hơn 20KB thì không split
 
       cacheGroups: {
+        // Webpack's built-in defaultVendors/default groups split initial chunks from node_modules.
+        // This causes MF remoteEntry.js to defer (waits for vendors chunk that shell never loads).
+        // Must explicitly disable them — setting chunks:'async' at top level is not enough.
+        defaultVendors: false,
+        default: false,
+
         // Vendor chunk chỉ trong production: split initial node_modules để browser cache.
         // Trong development, vendor chunk initial khiến MF container bị defer
         // (`shared = __webpack_exports__` chờ vendors.js load qua __webpack_require__.O)

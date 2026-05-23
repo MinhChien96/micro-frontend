@@ -15,7 +15,7 @@ module.exports = {
   resolve: { extensions: ['.js', '.jsx'] },
   module: {
     rules: [
-      { test: /\.(js|jsx)$/, exclude: /node_modules/, use: 'babel-loader' },
+      { test: /\.(js|jsx)$/, exclude: /node_modules/, use: { loader: 'babel-loader', options: { rootMode: 'upward' } } },
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
     ],
   },

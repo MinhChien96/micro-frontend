@@ -12,10 +12,17 @@ module.exports = {
     publicPath: process.env.PUBLIC_URL || 'http://localhost:3006/',
     clean: true,
   },
-  resolve: { extensions: ['.js', '.jsx'] },
+  resolve: {
+    extensions: ['.js', '.jsx'],
+    alias: {
+      'shared/auth':           path.resolve(__dirname, '../shared/src/auth'),
+      'shared/ui':             path.resolve(__dirname, '../shared/src/ui/index'),
+      'shared/PermissionGate': path.resolve(__dirname, '../shared/src/components/PermissionGate'),
+    },
+  },
   module: {
     rules: [
-      { test: /\.(js|jsx)$/, exclude: /node_modules/, use: 'babel-loader' },
+      { test: /\.(js|jsx)$/, exclude: /node_modules/, use: { loader: 'babel-loader', options: { rootMode: 'upward' } } },
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
     ],
   },
@@ -27,13 +34,11 @@ module.exports = {
       exposes: {
         './LoansApp': './src/components/LoansApp',
       },
-      remotes: {
-        shared: remotes.shared,
-      },
+      remotes: {},
       shared: {
-        react:              { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
-        'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
+        react:              { singleton: true, requiredVersion: '^18.2.0', import: false },
+        'react-dom':        { singleton: true, requiredVersion: '^18.2.0', import: false },
+        'react-router-dom': { singleton: true, requiredVersion: '^6.22.0', import: false },
       },
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),
@@ -42,5 +47,8 @@ module.exports = {
     port: 3006,
     historyApiFallback: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
+    hot: false,
+    liveReload: false,
+    client: false,
   },
 };
