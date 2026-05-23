@@ -1,9 +1,13 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageSpinner } from 'shared/ui';
 import AccountList from './AccountList';
 
-// Lazy load sub-pages — each becomes a separate webpack chunk
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
+});
+
 const AccountDetail = lazy(() =>
   import(
     /* webpackChunkName: "account-detail" */
@@ -20,27 +24,28 @@ const TransactionList = lazy(() =>
   )
 );
 
-// Không có <Router> — Router context đến từ shell (HashRouter)
 export default function AccountsApp() {
   return (
-    <Routes>
-      <Route index element={<AccountList />} />
-      <Route
-        path=":id"
-        element={
-          <Suspense fallback={<PageSpinner label="Đang tải tài khoản..." />}>
-            <AccountDetail />
-          </Suspense>
-        }
-      />
-      <Route
-        path=":id/transactions"
-        element={
-          <Suspense fallback={<PageSpinner label="Đang tải lịch sử..." />}>
-            <TransactionList />
-          </Suspense>
-        }
-      />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <Routes>
+        <Route index element={<AccountList />} />
+        <Route
+          path=":id"
+          element={
+            <Suspense fallback={<PageSpinner label="Đang tải tài khoản..." />}>
+              <AccountDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path=":id/transactions"
+          element={
+            <Suspense fallback={<PageSpinner label="Đang tải lịch sử..." />}>
+              <TransactionList />
+            </Suspense>
+          }
+        />
+      </Routes>
+    </QueryClientProvider>
   );
 }

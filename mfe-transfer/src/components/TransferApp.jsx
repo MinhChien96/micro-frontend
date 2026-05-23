@@ -1,7 +1,12 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PageSpinner } from 'shared/ui';
 import TransferDashboard from './TransferDashboard';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
+});
 
 const NewTransfer = lazy(() =>
   import(
@@ -19,27 +24,28 @@ const TransferHistory = lazy(() =>
   )
 );
 
-// Không có <Router> — Router context đến từ shell (HashRouter)
 export default function TransferApp() {
   return (
-    <Routes>
-      <Route index element={<TransferDashboard />} />
-      <Route
-        path="new"
-        element={
-          <Suspense fallback={<PageSpinner label="Đang tải form chuyển tiền..." />}>
-            <NewTransfer />
-          </Suspense>
-        }
-      />
-      <Route
-        path="history"
-        element={
-          <Suspense fallback={<PageSpinner label="Đang tải lịch sử..." />}>
-            <TransferHistory />
-          </Suspense>
-        }
-      />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <Routes>
+        <Route index element={<TransferDashboard />} />
+        <Route
+          path="new"
+          element={
+            <Suspense fallback={<PageSpinner label="Đang tải form chuyển tiền..." />}>
+              <NewTransfer />
+            </Suspense>
+          }
+        />
+        <Route
+          path="history"
+          element={
+            <Suspense fallback={<PageSpinner label="Đang tải lịch sử..." />}>
+              <TransferHistory />
+            </Suspense>
+          }
+        />
+      </Routes>
+    </QueryClientProvider>
   );
 }

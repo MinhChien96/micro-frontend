@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from 'shared/authStore';
+import { setUser, setToken } from 'shared/auth';
 import '../styles.css';
 
 const DEMO_ROLES = [
@@ -14,13 +14,11 @@ export default function Login() {
   const location  = useLocation();
   const from      = location.state?.from?.pathname || '/accounts';
 
-  const [customerId, setCustomerId] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('CUSTOMER');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const login = useAuthStore((s) => s.login);
+  const [customerId,    setCustomerId]    = useState('');
+  const [password,      setPassword]      = useState('');
+  const [selectedRole,  setSelectedRole]  = useState('CUSTOMER');
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,14 +28,16 @@ export default function Login() {
     await new Promise((r) => setTimeout(r, 900));
 
     if (customerId === '0021001' && password === '123456') {
-      login({
-        name: 'Nguyễn Văn Demo',
+      setUser({
+        name:       'Nguyễn Văn Demo',
         customerId: '0021001',
-        email: 'demo@vietbank.vn',
-        phone: '0901 234 567',
-        branch: 'Chi nhánh TP.HCM',
-        role: selectedRole,
+        email:      'demo@vietbank.vn',
+        phone:      '0901 234 567',
+        branch:     'Chi nhánh TP.HCM',
+        role:       selectedRole,
       });
+      setToken('mock-jwt-' + Date.now());
+      window.dispatchEvent(new CustomEvent('auth:changed'));
       navigate(from, { replace: true });
     } else {
       setError('Mã khách hàng hoặc mật khẩu không đúng. Thử: 0021001 / 123456');

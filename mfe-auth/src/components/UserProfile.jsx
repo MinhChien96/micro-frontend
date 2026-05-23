@@ -1,13 +1,21 @@
 import React from 'react';
-import { useAuthStore } from 'shared/authStore';
 import '../styles.css';
 
-export default function UserProfile() {
-  // Đọc trực tiếp từ store — không cần prop từ shell
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+const getUser = () => {
+  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
+  catch { return null; }
+};
 
-  if (!user) return <div className="auth-card">Not logged in</div>;
+export default function UserProfile() {
+  const user = getUser();
+
+  const handleLogout = () => {
+    localStorage.removeItem('vietbank_user');
+    localStorage.removeItem('vietbank_token');
+    window.dispatchEvent(new CustomEvent('auth:changed'));
+  };
+
+  if (!user) return <div className="auth-card">Chưa đăng nhập</div>;
 
   return (
     <div className="auth-card">
@@ -19,21 +27,21 @@ export default function UserProfile() {
 
       <div className="profile-info">
         <div className="info-row">
-          <span className="info-label">Role</span>
+          <span className="info-label">Loại TK</span>
           <span className="info-badge">{user.role}</span>
         </div>
         <div className="info-row">
-          <span className="info-label">Status</span>
-          <span className="info-badge success">Active</span>
+          <span className="info-label">Trạng thái</span>
+          <span className="info-badge success">Hoạt động</span>
         </div>
         <div className="info-row">
-          <span className="info-label">Store</span>
-          <span className="info-badge mfe">shared/authStore</span>
+          <span className="info-label">Auth</span>
+          <span className="info-badge mfe">localStorage</span>
         </div>
       </div>
 
-      <button onClick={logout} className="btn-danger">
-        Sign Out
+      <button onClick={handleLogout} className="btn-danger">
+        Đăng xuất
       </button>
     </div>
   );

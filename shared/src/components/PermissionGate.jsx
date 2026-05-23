@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../store/authStore';
+import { getPermissions } from '../auth';
 
 const UpgradeBadge = ({ requiredRole = 'PREMIUM' }) => (
   <span style={{
@@ -27,8 +27,7 @@ export default function PermissionGate({
   showLocked = false,
   children,
 }) {
-  const permissions = useAuthStore((s) => s.permissions);
-  const hasPermission = permissions.includes(permission);
+  const hasPermission = getPermissions().includes(permission);
 
   if (hasPermission) return children;
 

@@ -24,7 +24,6 @@ module.exports = {
     new ModuleFederationPlugin({
       name: 'shell',
       remotes: {
-        shared:       remotes.shared,
         mfe_auth:     remotes.mfe_auth,
         mfe_accounts: remotes.mfe_accounts,
         mfe_transfer: remotes.mfe_transfer,
@@ -36,7 +35,6 @@ module.exports = {
         react:              { singleton: true, requiredVersion: '^18.2.0' },
         'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
         'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
-        zustand:            { singleton: true, requiredVersion: '^4.5.0' },
       },
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),

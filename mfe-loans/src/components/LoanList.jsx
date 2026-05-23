@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from 'shared/authStore';
 import { Card, StatusBadge } from 'shared/ui';
 import PermissionGate from 'shared/PermissionGate';
+
+const getUser = () => {
+  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
+  catch { return null; }
+};
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -41,7 +45,7 @@ const MOCK_LOANS = [
 const LOAN_ICON = { personal: '💼', mortgage: '🏠' };
 
 export default function LoanList() {
-  const user = useAuthStore((s) => s.user);
+  const user = getUser();
   const totalOutstanding = MOCK_LOANS.reduce((s, l) => s + l.outstanding, 0);
 
   return (

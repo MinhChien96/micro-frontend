@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from 'shared/authStore';
-import { Card, CardHeader, StatusBadge } from 'shared/ui';
+import { Card, StatusBadge } from 'shared/ui';
+
+const getUser = () => {
+  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
+  catch { return null; }
+};
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -49,7 +53,7 @@ const MOCK_CARDS = [
 ];
 
 export default function CardList() {
-  const user = useAuthStore((s) => s.user);
+  const user = getUser();
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>

@@ -1,52 +1,19 @@
-import React, { useEffect, memo } from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccountStore } from 'shared/accountStore';
-import { useAuthStore } from 'shared/authStore';
-import { Card, CardHeader, Divider, StatusBadge } from 'shared/ui';
+import { useQuery } from '@tanstack/react-query';
+import { Card, StatusBadge, PageSpinner } from 'shared/ui';
+import { fetchAccounts } from '../api/accounts';
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const MOCK_ACCOUNTS = [
-  {
-    id: 'TK001',
-    type: 'checking',
-    typeLabel: 'Thanh toán',
-    name: 'Tài khoản thanh toán',
-    number: '0021 0001 2345 678',
-    balance: 15_420_000,
-    currency: 'VND',
-    status: 'active',
-  },
-  {
-    id: 'TK002',
-    type: 'savings',
-    typeLabel: 'Tiết kiệm',
-    name: 'Tiết kiệm 6 tháng',
-    number: '0021 0007 8901 234',
-    balance: 50_000_000,
-    currency: 'VND',
-    interestRate: 5.5,
-    maturity: '2024-11-01',
-    status: 'active',
-  },
-  {
-    id: 'TK003',
-    type: 'savings',
-    typeLabel: 'Tiết kiệm',
-    name: 'Tiết kiệm 12 tháng',
-    number: '0021 0003 4567 890',
-    balance: 100_000_000,
-    currency: 'VND',
-    interestRate: 6.2,
-    maturity: '2025-03-15',
-    status: 'active',
-  },
-];
+const getUser = () => {
+  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
+  catch { return null; }
+};
 
 const ACCOUNT_ICON = { checking: '🏦', savings: '💰' };
 
-// Memoized — won't re-render unless the account object itself changes
 const AccountItem = memo(function AccountItem({ acc }) {
   return (
     <Link to={acc.id} style={{ textDecoration: 'none' }}>
@@ -85,15 +52,15 @@ const AccountItem = memo(function AccountItem({ acc }) {
 });
 
 export default function AccountList() {
-  const { setAccounts, accounts, getTotalBalance } = useAccountStore();
-  const user = useAuthStore((s) => s.user);
+  const { data: accounts = [], isLoading } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: fetchAccounts,
+  });
 
-  useEffect(() => {
-    // Populate shared store để mfe-transfer có thể đọc
-    if (accounts.length === 0) setAccounts(MOCK_ACCOUNTS);
-  }, []);
+  const user         = getUser();
+  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
 
-  const list = accounts.length > 0 ? accounts : MOCK_ACCOUNTS;
+  if (isLoading) return <PageSpinner label="Đang tải tài khoản..." />;
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -110,12 +77,12 @@ export default function AccountList() {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 24 }}>
         <h2 style={{ margin: 0, fontSize: 22, color: '#0f172a' }}>Tài khoản của tôi</h2>
         <span style={{ fontSize: 14, color: '#64748b' }}>
-          Tổng: <strong style={{ color: '#1e3a5f' }}>{fmt(getTotalBalance() || list.reduce((s, a) => s + a.balance, 0))}</strong>
+          Tổng: <strong style={{ color: '#1e3a5f' }}>{fmt(totalBalance)}</strong>
         </span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {list.map((acc) => (
+        {accounts.map((acc) => (
           <AccountItem key={acc.id} acc={acc} />
         ))}
       </div>
