@@ -2,19 +2,15 @@
   "name": "micro-frontend",
   "private": true,
   "scripts": {
-    "start": "concurrently -n auth,accounts,transfer,cards,loans,profile,shell -c blue,green,cyan,purple,orange,pink,red \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-accounts start\" \"pnpm --filter mfe-transfer start\" \"pnpm --filter mfe-cards start\" \"pnpm --filter mfe-loans start\" \"pnpm --filter mfe-profile start\" \"wait-on http://localhost:3001/remoteEntry.js http://localhost:3002/remoteEntry.js http://localhost:3003/remoteEntry.js http://localhost:3005/remoteEntry.js http://localhost:3006/remoteEntry.js http://localhost:3007/remoteEntry.js && pnpm --filter shell start\"",
+    "start": "concurrently -n auth,accounts,transfer,cards,loans,profile,shell -c blue,green,cyan,purple,orange,pink,red \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-accounts start\" \"pnpm --filter mfe-transfer start\" \"pnpm --filter mfe-cards start\" \"pnpm --filter mfe-loans start\" \"pnpm --filter mfe-profile start\" \"pnpm --filter shell start\"",
     "build": "pnpm -r run build"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "postcss": "^8.5.15",
-    "wait-on": "^9.0.10"
+    "concurrently": "^8.2.2"
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": [
-        "postcss"
-      ]
+      "ignoreMissing": ["@types/react", "@types/react-dom"]
     }
   }
 }

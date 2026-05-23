@@ -6,7 +6,6 @@ on:
     paths:
       - 'mfe-auth/**'
       - 'remotes.config.js'
-      - 'webpack.optimization.js'
   workflow_dispatch:
 
 concurrency:

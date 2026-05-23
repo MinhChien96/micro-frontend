@@ -3,7 +3,7 @@ name: Deploy All (full rebuild)
 # Dùng cho:
 #   - Lần deploy đầu tiên
 #   - Khi thay đổi shared/ (store, UI, PermissionGate) — vì shared ảnh hưởng mọi MFE
-#   - Khi thay đổi infrastructure (webpack.optimization.js, remotes.config.js, pnpm-lock.yaml)
+#   - Khi thay đổi infrastructure (remotes.config.js, pnpm-lock.yaml)
 #   - Khi cần full rebuild khẩn cấp
 #
 # Lý do shared/ → deploy-all thay vì deploy-shared:
@@ -16,7 +16,6 @@ on:
     paths:
       - 'shared/**'
       - '.github/workflows/**'
-      - 'webpack.optimization.js'
       - 'remotes.config.js'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'

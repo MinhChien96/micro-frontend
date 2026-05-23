@@ -6,7 +6,6 @@ on:
     paths:
       - 'shell/**'
       - 'remotes.config.js'
-      - 'webpack.optimization.js'
   workflow_dispatch:
 
 concurrency:
