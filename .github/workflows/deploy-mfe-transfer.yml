@@ -5,12 +5,11 @@ on:
     branches: [main]
     paths:
       - 'mfe-transfer/**'
-      - 'remotes.config.js'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-pages
-  cancel-in-progress: false
+  group: deploy-mfe-transfer
+  cancel-in-progress: true
 
 permissions:
   contents: write

@@ -5,12 +5,11 @@ on:
     branches: [main]
     paths:
       - 'mfe-accounts/**'
-      - 'remotes.config.js'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-pages
-  cancel-in-progress: false
+  group: deploy-mfe-accounts
+  cancel-in-progress: true
 
 permissions:
   contents: write
