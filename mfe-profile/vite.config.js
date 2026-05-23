@@ -9,7 +9,7 @@ export default defineConfig({
   base: process.env.PUBLIC_URL || '/',
   plugins: [
     react(),
-    federation({
+    federation({ dts: false,
       name: 'mfe_profile',
       filename: 'remoteEntry.js',
       exposes: {
