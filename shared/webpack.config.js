@@ -29,9 +29,15 @@ module.exports = {
         './PermissionGate': './src/components/PermissionGate',
       },
       shared: {
-        react:       { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
-        zustand:     { singleton: true, requiredVersion: '^4.5.0' },
+        // import: false → shared does NOT provide these to the share scope.
+        // Without this, webpack creates a 'provide-module' async chunk for each
+        // library. That chunk ends up in __webpack_require__.O's deferred list,
+        // blocking `shared = __webpack_exports__` from executing synchronously
+        // when the shell fetches only remoteEntry.js.
+        // Shell provides all singletons; shared only consumes them.
+        react:       { singleton: true, requiredVersion: '^18.2.0', import: false },
+        'react-dom': { singleton: true, requiredVersion: '^18.2.0', import: false },
+        zustand:     { singleton: true, requiredVersion: '^4.5.0',  import: false },
       },
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),
@@ -39,5 +45,18 @@ module.exports = {
   devServer: {
     port: 3004,
     headers: { 'Access-Control-Allow-Origin': '*' },
+    // HMR must be disabled for the shared container.
+    // When hot: true, webpack-dev-server injects HMR client code into the entry
+    // bundle AND eagerly initializes the MF share scope. Both operations add
+    // chunks (webpack-dev-server vendor + provide-module) to the deferred list of
+    // `__webpack_require__.O`, preventing `shared = __webpack_exports__` from
+    // executing synchronously. Shell loads only remoteEntry.js (not those chunks)
+    // → shared stays undefined → ScriptExternalLoadError.
+    hot: false,
+    liveReload: false,
+    // Prevent webpack-dev-server from injecting its own client bundle into the
+    // entry point. Without this, a 'vendors-webpack-dev-server-...' chunk is
+    // added to __webpack_require__.O's deferred list, blocking synchronous init.
+    client: false,
   },
 };
