@@ -1,9 +1,7 @@
-import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { federation } from '@module-federation/vite';
-
-const sharedSrc = fileURLToPath(new URL('../shared/src', import.meta.url));
+import remotes from '../remotes.config.js';
 
 export default defineConfig({
   base: process.env.PUBLIC_URL || '/',
@@ -15,6 +13,7 @@ export default defineConfig({
       exposes: {
         './AccountsApp': './src/components/AccountsApp',
       },
+      remotes: { shared: remotes.shared },
       shared: {
         react:                   { singleton: true, requiredVersion: '^18.2.0' },
         'react-dom':             { singleton: true, requiredVersion: '^18.2.0' },
@@ -23,13 +22,6 @@ export default defineConfig({
       },
     }),
   ],
-  resolve: {
-    alias: {
-      'shared/ui':             `${sharedSrc}/ui/index.js`,
-      'shared/auth':           `${sharedSrc}/auth.js`,
-      'shared/PermissionGate': `${sharedSrc}/components/PermissionGate.jsx`,
-    },
-  },
   server:  { port: 3002, cors: true, origin: 'http://localhost:3002' },
   preview: { port: 3002, cors: true },
   build:   { target: 'esnext' },

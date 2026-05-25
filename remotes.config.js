@@ -19,6 +19,7 @@ const pages = (path) => `${base}/${path}/remoteEntry.js`;
 const remote = (name, entry) => ({ type: 'module', name, entry });
 
 module.exports = {
+  shared:       remote('shared',       process.env.SHARED_URL       || (base ? pages('shared')       : local(3004))),
   mfe_auth:     remote('mfe_auth',     process.env.MFE_AUTH_URL     || (base ? pages('mfe-auth')     : local(3001))),
   mfe_accounts: remote('mfe_accounts', process.env.MFE_ACCOUNTS_URL || (base ? pages('mfe-accounts') : local(3002))),
   mfe_transfer: remote('mfe_transfer', process.env.MFE_TRANSFER_URL || (base ? pages('mfe-transfer') : local(3003))),
