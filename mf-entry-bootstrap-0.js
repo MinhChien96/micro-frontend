@@ -10,8 +10,8 @@ const __mfImport = (src) =>
     ? globalThis.System.import(src)
     : import(src);
 (async () => {
-  const { initHost } = await __mfImport("https://minhchien96.github.io/micro-frontend/assets/hostInit-DY5j32Ef.js");
+  const { initHost } = await __mfImport("https://minhchien96.github.io/micro-frontend/assets/hostInit-sNK22N0s.js");
   const runtime = await initHost();
   const __mfRemotePreloads = [runtime.loadRemote("mfe_accounts/AccountsApp"),runtime.loadRemote("mfe_auth/Login"),runtime.loadRemote("mfe_cards/CardsApp"),runtime.loadRemote("mfe_loans/LoansApp"),runtime.loadRemote("mfe_profile/ProfileApp"),runtime.loadRemote("mfe_transfer/TransferApp")];
   await Promise.all(__mfRemotePreloads);
-})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/assets/index-DbUlfOmF.js"));
+})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/assets/index-CQsAWTR2.js"));

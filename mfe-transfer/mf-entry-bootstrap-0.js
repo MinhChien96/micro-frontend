@@ -12,6 +12,6 @@ const __mfImport = (src) =>
 (async () => {
   const { initHost } = await __mfImport("https://minhchien96.github.io/micro-frontend/mfe-transfer/assets/hostInit-BR5WoOjN.js");
   const runtime = await initHost();
-  const __mfRemotePreloads = [];
+  const __mfRemotePreloads = [runtime.loadRemote("shared/PermissionGate"),runtime.loadRemote("shared/ui")];
   await Promise.all(__mfRemotePreloads);
-})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/mfe-transfer/assets/index-pDdNNqUz.js"));
+})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/mfe-transfer/assets/index-Ck09vQG2.js"));
