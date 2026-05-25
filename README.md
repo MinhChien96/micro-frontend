@@ -15,7 +15,7 @@
 4. [Routing — Shell + Intra-MFE](#4-routing--shell--intra-mfe)
 5. [Auth — localStorage + Custom Event](#5-auth--localstorage--custom-event)
 6. [Data Fetching — React Query per MFE](#6-data-fetching--react-query-per-mfe)
-7. [Shared Package — Build-time Alias](#7-shared-package--build-time-alias)
+7. [Shared Package — MF Runtime Remote](#7-shared-package--mf-runtime-remote)
 8. [Authorization — RBAC](#8-authorization--rbac)
 9. [Performance](#9-performance)
 10. [Chạy local](#10-chạy-local)
@@ -54,10 +54,10 @@
 │  └────────────────────────────────────────────────────────────────┘   │
 └───────────────────────────────────────────────────────────────────────┘
 
-BUILD TIME (Vite alias — không phải runtime MF remote):
-  shared/src/auth.js                 → bundled vào mỗi MFE
-  shared/src/ui/{Button,Card,…}.jsx  → bundled vào mỗi MFE
-  shared/src/components/PermissionGate.jsx → bundled vào mỗi MFE
+RUNTIME (MF Remote — localhost:3004 / GitHub Pages /shared/):
+  shared/src/auth.js                 → fetch qua shared/remoteEntry.js
+  shared/src/ui/{Button,Card,…}.jsx  → fetch qua shared/remoteEntry.js
+  shared/src/components/PermissionGate.jsx → fetch qua shared/remoteEntry.js
 ```
 
 ### Các quyết định kiến trúc quan trọng
@@ -65,7 +65,7 @@ BUILD TIME (Vite alias — không phải runtime MF remote):
 | Vấn đề | Giải pháp | Lý do |
 |--------|-----------|-------|
 | Auth state cross-MFE | `localStorage` + DOM event `auth:changed` | Không cần runtime dependency, hoạt động ngay khi MFE được mount |
-| Shared UI/utils | Vite `resolve.alias` (build-time) | Tránh MF container deferred init; không có port dependency |
+| Shared UI/utils | MF runtime remote (:3004) | Single source of truth — update shared 1 lần, mọi MFE nhận ngay; không bundle duplicate |
 | Singleton React | `singleton: true` trong MF shared | Shell cung cấp 1 instance react/react-dom/react-router-dom cho toàn bộ |
 | Data fetching | `QueryClient` riêng mỗi MFE | Domain isolation, mỗi team tự quản lý cache |
 | Routing | Shell dùng `path="/*"`, MFE dùng `<Routes>` | MFE nhận Router context từ shell, không tạo Router mới |
@@ -77,13 +77,13 @@ BUILD TIME (Vite alias — không phải runtime MF remote):
 
 ```
 micro-frontend/
-├── remotes.config.js        # URL registry tập trung cho 6 MFE remotes
+├── remotes.config.js        # URL registry tập trung cho shared + 6 MFE remotes
 ├── pnpm-workspace.yaml      # 8 workspace packages
 ├── package.json             # Root: script start + build
 │
-├── shared/                  # Build-time utility package (không phải MF remote)
+├── shared/                  # MF remote package — port 3004
 │   ├── index.html
-│   ├── vite.config.js       # Standalone dev server :3004
+│   ├── vite.config.js       # MF remote server :3004 — exposes ui/auth/PermissionGate
 │   └── src/
 │       ├── auth.js          # getUser/setUser/getToken/hasPermission/…
 │       ├── utils/
@@ -173,12 +173,10 @@ export default defineConfig({
 ### MFE (remote) — ví dụ `mfe-accounts/vite.config.js`
 
 ```js
-import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { federation } from '@module-federation/vite';
-
-const sharedSrc = fileURLToPath(new URL('../shared/src', import.meta.url));
+import remotes from '../remotes.config.js';
 
 export default defineConfig({
   base: process.env.PUBLIC_URL || '/',
@@ -190,6 +188,7 @@ export default defineConfig({
       exposes: {
         './AccountsApp': './src/components/AccountsApp',
       },
+      remotes: { shared: remotes.shared },   // load shared/ui, shared/auth, shared/PermissionGate từ MF runtime
       shared: {
         react:                   { singleton: true, requiredVersion: '^18.2.0' },
         'react-dom':             { singleton: true, requiredVersion: '^18.2.0' },
@@ -198,13 +197,6 @@ export default defineConfig({
       },
     }),
   ],
-  resolve: {
-    alias: {
-      'shared/ui':             `${sharedSrc}/ui/index.js`,
-      'shared/auth':           `${sharedSrc}/auth.js`,
-      'shared/PermissionGate': `${sharedSrc}/components/PermissionGate.jsx`,
-    },
-  },
   server:  { port: 3002, cors: true, origin: 'http://localhost:3002' },
   preview: { port: 3002, cors: true },
   build:   { target: 'esnext' },
@@ -228,6 +220,7 @@ const pages = (path) => `${base}/${path}/remoteEntry.js`;
 const remote = (name, entry) => ({ type: 'module', name, entry });
 
 module.exports = {
+  shared:       remote('shared',       process.env.SHARED_URL       || (base ? pages('shared')       : local(3004))),
   mfe_auth:     remote('mfe_auth',     process.env.MFE_AUTH_URL     || (base ? pages('mfe-auth')     : local(3001))),
   mfe_accounts: remote('mfe_accounts', process.env.MFE_ACCOUNTS_URL || (base ? pages('mfe-accounts') : local(3002))),
   mfe_transfer: remote('mfe_transfer', process.env.MFE_TRANSFER_URL || (base ? pages('mfe-transfer') : local(3003))),
@@ -458,30 +451,49 @@ Mock API nằm trong `mfe-xxx/src/api/` — chỉ cần thay `queryFn`, không �
 
 ---
 
-## 7. Shared Package — Build-time Alias
+## 7. Shared Package — MF Runtime Remote
 
-`shared/` là workspace package được bundle **trực tiếp vào mỗi MFE** tại build time thông qua Vite alias. Không phải MF runtime remote, không có port dependency.
+`shared/` là **Module Federation remote** riêng, chạy tại port 3004. Tất cả MFE load `shared/ui`, `shared/auth`, `shared/PermissionGate` qua MF runtime — không bundle vào mỗi MFE.
 
-### Cách hoạt động
+### Cấu hình shared remote (`shared/vite.config.js`)
 
 ```js
-// mfe-accounts/vite.config.js
-const sharedSrc = fileURLToPath(new URL('../shared/src', import.meta.url));
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { federation } from '@module-federation/vite';
 
-resolve: {
-  alias: {
-    'shared/auth':           `${sharedSrc}/auth.js`,
-    'shared/ui':             `${sharedSrc}/ui/index.js`,
-    'shared/PermissionGate': `${sharedSrc}/components/PermissionGate.jsx`,
-  },
-}
+export default defineConfig({
+  base: process.env.PUBLIC_URL || '/',
+  plugins: [
+    react(),
+    federation({
+      dts: false,
+      name: 'shared',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './ui':             './src/ui/index.js',
+        './auth':           './src/auth.js',
+        './PermissionGate': './src/components/PermissionGate.jsx',
+      },
+      shared: {
+        react:       { singleton: true, requiredVersion: '^18.2.0' },
+        'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
+      },
+    }),
+  ],
+  server:  { port: 3004, cors: true, origin: 'http://localhost:3004' },
+  preview: { port: 3004, cors: true },
+  build:   { target: 'esnext' },
+});
 ```
 
+### Dùng trong MFE — import path giống nhau
+
 ```jsx
-// Dùng trong bất kỳ MFE nào — import path giống nhau, Vite tự resolve
 import { Card, CardHeader, Button, PageSpinner, StatusBadge, useToast } from 'shared/ui';
 import { getUser, setUser, hasPermission, clearAuth } from 'shared/auth';
 import PermissionGate from 'shared/PermissionGate';
+// MF runtime tự fetch từ localhost:3004/remoteEntry.js (hoặc GitHub Pages /shared/)
 ```
 
 ### UI Components (`shared/src/ui/`)
@@ -499,17 +511,21 @@ import PermissionGate from 'shared/PermissionGate';
 | `<ToastProvider>` | wrap component tree cần dùng `useToast` |
 | `useToast()` | `{ show }` — `show(message, type, duration)` hiển thị toast notification |
 
-### Tại sao không dùng MF runtime remote cho shared?
+### Lợi ích của MF runtime remote
 
-Khi `shared` expose React components, `remoteEntry.js` phải register chúng vào share scope — tạo ra **initial chunk dependencies**. Shell chỉ load `remoteEntry.js`, không load các chunk phụ này → `remoteEntry.js` bị deferred init (vấn đề kinh điển của Webpack 5). Với Vite alias, không có `remoteEntry.js`, không có deferred init.
+| | Build-time alias (cũ) | MF runtime remote (hiện tại) |
+|-|-----------------------|------------------------------|
+| Shared UI trong bundle MFE | ~7KB × 6 MFE = ~42KB duplicate | Không — chỉ có ở shared/dist |
+| Update shared → cần làm gì | Rebuild tất cả 6 MFE | Chỉ deploy shared, MFE nhận ngay |
+| Shared server phải chạy | Không | Có — MFE crash nếu shared offline |
 
-### Phát triển shared components độc lập
+### Phát triển shared components
 
 ```bash
 pnpm --filter shared start   # http://localhost:3004
 ```
 
-> Khi thay đổi file trong `shared/src/`, cần **restart devserver của MFE** để Vite recompile. HMR không theo dõi file ngoài package boundary.
+Khi thay đổi file trong `shared/src/`, Vite HMR tự cập nhật — không cần restart MFE devserver.
 
 ---
 
@@ -637,9 +653,10 @@ pnpm install
 pnpm start
 ```
 
-Khởi động 7 devserver song song:
+Khởi động 8 devserver song song:
 
 ```
+[shared]   VITE ready in ~500ms  →  http://localhost:3004  (shared MF remote)
 [auth]     VITE ready in ~600ms  →  http://localhost:3001  (mfe-auth)
 [accounts] VITE ready in ~650ms  →  http://localhost:3002  (mfe-accounts)
 [transfer] VITE ready in ~650ms  →  http://localhost:3003  (mfe-transfer)
@@ -649,7 +666,7 @@ Khởi động 7 devserver song song:
 [shell]    VITE ready in ~660ms  →  http://localhost:3000  ← mở tại đây
 ```
 
-> Vite lazy-load `remoteEntry.js` khi user navigate đến route, không phải lúc start. Shell có thể ready trước các MFE mà không bị lỗi.
+> Shared server (:3004) phải chạy trước khi MFE fetch `shared/ui`. Nếu chạy MFE riêng lẻ mà thiếu shared server, các components sẽ resolve thành `undefined`.
 
 ### Chạy từng MFE độc lập (standalone mode)
 
@@ -732,6 +749,8 @@ push to main
 
 ### Per-MFE deploy (ví dụ `deploy-mfe-accounts.yml`)
 
+Tách thành 2 job để tránh race condition khi nhiều MFE deploy đồng thời:
+
 ```yaml
 on:
   push:
@@ -739,12 +758,17 @@ on:
     paths:
       - 'mfe-accounts/**'
 
+concurrency:
+  group: deploy-mfe-accounts   # ngăn cùng workflow chạy song song
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
+    runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
 
-      - name: Build shared        # shared được bundle vào MFE nên cần build trước
+      - name: Build shared        # cần build shared trước để MFE resolve remoteEntry URL
         run: pnpm --filter shared build
         env:
           PUBLIC_URL: ${{ env.BASE }}/shared/
@@ -753,7 +777,25 @@ jobs:
         run: pnpm --filter mfe-accounts build
         env:
           PUBLIC_URL: ${{ env.BASE }}/mfe-accounts/
-          BASE_GH_PAGES: ${{ env.BASE }}          # remotes.config.js dùng env này
+          BASE_GH_PAGES: ${{ env.BASE }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mfe-accounts-dist
+          path: mfe-accounts/dist
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-gh-pages      # shared với mọi workflow — xếp hàng, không tranh nhau push gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mfe-accounts-dist
+          path: mfe-accounts/dist
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
@@ -761,6 +803,8 @@ jobs:
           destination_dir: mfe-accounts
           keep_files: true    # chỉ update mfe-accounts/, giữ nguyên các folder khác
 ```
+
+**Tại sao cần 2 job?** Khi merge PR thay đổi nhiều MFE, các workflow build song song — nhưng nếu cùng push lên `gh-pages` thì bị reject ("cannot lock ref"). `deploy` job dùng shared concurrency group `deploy-gh-pages, cancel-in-progress: false` → xếp hàng tuần tự, không race condition.
 
 ### Full deploy (`deploy-all.yml`)
 
@@ -809,7 +853,7 @@ https://minhchien96.github.io/micro-frontend/
 
 ### Tại sao `shared` thay đổi → `deploy-all`?
 
-`shared/` được bundle trực tiếp vào mỗi MFE tại build time. Nếu chỉ deploy riêng 1 MFE khi shared thay đổi, các MFE còn lại trên production vẫn dùng phiên bản shared cũ → inconsistency. `deploy-all` đảm bảo toàn bộ hệ thống được rebuild đồng bộ.
+`deploy-shared.yml` (chỉ deploy shared) và `deploy-all.yml` đều trigger khi `shared/**` thay đổi. `deploy-all` đảm bảo shared/dist được đặt đúng vị trí trong cây Pages cùng với toàn bộ MFE. Nếu chỉ chạy `deploy-shared`, cấu trúc folder `/shared/` trên Pages phải đã tồn tại — dùng `deploy-all` cho lần đầu hoặc khi cần rebuild toàn bộ.
 
 ---
 
@@ -836,32 +880,39 @@ git push
 ### Thay đổi shared components
 
 ```bash
-# 1. Phát triển shared độc lập
+# 1. Phát triển shared — HMR tự cập nhật, không cần restart
 pnpm --filter shared start   # http://localhost:3004
 
-# 2. Test trong MFE cụ thể (restart để pick up changes)
-pnpm --filter mfe-accounts start
+# 2. Test trong full stack (MFE nhận shared update qua HMR)
+pnpm start
 
 # 3. Commit
 git add shared/
 git commit -m "feat: thêm variant danger cho Button"
 git push
-# → deploy-all.yml chạy — rebuild toàn bộ MFE (~3-4 phút)
+# → deploy-all.yml chạy — build shared + toàn bộ MFE (~3-4 phút)
+# Sau khi deploy shared lên GitHub Pages, mọi MFE nhận update ngay khi user reload
 ```
 
 ### Concurrency — tránh conflict deploy
 
-Mỗi workflow có concurrency group riêng để tránh cancel nhau khi nhiều push xảy ra cùng lúc:
+Hai tầng concurrency group để giải quyết hai vấn đề khác nhau:
+
+**Tầng 1 — top-level (ngăn duplicate run của cùng workflow):**
 
 | Workflow | Group | cancel-in-progress |
 |----------|-------|--------------------|
 | `deploy-all` | `deploy-pages` | `false` — full rebuild không bị interrupt |
-| `deploy-shell` | `deploy-shell` | `true` — push mới nhất thắng |
+| `deploy-shell` | `deploy-shell` | `true` |
 | `deploy-mfe-auth` | `deploy-mfe-auth` | `true` |
 | `deploy-mfe-accounts` | `deploy-mfe-accounts` | `true` |
 | … (các MFE khác) | `deploy-mfe-{name}` | `true` |
 
-`remotes.config.js` thay đổi chỉ trigger `deploy-all` (không trigger per-MFE), tránh tình huống 9 workflows race nhau cùng một push.
+**Tầng 2 — job-level `deploy` (ngăn race condition khi nhiều workflow push gh-pages cùng lúc):**
+
+Tất cả job `deploy` dùng chung `group: deploy-gh-pages, cancel-in-progress: false` → xếp hàng tuần tự.
+
+`remotes.config.js` thay đổi chỉ trigger `deploy-all` (không trigger per-MFE), tránh tình huống 8 workflows race nhau cùng một push.
 
 ---
 
@@ -911,13 +962,15 @@ MFE tuyệt đối không dùng `<BrowserRouter>` hay `<HashRouter>` trong expos
 federation({ dts: false, name: 'mfe_xxx', … })
 ```
 
-### Shared code thay đổi nhưng MFE không cập nhật
+### `Element type is invalid: expected a string...but got: undefined`
 
-Vite HMR không theo dõi file ngoài package boundary. Với `resolve.alias` trỏ vào `../shared/src`, cần restart devserver của MFE.
+Xảy ra khi shared server không chạy. MFE fetch `shared/remoteEntry.js` thất bại → component resolve thành `undefined` → React throw khi render.
 
+**Fix:** Đảm bảo shared server đang chạy:
 ```bash
-# Ctrl+C để dừng, rồi start lại
-pnpm --filter mfe-accounts start
+pnpm start           # khởi động shared cùng tất cả MFE
+# hoặc riêng lẻ:
+pnpm --filter shared start   # :3004
 ```
 
 ### Lỗi CORS khi shell fetch remoteEntry.js
