@@ -1,10 +1,9 @@
 name: Deploy shared
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'shared/**'
+  # Push trigger đã bị xóa: deploy-all.yml đã có paths: shared/**
+  # và rebuild toàn bộ MFEs khi shared thay đổi — chạy song song gây cancel.
+  # Workflow này chỉ dùng khi cần deploy riêng shared qua GitHub UI.
   workflow_dispatch:
 
 concurrency:
