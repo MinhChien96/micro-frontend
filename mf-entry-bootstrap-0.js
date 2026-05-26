@@ -14,4 +14,4 @@ const __mfImport = (src) =>
   const runtime = await initHost();
   const __mfRemotePreloads = [runtime.loadRemote("mfe_accounts/AccountsApp"),runtime.loadRemote("mfe_auth/Login"),runtime.loadRemote("mfe_cards/CardsApp"),runtime.loadRemote("mfe_loans/LoansApp"),runtime.loadRemote("mfe_profile/ProfileApp"),runtime.loadRemote("mfe_transfer/TransferApp"),runtime.loadRemote("shared/ThemeContext"),runtime.loadRemote("shared/ui")];
   await Promise.all(__mfRemotePreloads);
-})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/assets/index-ILyYB1-X.js"));
+})().then(() => __mfImport("https://minhchien96.github.io/micro-frontend/assets/index-CPkiBMO_.js"));
