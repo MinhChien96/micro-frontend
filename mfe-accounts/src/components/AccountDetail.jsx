@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, Divider, StatusBadge, PageSpinner } from 'shared/ui';
+import eventBus from 'shared/eventBus';
 import { fetchAccount, fetchTransactions } from '../api/accounts';
 
 const fmt = (n) =>
@@ -120,9 +121,21 @@ export default function AccountDetail() {
       )}
 
       <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-        <Link to="/transfer/new" style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#1e3a5f', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
-          Chuyển tiền
-        </Link>
+        {/* Event Bus demo: emit vb:transferPrefill → mfe-transfer reads it on mount */}
+        <button
+          onClick={() => {
+            eventBus.emit('vb:transferPrefill', {
+              accountId:     account.id,
+              accountName:   account.name,
+              accountNumber: account.number,
+              balance:       account.balance,
+            });
+            navigate('/transfer/new');
+          }}
+          style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#1e3a5f', color: '#fff', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
+        >
+          Chuyển tiền từ đây
+        </button>
         <Link to={`${id}/transactions`} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#f1f5f9', color: '#1e3a5f', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14 }}>
           Lịch sử giao dịch
         </Link>

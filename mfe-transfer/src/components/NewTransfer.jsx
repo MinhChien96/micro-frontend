@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardHeader, Divider, PageSpinner } from 'shared/ui';
+import { Card, CardHeader, Divider, PageSpinner, useToast } from 'shared/ui';
 import PermissionGate from 'shared/PermissionGate';
+import eventBus from 'shared/eventBus';
 import { fetchAccounts } from '../api/accounts';
 import { submitTransfer } from '../api/transfer';
 
@@ -20,12 +21,19 @@ const INITIAL_FORM = { sourceId: '', recipientName: '', recipientBank: '', recip
 export default function NewTransfer() {
   const navigate     = useNavigate();
   const queryClient  = useQueryClient();
+  const { show: toast } = useToast();
+
+  // Event Bus: read prefill context emitted by mfe-accounts/AccountDetail
+  const prefill = eventBus.getLast('vb:transferPrefill');
 
   const { data: accounts = [], isLoading } = useQuery({ queryKey: ['accounts'], queryFn: fetchAccounts });
 
   const [transferType, setTransferType] = useState('domestic');
   const [step,         setStep]         = useState(0);
-  const [form,         setForm]         = useState(INITIAL_FORM);
+  const [form,         setForm]         = useState({ ...INITIAL_FORM, sourceId: prefill?.accountId ?? '' });
+
+  // Clear prefill cache when this component unmounts to avoid stale data on next visit
+  useEffect(() => () => eventBus.clear('vb:transferPrefill'), []);
 
   const source = accounts.find((a) => a.id === form.sourceId);
   const update = useCallback((field, value) => setForm((f) => ({ ...f, [field]: value })), []);
@@ -81,6 +89,8 @@ export default function NewTransfer() {
   const handleSubmit = () => {
     mutation.mutate(form, {
       onSuccess: () => {
+        // Shell-level toast — cross-MFE notification via singleton ToastProvider
+        toast('Chuyển tiền thành công!', 'success');
         setForm(INITIAL_FORM);
         setStep(0);
       },
@@ -173,6 +183,13 @@ export default function NewTransfer() {
       {step === 0 && (
         <div>
           <CardHeader style={{ marginBottom: 12 }}>Chọn tài khoản nguồn</CardHeader>
+          {/* Event Bus indicator — shown when navigated from mfe-accounts */}
+          {prefill && (
+            <div style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', fontSize: 13, color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>⚡</span>
+              <span>Đã chọn sẵn từ <strong>mfe-accounts</strong>: {prefill.accountName} ({prefill.accountNumber})</span>
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {accounts.map((acc) => (
               <div key={acc.id} onClick={() => update('sourceId', acc.id)} style={{ padding: '14px 16px', borderRadius: 12, cursor: 'pointer', border: '2px solid', borderColor: form.sourceId === acc.id ? '#1e3a5f' : '#e2e8f0', background: form.sourceId === acc.id ? '#f0f4ff' : '#fff' }}>

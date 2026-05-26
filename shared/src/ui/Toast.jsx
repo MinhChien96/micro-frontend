@@ -83,6 +83,7 @@ export function ToastProvider({ children }) {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');
+  // Return a noop when running in standalone MFE dev mode (no shell ToastProvider).
+  if (!ctx) return { show: () => {} };
   return ctx;
 }
