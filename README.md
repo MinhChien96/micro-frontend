@@ -1,6 +1,6 @@
 # VietBank — Micro Frontend với Vite Module Federation
 
-> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, localStorage auth, và GitHub Actions CI/CD.
+> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, Cross-MFE Event Bus, Shell-level Toast, Retry ErrorBoundary, localStorage auth, và GitHub Actions CI/CD.
 
 **Live demo:** https://minhchien96.github.io/micro-frontend/  
 **Đăng nhập:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
@@ -18,6 +18,14 @@
 7. [Shared Package — MF Runtime Remote](#7-shared-package--mf-runtime-remote)
 8. [Authorization — RBAC](#8-authorization--rbac)
 9. [Performance & Advanced Techniques](#9-performance--advanced-techniques)
+   - [9.1 Dark mode](#91-dark-mode--themecontext--css-custom-properties)
+   - [9.2 React 18 Concurrent](#92-react-18-concurrent--usetransition--usedeferredvalue)
+   - [9.3 Virtual Scrolling](#93-virtual-scrolling--tanstackreact-virtual)
+   - [9.4 React Query Advanced](#94-react-query-advanced)
+   - [9.5 Performance patterns](#95-các-kỹ-thuật-performance-khác)
+   - [9.6 Cross-MFE Event Bus](#96-cross-mfe-event-bus)
+   - [9.7 Shell-level Toast (Cross-MFE notification)](#97-shell-level-toast--cross-mfe-notification)
+   - [9.8 Retry ErrorBoundary / Circuit Breaker](#98-retry-errorboundary--circuit-breaker)
 10. [Chạy local](#10-chạy-local)
 11. [CI/CD — GitHub Actions](#11-cicd--github-actions)
 12. [Quy trình làm việc theo team](#12-quy-trình-làm-việc-theo-team)
@@ -65,10 +73,13 @@ RUNTIME (MF Remote — localhost:3004 / GitHub Pages /shared/):
 | Vấn đề | Giải pháp | Lý do |
 |--------|-----------|-------|
 | Auth state cross-MFE | `localStorage` + DOM event `auth:changed` | Không cần runtime dependency, hoạt động ngay khi MFE được mount |
+| Cross-MFE communication | Event Bus (`shared/eventBus.js`) qua `window.CustomEvent` | Pub/sub decoupled — MFE không cần biết schema của nhau; last-value cache cho navigation handoff |
+| Cross-MFE notification | `ToastProvider` ở shell root + singleton context | MFE gọi `useToast()` push notification lên shell UI — không cần prop drilling qua MF boundary |
 | Shared UI/utils | MF runtime remote (:3004) | Single source of truth — update shared 1 lần, mọi MFE nhận ngay; không bundle duplicate |
 | Singleton React | `singleton: true` trong MF shared | Shell cung cấp 1 instance react/react-dom/react-router-dom cho toàn bộ |
 | Data fetching | `QueryClient` riêng mỗi MFE | Domain isolation, mỗi team tự quản lý cache |
 | Routing | Shell dùng `path="/*"`, MFE dùng `<Routes>` | MFE nhận Router context từ shell, không tạo Router mới |
+| MFE error resilience | Retry ErrorBoundary (3 lần) → circuit open | Phân biệt lỗi tạm thời (retry) vs remote chết hẳn (reload) |
 | remoteEntry type | `type: 'module'` trong remotes config | `remoteEntry.js` của Vite là ES Module, cần `<script type="module">` |
 
 ---
@@ -87,6 +98,7 @@ micro-frontend/
 │   └── src/
 │       ├── auth.js          # getUser/setUser/getToken/hasPermission/…
 │       ├── ThemeContext.jsx # ThemeProvider + useTheme — dark/light mode cross-MFE
+│       ├── eventBus.js      # Cross-MFE pub/sub — emit/on/getLast/clear
 │       ├── utils/
 │       │   └── permissions.js  # ROLE_PERMISSIONS map, getPermissionsForRole()
 │       ├── components/
@@ -105,8 +117,9 @@ micro-frontend/
 │   ├── vite.config.js
 │   └── src/
 │       ├── main.jsx         # ReactDOM.createRoot + HashRouter
-│       ├── App.jsx          # Routes + ErrorBoundary + lazy MFE imports
+│       ├── App.jsx          # Routes + ErrorBoundary (retry+circuit) + ToastProvider + lazy MFE
 │       ├── AuthContext.jsx  # React Context + localStorage listener
+│       ├── skeletons.jsx    # Per-route skeleton fallback (5 MFE)
 │       ├── styles.css
 │       └── components/
 │           ├── Nav.jsx          # Navigation + prefetch on hover + logout
@@ -476,6 +489,7 @@ export default defineConfig({
         './auth':           './src/auth.js',
         './PermissionGate': './src/components/PermissionGate.jsx',
         './ThemeContext':   './src/ThemeContext.jsx',
+        './eventBus':       './src/eventBus.js',
       },
       shared: {
         react:       { singleton: true, requiredVersion: '^18.2.0' },
@@ -496,6 +510,7 @@ import { Card, CardHeader, Button, PageSpinner, StatusBadge, useToast } from 'sh
 import { getUser, setUser, hasPermission, clearAuth } from 'shared/auth';
 import PermissionGate from 'shared/PermissionGate';
 import { ThemeProvider, useTheme } from 'shared/ThemeContext';
+import eventBus from 'shared/eventBus';  // Cross-MFE pub/sub
 // MF runtime tự fetch từ localhost:3004/remoteEntry.js (hoặc GitHub Pages /shared/)
 ```
 
@@ -515,6 +530,7 @@ import { ThemeProvider, useTheme } from 'shared/ThemeContext';
 | `useToast()` | `{ show }` — `show(message, type, duration)` hiển thị toast notification |
 | `<ThemeProvider>` | wrap root app — quản lý dark/light mode, persist vào localStorage |
 | `useTheme()` | `{ isDark, toggle }` — toggle dark/light từ bất kỳ component nào |
+| `eventBus` (default export từ `shared/eventBus`) | `emit(event, detail)` · `on(event, handler)` · `getLast(event)` · `clear(event)` — cross-MFE pub/sub |
 
 ### Lợi ích của MF runtime remote
 
@@ -913,6 +929,230 @@ const queryClient = new QueryClient({
 
 ---
 
+### 9.6 Cross-MFE Event Bus
+
+Pattern pub/sub qua `window.CustomEvent` + **last-value cache** cho phép hai MFE giao tiếp mà không cần mount cùng lúc và không cần biết schema store của nhau.
+
+**Tại sao không dùng Zustand store?**
+
+| | Zustand `accountStore` | Event Bus |
+|-|------------------------|-----------|
+| Dùng cho | State persisted, nhiều subscriber cùng lúc | One-time intent — navigation handoff, user action |
+| Coupling | MFE phải biết store schema | Không — chỉ cần biết event name + payload shape |
+| Phù hợp với | accounts[] cần persist và sync | Pre-fill context khi navigate |
+
+```js
+// shared/src/eventBus.js
+const _last = {};  // last-value cache
+
+const eventBus = {
+  emit(event, detail) {
+    _last[event] = detail;
+    window.dispatchEvent(new CustomEvent(event, { detail, bubbles: true }));
+  },
+  on(event, handler) {
+    const wrapped = (e) => handler(e.detail);
+    window.addEventListener(event, wrapped);
+    return () => window.removeEventListener(event, wrapped);
+  },
+  getLast(event) { return _last[event] ?? null; },
+  clear(event)   { delete _last[event]; },
+};
+
+export default eventBus;
+```
+
+**Flow demo — AccountDetail → NewTransfer:**
+
+```
+mfe-accounts/AccountDetail
+  User click "Chuyển tiền từ đây"
+  → eventBus.emit('vb:transferPrefill', { accountId, accountName, accountNumber, balance })
+  → navigate('/transfer/new')
+
+  [MFE unmounted — không còn trong DOM]
+
+mfe-transfer/NewTransfer (mount mới)
+  const prefill = eventBus.getLast('vb:transferPrefill')
+  → form.sourceId = prefill.accountId   (tự chọn sẵn tài khoản nguồn)
+  → hiện banner "Đã chọn sẵn từ mfe-accounts: [tên tài khoản]"
+  useEffect(() => () => eventBus.clear('vb:transferPrefill'), [])  // cleanup on unmount
+```
+
+```jsx
+// mfe-accounts/src/components/AccountDetail.jsx
+import eventBus from 'shared/eventBus';
+
+<button onClick={() => {
+  eventBus.emit('vb:transferPrefill', {
+    accountId: account.id, accountName: account.name,
+    accountNumber: account.number, balance: account.balance,
+  });
+  navigate('/transfer/new');
+}}>
+  Chuyển tiền từ đây
+</button>
+```
+
+```jsx
+// mfe-transfer/src/components/NewTransfer.jsx
+import eventBus from 'shared/eventBus';
+
+export default function NewTransfer() {
+  const prefill = eventBus.getLast('vb:transferPrefill');
+  const [form, setForm] = useState({ ...INITIAL_FORM, sourceId: prefill?.accountId ?? '' });
+
+  useEffect(() => () => eventBus.clear('vb:transferPrefill'), []);
+
+  // Hiện indicator nếu có prefill
+  {prefill && (
+    <div className="prefill-banner">
+      ⚡ Đã chọn sẵn từ <strong>mfe-accounts</strong>: {prefill.accountName}
+    </div>
+  )}
+}
+```
+
+**Tại sao cần `getLast` (last-value cache)?** `CustomEvent` là fire-and-forget — subscriber phải mount TRƯỚC khi event được emit mới nhận được. Vì user navigate đi trước khi NewTransfer mount, ta cần cache payload để component đọc được khi nó khởi tạo.
+
+---
+
+### 9.7 Shell-level Toast — Cross-MFE notification
+
+`ToastProvider` được mount ở **shell root** (bao quanh toàn bộ cây). Vì `shared` là singleton MF module, `ToastContext` chỉ có một instance duy nhất trong runtime. Bất kỳ MFE nào gọi `useToast()` đều nhận được context từ shell — không phải context cục bộ của MFE.
+
+```
+shell/App.jsx
+  <ThemeProvider>
+    <ToastProvider>           ← provide ở đây
+      <AuthProvider>
+        <Nav />
+        <Routes>
+          <Route path="/transfer/*" → <TransferApp />
+            → <NewTransfer />
+              const { show: toast } = useToast()   ← nhận ToastContext từ shell
+```
+
+```jsx
+// shell/src/App.jsx
+import { ToastProvider } from 'shared/ui';
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <ToastProvider>          {/* Toast render tại đây, trong shell DOM */}
+        <AuthProvider>
+          <div className="app">…</div>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
+  );
+}
+```
+
+```jsx
+// mfe-transfer/src/components/NewTransfer.jsx
+import { useToast } from 'shared/ui';
+
+export default function NewTransfer() {
+  const { show: toast } = useToast();
+
+  const handleSubmit = () => {
+    mutation.mutate(form, {
+      onSuccess: () => {
+        // Toast xuất hiện ở góc phải shell (không phải trong mfe-transfer DOM)
+        toast('Chuyển tiền thành công!', 'success');
+      },
+    });
+  };
+}
+```
+
+**`useToast()` resilient fallback** — khi MFE chạy standalone (không có shell `<ToastProvider>`), hook trả về noop thay vì throw:
+
+```js
+// shared/src/ui/Toast.jsx
+export function useToast() {
+  const ctx = useContext(ToastContext);
+  // Standalone mode (no shell): return noop instead of throwing
+  if (!ctx) return { show: () => {} };
+  return ctx;
+}
+```
+
+---
+
+### 9.8 Retry ErrorBoundary / Circuit Breaker
+
+Shell's `ErrorBoundary` được nâng cấp từ "chỉ hiện lỗi" thành circuit breaker 3-stage:
+
+```
+Lần 1-3: Remote load fail
+  → ErrorBoundary catch
+  → Hiện "Thử lại (N lần còn lại)" button
+  → User click → retryKey++ → React Fragment key thay đổi
+  → Suspense+lazy subtree remount → MF runtime thử load lại
+
+Sau 3 lần fail:
+  → "Circuit open" message
+  → Hiện nút "Tải lại trang" → window.location.reload()
+  → Full reload: browser fetch lại remoteEntry.js từ đầu (bypass React.lazy cache)
+```
+
+```jsx
+// shell/src/App.jsx
+const MAX_RETRIES = 3;
+
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null, retryCount: 0, retryKey: 0 };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  handleRetry = () => {
+    this.setState((s) => ({
+      hasError:   false,
+      error:      null,
+      retryCount: s.retryCount + 1,
+      retryKey:   s.retryKey + 1,  // keyed Fragment → force subtree remount
+    }));
+  };
+
+  render() {
+    const { hasError, error, retryCount, retryKey } = this.state;
+    const attemptsLeft = MAX_RETRIES - retryCount;
+
+    if (hasError) {
+      return (
+        <div className="error-box">
+          <strong>Không thể tải MFE</strong>
+          <br /><small>{error?.message}</small>
+          <br />
+          {attemptsLeft > 0 ? (
+            <button onClick={this.handleRetry}>
+              Thử lại ({attemptsLeft} lần còn lại)
+            </button>
+          ) : (
+            <>
+              <small>⚡ Circuit open — Remote không phản hồi sau {MAX_RETRIES} lần thử.</small>
+              <button onClick={() => window.location.reload()}>Tải lại trang</button>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // key trick: React.Fragment với key thay đổi → unmount + remount toàn bộ children
+    return <React.Fragment key={retryKey}>{this.props.children}</React.Fragment>;
+  }
+}
+```
+
+**Tại sao cần `window.location.reload()` thay vì chỉ retry?** `React.lazy()` cache promise — nếu import fail, promise bị đánh dấu rejected vĩnh viễn trong cùng một page lifetime. Keyed Fragment remount giúp với lỗi runtime trong MFE component, nhưng với lỗi load chunk từ network thì full reload mới thực sự retry được.
+
+---
+
 ## 10. Chạy local
 
 ### Yêu cầu
@@ -1277,10 +1517,12 @@ lsof -ti :3002 | xargs kill -9
 |-----------|---------|---------|
 | [Vite](https://vitejs.dev/) | 6.4 | Build tool, HMR, dev server |
 | [@module-federation/vite](https://github.com/module-federation/vite) | 1.15 | Module Federation plugin cho Vite |
-| [React](https://react.dev/) | 18.3 | UI framework |
+| [React](https://react.dev/) | 18.3 | UI framework (Concurrent: useTransition, useDeferredValue, Suspense) |
 | [React Router](https://reactrouter.com/) | 6.22 | Client-side routing (HashRouter) |
 | [TanStack React Query](https://tanstack.com/query) | 5.28 | Data fetching + cache, useInfiniteQuery, useMutation + optimistic update |
 | [TanStack Virtual](https://tanstack.com/virtual) | 3.x | Virtual scrolling — chỉ render visible rows trong danh sách lớn |
+| [Zustand](https://github.com/pmndrs/zustand) | 4.x | Shared state (authStore + accountStore) với subscribeWithSelector + persist |
+| Event Bus (built-in) | — | Cross-MFE pub/sub qua `window.CustomEvent` + last-value cache |
 | [pnpm](https://pnpm.io/) | 10 | Workspace package manager |
 | [GitHub Actions](https://github.com/features/actions) | — | CI/CD |
 | [GitHub Pages](https://pages.github.com/) | — | Hosting (static) |
