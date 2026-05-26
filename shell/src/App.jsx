@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
+import { ThemeProvider } from 'shared/ThemeContext';
 import Nav from './components/Nav';
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles.css';
@@ -45,6 +46,7 @@ const mfe = (name, element) => (
 
 export default function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <div className="app">
         <Nav />
@@ -63,5 +65,6 @@ export default function App() {
         </main>
       </div>
     </AuthProvider>
+    </ThemeProvider>
   );
 }

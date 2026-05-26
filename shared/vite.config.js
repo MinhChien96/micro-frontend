@@ -14,6 +14,7 @@ export default defineConfig({
         './ui':             './src/ui/index.js',
         './auth':           './src/auth.js',
         './PermissionGate': './src/components/PermissionGate.jsx',
+        './ThemeContext':   './src/ThemeContext.jsx',
       },
       shared: {
         react:       { singleton: true, requiredVersion: '^18.2.0' },

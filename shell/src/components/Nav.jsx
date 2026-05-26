@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { useTheme } from 'shared/ThemeContext';
 
 const ROLE_BADGE = {
   PREMIUM:  { label: 'Ưu tiên', bg: '#fef3c7', color: '#d97706' },
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 export default function Nav() {
   const user     = useAuth();
   const location = useLocation();
+  const { isDark, toggle } = useTheme();
   const isActive = (path) => location.pathname.startsWith(path);
 
   const handleLogout = useCallback(() => {
@@ -48,6 +50,14 @@ export default function Nav() {
           </Link>
         ))}
       </div>
+
+      <button
+        onClick={toggle}
+        title={isDark ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+        style={{ background: 'transparent', border: '1px solid #334155', borderRadius: 8, cursor: 'pointer', padding: '4px 10px', fontSize: 16, color: 'white' }}
+      >
+        {isDark ? '☀️' : '🌙'}
+      </button>
 
       <div className="navbar-user">
         {user ? (

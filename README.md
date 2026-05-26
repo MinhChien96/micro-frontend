@@ -1,6 +1,6 @@
 # VietBank — Micro Frontend với Vite Module Federation
 
-> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18, React Router 6, TanStack React Query 5, localStorage auth, và GitHub Actions CI/CD.
+> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, localStorage auth, và GitHub Actions CI/CD.
 
 **Live demo:** https://minhchien96.github.io/micro-frontend/  
 **Đăng nhập:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
@@ -17,7 +17,7 @@
 6. [Data Fetching — React Query per MFE](#6-data-fetching--react-query-per-mfe)
 7. [Shared Package — MF Runtime Remote](#7-shared-package--mf-runtime-remote)
 8. [Authorization — RBAC](#8-authorization--rbac)
-9. [Performance](#9-performance)
+9. [Performance & Advanced Techniques](#9-performance--advanced-techniques)
 10. [Chạy local](#10-chạy-local)
 11. [CI/CD — GitHub Actions](#11-cicd--github-actions)
 12. [Quy trình làm việc theo team](#12-quy-trình-làm-việc-theo-team)
@@ -83,9 +83,10 @@ micro-frontend/
 │
 ├── shared/                  # MF remote package — port 3004
 │   ├── index.html
-│   ├── vite.config.js       # MF remote server :3004 — exposes ui/auth/PermissionGate
+│   ├── vite.config.js       # MF remote server :3004 — exposes ui/auth/PermissionGate/ThemeContext
 │   └── src/
 │       ├── auth.js          # getUser/setUser/getToken/hasPermission/…
+│       ├── ThemeContext.jsx # ThemeProvider + useTheme — dark/light mode cross-MFE
 │       ├── utils/
 │       │   └── permissions.js  # ROLE_PERMISSIONS map, getPermissionsForRole()
 │       ├── components/
@@ -474,6 +475,7 @@ export default defineConfig({
         './ui':             './src/ui/index.js',
         './auth':           './src/auth.js',
         './PermissionGate': './src/components/PermissionGate.jsx',
+        './ThemeContext':   './src/ThemeContext.jsx',
       },
       shared: {
         react:       { singleton: true, requiredVersion: '^18.2.0' },
@@ -493,6 +495,7 @@ export default defineConfig({
 import { Card, CardHeader, Button, PageSpinner, StatusBadge, useToast } from 'shared/ui';
 import { getUser, setUser, hasPermission, clearAuth } from 'shared/auth';
 import PermissionGate from 'shared/PermissionGate';
+import { ThemeProvider, useTheme } from 'shared/ThemeContext';
 // MF runtime tự fetch từ localhost:3004/remoteEntry.js (hoặc GitHub Pages /shared/)
 ```
 
@@ -510,6 +513,8 @@ import PermissionGate from 'shared/PermissionGate';
 | `<SkeletonCard>` `<SkeletonRow>` `<SkeletonList>` | placeholder loading |
 | `<ToastProvider>` | wrap component tree cần dùng `useToast` |
 | `useToast()` | `{ show }` — `show(message, type, duration)` hiển thị toast notification |
+| `<ThemeProvider>` | wrap root app — quản lý dark/light mode, persist vào localStorage |
+| `useTheme()` | `{ isDark, toggle }` — toggle dark/light từ bất kỳ component nào |
 
 ### Lợi ích của MF runtime remote
 
@@ -587,9 +592,272 @@ const perms = getPermissions();  // string[]
 
 ---
 
-## 9. Performance
+## 9. Performance & Advanced Techniques
 
-### Prefetch MFE khi hover nav link
+### 9.1 Dark mode — ThemeContext + CSS Custom Properties
+
+Dark mode được implement qua `shared/ThemeContext` — exposed từ MF runtime remote, dùng được ở mọi MFE mà không cần props drilling.
+
+```jsx
+// shared/src/ThemeContext.jsx
+export function ThemeProvider({ children }) {
+  const [isDark, setIsDark] = useState(
+    () => localStorage.getItem('vietbank_theme') === 'dark'
+  );
+
+  useEffect(() => {
+    // Set data-theme lên <html> → CSS custom properties tự kích hoạt
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('vietbank_theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  return (
+    <ThemeContext.Provider value={{ isDark, toggle: () => setIsDark((d) => !d) }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+```
+
+CSS custom properties được định nghĩa trong `shell/src/styles.css`:
+
+```css
+:root {
+  --bg-page:    #f8fafc;
+  --bg-card:    #ffffff;
+  --text-main:  #0f172a;
+  --text-muted: #64748b;
+  --border:     #e2e8f0;
+}
+
+[data-theme="dark"] {
+  --bg-page:    #0f172a;
+  --bg-card:    #1e293b;
+  --text-main:  #f1f5f9;
+  --text-muted: #94a3b8;
+  --border:     #334155;
+}
+
+.app {
+  background: var(--bg-page);
+  color: var(--text-main);
+  transition: background 0.2s, color 0.2s;
+}
+```
+
+Dùng toggle từ bất kỳ component nào:
+
+```jsx
+// shell/src/components/Nav.jsx
+import { useTheme } from 'shared/ThemeContext';
+
+const { isDark, toggle } = useTheme();
+<button onClick={toggle}>{isDark ? '☀️' : '🌙'}</button>
+```
+
+**Tại sao dùng `data-theme` + CSS vars thay vì class?** CSS custom properties tự cascade xuống tất cả elements — không cần truyền prop, không cần inline style override. `data-theme` trên `<html>` ảnh hưởng toàn bộ trang kể cả nội dung MFE.
+
+---
+
+### 9.2 React 18 Concurrent — `useTransition` + `useDeferredValue`
+
+Áp dụng trong `mfe-accounts/src/components/TransactionList.jsx`:
+
+**`useTransition`** — wrap state update không khẩn cấp (filter switch) để UI input/scroll không bị block:
+
+```jsx
+const [isPending, startTransition] = useTransition();
+const [filter, setFilter] = useState('all');
+
+const handleFilter = useCallback((key) => {
+  startTransition(() => setFilter(key));
+}, []);
+
+// isPending = true trong lúc React đang re-render → hiện visual feedback
+<button style={{ opacity: isPending ? 0.6 : 1 }}>Tất cả</button>
+```
+
+**`useDeferredValue`** — search input cập nhật ngay (không lag), list filter chạy sau khi browser rảnh:
+
+```jsx
+const [searchText, setSearchText] = useState('');
+const deferredSearch = useDeferredValue(searchText);
+const isSearchStale  = searchText !== deferredSearch; // true trong lúc defer
+
+// Input dùng searchText (cập nhật ngay)
+<input value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+
+// Filter list dùng deferredSearch (chạy sau)
+const filtered = useMemo(() => {
+  return allTxns.filter((t) => t.desc.toLowerCase().includes(deferredSearch.toLowerCase()));
+}, [allTxns, deferredSearch]);
+
+// Hiện "đang lọc..." khi deferred chưa bắt kịp
+{isSearchStale && <span>đang lọc...</span>}
+```
+
+| Hook | Dùng khi | Cách hoạt động |
+|------|----------|----------------|
+| `useTransition` | User click button → state update nặng | React ưu tiên input events, defer state update |
+| `useDeferredValue` | Controlled input → tính toán đắt phụ thuộc vào value | Giữ value cũ cho expensive render, dùng value mới khi browser rảnh |
+
+---
+
+### 9.3 Virtual Scrolling — `@tanstack/react-virtual`
+
+Với danh sách lớn (120+ giao dịch), DOM chỉ render rows đang visible trong viewport — không render toàn bộ list:
+
+```jsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+const parentRef = useRef(null);
+
+const virtualizer = useVirtualizer({
+  count:            filtered.length,   // tổng số items (kể cả chưa render)
+  getScrollElement: () => parentRef.current,
+  estimateSize:     () => 80,          // chiều cao ước tính mỗi row (px)
+  overscan:         5,                 // render thêm 5 rows ngoài viewport để scroll mượt
+});
+
+// Container fixed height với overflow scroll
+<div ref={parentRef} style={{ height: 480, overflowY: 'auto' }}>
+  {/* Div cao bằng tổng chiều cao tất cả rows — tạo scrollbar đúng kích thước */}
+  <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+    {virtualizer.getVirtualItems().map((vItem) => (
+      <div
+        key={vItem.key}
+        ref={virtualizer.measureElement}   // đo chiều cao thực của row sau khi render
+        style={{
+          position:  'absolute',
+          top:       0,
+          transform: `translateY(${vItem.start}px)`,  // dịch đến vị trí đúng
+        }}
+      >
+        <TransactionRow tx={filtered[vItem.index]} />
+      </div>
+    ))}
+  </div>
+</div>
+```
+
+Khi scroll qua 120 rows: DOM chỉ có ~8 nodes thay vì 120. `overscan: 5` render sẵn 5 rows trên/dưới viewport để tránh flash khi scroll nhanh.
+
+---
+
+### 9.4 React Query Advanced
+
+#### `useInfiniteQuery` — load dữ liệu theo trang
+
+Thay vì load 1 lần rồi paginate ở client, `useInfiniteQuery` fetch từng trang và gộp kết quả:
+
+```js
+// mfe-accounts/src/api/accounts.js
+export const fetchTransactionPage = async ({ accountId, pageParam = 0 }) => {
+  await delay(300);
+  const all = MOCK_TRANSACTIONS[accountId] || [];
+  return {
+    items:    all.slice(pageParam * 20, (pageParam + 1) * 20),
+    nextPage: (pageParam + 1) * 20 < all.length ? pageParam + 1 : undefined,
+    total:    all.length,
+  };
+};
+```
+
+```jsx
+// mfe-accounts/src/components/TransactionList.jsx
+const {
+  data, fetchNextPage, hasNextPage, isFetchingNextPage,
+} = useInfiniteQuery({
+  queryKey:         ['transactions', id],
+  queryFn:          ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
+  initialPageParam: 0,
+  getNextPageParam: (lastPage) => lastPage.nextPage,  // undefined = không còn trang nào
+});
+
+// Gộp tất cả trang đã load
+const allTxns = useMemo(
+  () => data?.pages.flatMap((p) => p.items) ?? [],
+  [data],
+);
+
+// Nút tải thêm
+{hasNextPage && (
+  <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+    {isFetchingNextPage ? 'Đang tải...' : `Tải thêm (còn ${total - allTxns.length})`}
+  </button>
+)}
+```
+
+#### `useMutation` + Optimistic Update
+
+Khi user submit chuyển tiền, item xuất hiện ngay trong `TransferHistory` trước khi API trả về. Nếu API lỗi → rollback tự động:
+
+```jsx
+// mfe-transfer/src/components/NewTransfer.jsx
+const queryClient = useQueryClient();
+
+const mutation = useMutation({
+  mutationFn: submitTransfer,
+
+  // 1. Chạy TRƯỚC API call — thêm item vào cache ngay lập tức
+  onMutate: async (newForm) => {
+    await queryClient.cancelQueries({ queryKey: ['transfer-history'] });
+    const previousHistory = queryClient.getQueryData(['transfer-history']);
+
+    queryClient.setQueryData(['transfer-history'], (old = []) => [
+      { id: `optimistic-${Date.now()}`, ...newForm, status: 'pending', _optimistic: true },
+      ...old,
+    ]);
+
+    return { previousHistory };  // context để rollback
+  },
+
+  // 2. Rollback nếu API thất bại
+  onError: (_err, _form, context) => {
+    queryClient.setQueryData(['transfer-history'], context.previousHistory);
+  },
+
+  // 3. Luôn invalidate sau khi xong — fetch lại data thật từ server
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['transfer-history'] });
+  },
+});
+```
+
+`TransferHistory` đọc từ cùng `queryKey: ['transfer-history']` nên tự nhận optimistic item:
+
+```jsx
+// mfe-transfer/src/components/TransferHistory.jsx
+const { data: history = [] } = useQuery({
+  queryKey: ['transfer-history'],
+  queryFn:  fetchTransferHistory,
+});
+
+// Item optimistic có flag _optimistic: true → render "Đang xử lý..."
+{h._optimistic && <span>Đang xử lý...</span>}
+```
+
+**Flow optimistic update:**
+
+```
+User nhấn "Xác nhận"
+  │
+  ├─ onMutate: cache['transfer-history'] = [optimisticItem, ...old]
+  │            TransferHistory re-render ngay — hiện item mờ "Đang xử lý..."
+  │
+  ├─ API call (1.2s delay mock)
+  │    │
+  │    ├─ Success → onSettled: invalidate → refetch → item thật thay thế optimistic
+  │    │
+  │    └─ Error → onError: rollback cache về previousHistory → item biến mất
+  │               onSettled: invalidate → refetch để chắc chắn đồng bộ
+```
+
+---
+
+### 9.5 Các kỹ thuật performance khác
+
+#### Prefetch MFE khi hover nav link
 
 ```jsx
 // shell/src/components/Nav.jsx
@@ -604,7 +872,7 @@ const NAV_LINKS = [
 // Khi user hover vào nav link, MFE đã được download trước → navigate instant
 ```
 
-### Lazy load sub-pages trong MFE
+#### Lazy load sub-pages trong MFE
 
 ```jsx
 // mfe-accounts/src/components/AccountsApp.jsx
@@ -613,7 +881,20 @@ const TransactionList = lazy(() => import('./TransactionList'));
 // Vite tự động code-split, chỉ download khi navigate đến
 ```
 
-### React Query staleTime
+#### React.memo + useMemo + useCallback
+
+```jsx
+// Tránh re-render khi virtualizer scroll — chỉ re-render khi props thực sự thay đổi
+const TransactionRow = memo(function TransactionRow({ tx }) { … });
+
+// Tính toán đắt chỉ chạy khi dependency thay đổi
+const filtered = useMemo(() => allTxns.filter(…), [allTxns, filter, deferredSearch]);
+
+// Stable reference cho event handler — tránh re-render child
+const handleFilter = useCallback((key) => { startTransition(() => setFilter(key)); }, []);
+```
+
+#### React Query staleTime
 
 ```js
 const queryClient = new QueryClient({
@@ -622,7 +903,7 @@ const queryClient = new QueryClient({
 // Navigate /accounts → /transfer → /accounts: không refetch, dùng cache
 ```
 
-### Chunk caching strategy
+#### Chunk caching strategy
 
 | File | Caching |
 |------|---------|
@@ -998,7 +1279,8 @@ lsof -ti :3002 | xargs kill -9
 | [@module-federation/vite](https://github.com/module-federation/vite) | 1.15 | Module Federation plugin cho Vite |
 | [React](https://react.dev/) | 18.3 | UI framework |
 | [React Router](https://reactrouter.com/) | 6.22 | Client-side routing (HashRouter) |
-| [TanStack React Query](https://tanstack.com/query) | 5.28 | Data fetching + cache per MFE |
+| [TanStack React Query](https://tanstack.com/query) | 5.28 | Data fetching + cache, useInfiniteQuery, useMutation + optimistic update |
+| [TanStack Virtual](https://tanstack.com/virtual) | 3.x | Virtual scrolling — chỉ render visible rows trong danh sách lớn |
 | [pnpm](https://pnpm.io/) | 10 | Workspace package manager |
 | [GitHub Actions](https://github.com/features/actions) | — | CI/CD |
 | [GitHub Pages](https://pages.github.com/) | — | Hosting (static) |

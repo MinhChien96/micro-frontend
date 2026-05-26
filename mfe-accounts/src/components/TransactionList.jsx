@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, {
+  useState, useMemo, useCallback, useTransition, useDeferredValue, useRef, memo,
+} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, StatusBadge, PageSpinner } from 'shared/ui';
-import { fetchAccount, fetchTransactions } from '../api/accounts';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Card, StatusBadge, PageSpinner } from 'shared/ui';
+import { fetchAccount, fetchTransactionPage } from '../api/accounts';
 
 const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -10,13 +13,13 @@ const fmt = (n) =>
 const fmtDate = (d) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(d));
 
-const PAGE_SIZE = 5;
 const FILTERS = [
   { key: 'all',    label: 'Tất cả' },
   { key: 'credit', label: 'Tiền vào' },
   { key: 'debit',  label: 'Tiền ra' },
 ];
 
+// memo để tránh re-render khi virtualizer scroll
 const TransactionRow = memo(function TransactionRow({ tx }) {
   return (
     <Card>
@@ -45,22 +48,68 @@ const TransactionRow = memo(function TransactionRow({ tx }) {
 });
 
 export default function TransactionList() {
-  const { id }    = useParams();
-  const navigate  = useNavigate();
+  const { id }   = useParams();
+  const navigate = useNavigate();
 
-  const { data: account }       = useQuery({ queryKey: ['account', id],      queryFn: () => fetchAccount(id) });
-  const { data: allTxns = [], isLoading } = useQuery({ queryKey: ['transactions', id], queryFn: () => fetchTransactions(id) });
+  // ── useInfiniteQuery: load trang theo trang, không load hết 1 lúc ──
+  const {
+    data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading,
+  } = useInfiniteQuery({
+    queryKey:       ['transactions', id],
+    queryFn:        ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
 
+  const { data: account } = useQuery({
+    queryKey: ['account', id],
+    queryFn:  () => fetchAccount(id),
+  });
+
+  // Gộp tất cả items đã load từ nhiều trang
+  const allTxns = useMemo(
+    () => data?.pages.flatMap((p) => p.items) ?? [],
+    [data],
+  );
+  const total = data?.pages[0]?.total ?? 0;
+
+  // ── useTransition: filter switch không block UI ──
+  const [isPending, startTransition] = useTransition();
   const [filter, setFilter] = useState('all');
-  const [page,   setPage]   = useState(1);
 
-  const totalIn    = useMemo(() => allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0), [allTxns]);
-  const totalOut   = useMemo(() => allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0), [allTxns]);
-  const filtered   = useMemo(() => filter === 'all' ? allTxns : allTxns.filter((t) => t.type === filter), [allTxns, filter]);
-  const totalPages = useMemo(() => Math.ceil(filtered.length / PAGE_SIZE), [filtered]);
-  const visible    = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
+  const handleFilter = useCallback((key) => {
+    startTransition(() => setFilter(key));
+  }, []);
 
-  const handleFilter = useCallback((key) => { setFilter(key); setPage(1); }, []);
+  // ── useDeferredValue: search text — UI input đáp ứng ngay, filter chạy sau ──
+  const [searchText, setSearchText] = useState('');
+  const deferredSearch = useDeferredValue(searchText);
+  const isSearchStale  = searchText !== deferredSearch;
+
+  // Summary stats (tính trên toàn bộ đã load)
+  const totalIn  = useMemo(() => allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0), [allTxns]);
+  const totalOut = useMemo(() => allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0), [allTxns]);
+
+  // Filter + search dùng deferredSearch để không block input
+  const filtered = useMemo(() => {
+    let list = filter === 'all' ? allTxns : allTxns.filter((t) => t.type === filter);
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.toLowerCase();
+      list = list.filter((t) => t.desc.toLowerCase().includes(q));
+    }
+    return list;
+  }, [allTxns, filter, deferredSearch]);
+
+  // ── Virtual scrolling: chỉ render rows đang visible trong viewport ──
+  const parentRef = useRef(null);
+  const virtualizer = useVirtualizer({
+    count:           filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize:    () => 80,
+    overscan:        5, // render thêm 5 rows ngoài viewport để scroll mượt
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
 
   if (isLoading) return <PageSpinner label="Đang tải lịch sử..." />;
 
@@ -70,7 +119,10 @@ export default function TransactionList() {
         MFE-ACCOUNTS TEAM
       </div>
 
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 20, padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontSize: 13, color: '#64748b' }}>
+      <button
+        onClick={() => navigate(-1)}
+        style={{ marginBottom: 20, padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontSize: 13, color: '#64748b' }}
+      >
         ← Chi tiết tài khoản
       </button>
 
@@ -90,29 +142,108 @@ export default function TransactionList() {
         </Card>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      {/* Filter buttons — useTransition: isPending cho thấy React đang xử lý transition */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
         {FILTERS.map((f) => (
-          <button key={f.key} onClick={() => handleFilter(f.key)} style={{ padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, background: filter === f.key ? '#1e3a5f' : '#f1f5f9', color: filter === f.key ? '#fff' : '#64748b', fontWeight: filter === f.key ? 600 : 400 }}>
+          <button
+            key={f.key}
+            onClick={() => handleFilter(f.key)}
+            style={{
+              padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
+              background: filter === f.key ? '#1e3a5f' : '#f1f5f9',
+              color:      filter === f.key ? '#fff' : '#64748b',
+              fontWeight: filter === f.key ? 600 : 400,
+              opacity:    isPending ? 0.6 : 1,
+              transition: 'opacity 0.15s',
+            }}
+          >
             {f.label}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: '#94a3b8', alignSelf: 'center' }}>{filtered.length} giao dịch</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#94a3b8' }}>
+          {allTxns.length}/{total} giao dịch
+        </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-        {visible.length === 0
-          ? <div style={{ textAlign: 'center', padding: 32, color: '#94a3b8' }}>Không có giao dịch nào</div>
-          : visible.map((tx) => <TransactionRow key={tx.id} tx={tx} />)
-        }
+      {/* Search input — useDeferredValue: input cập nhật ngay, filter chạy sau */}
+      <div style={{ marginBottom: 16, position: 'relative' }}>
+        <input
+          type="text"
+          placeholder="Tìm kiếm giao dịch..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{
+            width: '100%', padding: '8px 12px 8px 32px', borderRadius: 8,
+            border: '1px solid #e2e8f0', fontSize: 13, boxSizing: 'border-box',
+            opacity: isSearchStale ? 0.7 : 1, transition: 'opacity 0.1s',
+          }}
+        />
+        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: 14 }}>🔍</span>
+        {isSearchStale && (
+          <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8' }}>
+            đang lọc...
+          </span>
+        )}
       </div>
 
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: page === 1 ? 'default' : 'pointer', background: '#fff', opacity: page === 1 ? 0.4 : 1 }}>←</button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button key={p} onClick={() => setPage(p)} style={{ padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: p === page ? '#1e3a5f' : '#f1f5f9', color: p === page ? '#fff' : '#64748b', fontWeight: p === page ? 700 : 400 }}>{p}</button>
-          ))}
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: page === totalPages ? 'default' : 'pointer', background: '#fff', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
+      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>
+        Hiển thị {filtered.length} kết quả
+        {deferredSearch && ` · tìm "${deferredSearch}"`}
+      </div>
+
+      {/* Virtual scroll container — chỉ render visible rows */}
+      <div
+        ref={parentRef}
+        style={{ height: 480, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 12 }}
+      >
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 48, color: '#94a3b8' }}>
+            Không có giao dịch nào
+          </div>
+        ) : (
+          /* Container cao bằng tổng chiều cao của tất cả rows (kể cả chưa render) */
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', padding: '8px 8px' }}>
+            {virtualItems.map((vItem) => (
+              <div
+                key={vItem.key}
+                data-index={vItem.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 8,
+                  right: 8,
+                  transform: `translateY(${vItem.start}px)`,
+                  paddingBottom: 8,
+                }}
+              >
+                <TransactionRow tx={filtered[vItem.index]} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Load more — useInfiniteQuery: tải trang tiếp theo khi cần */}
+      {hasNextPage && (
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            style={{
+              padding: '10px 28px', borderRadius: 8, border: 'none', cursor: isFetchingNextPage ? 'default' : 'pointer',
+              background: '#1e3a5f', color: '#fff', fontWeight: 600, fontSize: 14,
+              opacity: isFetchingNextPage ? 0.6 : 1,
+            }}
+          >
+            {isFetchingNextPage ? 'Đang tải...' : `Tải thêm (còn ${total - allTxns.length})`}
+          </button>
+        </div>
+      )}
+
+      {!hasNextPage && allTxns.length > 0 && (
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: '#94a3b8' }}>
+          Đã hiển thị tất cả {total} giao dịch
         </div>
       )}
     </div>

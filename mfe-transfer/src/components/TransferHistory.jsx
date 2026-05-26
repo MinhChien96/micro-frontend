@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, StatusBadge } from 'shared/ui';
+import { useQuery } from '@tanstack/react-query';
+import { Card, StatusBadge, PageSpinner } from 'shared/ui';
+import { fetchTransferHistory } from '../api/transfer';
 
 function useDebounce(value, delay = 300) {
   const [debounced, setDebounced] = useState(value);
@@ -17,17 +19,6 @@ const fmt = (n) =>
 const fmtDate = (d) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(d));
 
-const ALL_HISTORY = [
-  { id: 'h1',  date: '2024-10-15', name: 'Nguyễn Văn A',  bank: 'Vietcombank', account: '1234 5678', amount: 2_000_000,  status: 'success', note: 'Tiền cafe' },
-  { id: 'h2',  date: '2024-10-13', name: 'Trần Thị B',    bank: 'Techcombank', account: '9876 5432', amount: 5_000_000,  status: 'success', note: 'Thanh toán nhà' },
-  { id: 'h3',  date: '2024-10-10', name: 'Lê Văn C',      bank: 'BIDV',        account: '4567 8901', amount: 1_500_000,  status: 'pending', note: 'Mua đồ' },
-  { id: 'h4',  date: '2024-10-05', name: 'Phạm Thị D',    bank: 'Agribank',    account: '2345 6789', amount: 10_000_000, status: 'success', note: 'Trả nợ' },
-  { id: 'h5',  date: '2024-10-01', name: 'Hoàng Văn E',   bank: 'VPBank',      account: '3456 7890', amount: 3_200_000,  status: 'failed',  note: 'Chuyển nhầm' },
-  { id: 'h6',  date: '2024-09-28', name: 'Nguyễn Thị F',  bank: 'MB Bank',     account: '5678 9012', amount: 800_000,    status: 'success', note: 'Ăn uống' },
-  { id: 'h7',  date: '2024-09-25', name: 'Đặng Văn G',    bank: 'TPBank',      account: '6789 0123', amount: 15_000_000, status: 'success', note: 'Học phí' },
-  { id: 'h8',  date: '2024-09-20', name: 'Vũ Thị H',      bank: 'VIB',         account: '7890 1234', amount: 500_000,    status: 'pending', note: 'Phụng dưỡng' },
-];
-
 const STATUS_COLOR = { success: 'green', pending: 'yellow', failed: 'red' };
 const STATUS_LABEL = { success: 'Thành công', pending: 'Chờ xử lý', failed: 'Thất bại' };
 const STATUS_FILTERS = [
@@ -39,24 +30,32 @@ const STATUS_FILTERS = [
 
 export default function TransferHistory() {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('');
 
-  // Debounce date input — avoid re-filtering on every keystroke
+  // Đọc từ query cache — optimistic item từ NewTransfer sẽ xuất hiện ngay tại đây
+  const { data: history = [], isLoading } = useQuery({
+    queryKey:  ['transfer-history'],
+    queryFn:   fetchTransferHistory,
+    staleTime: 30_000,
+  });
+
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter]     = useState('');
   const debouncedDate = useDebounce(dateFilter, 300);
 
   const handleStatus = useCallback((key) => setStatusFilter(key), []);
 
-  const filtered = useMemo(() => ALL_HISTORY.filter((h) => {
+  const filtered = useMemo(() => history.filter((h) => {
     if (statusFilter !== 'all' && h.status !== statusFilter) return false;
     if (debouncedDate && !h.date.startsWith(debouncedDate)) return false;
     return true;
-  }), [statusFilter, debouncedDate]);
+  }), [history, statusFilter, debouncedDate]);
 
   const totalSuccess = useMemo(
-    () => ALL_HISTORY.filter((h) => h.status === 'success').reduce((s, h) => s + h.amount, 0),
-    []
+    () => history.filter((h) => h.status === 'success').reduce((s, h) => s + h.amount, 0),
+    [history],
   );
+
+  if (isLoading) return <PageSpinner label="Đang tải lịch sử..." />;
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -86,7 +85,7 @@ export default function TransferHistory() {
             style={{
               padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
               background: statusFilter === f.key ? '#1e3a5f' : '#f1f5f9',
-              color: statusFilter === f.key ? '#fff' : '#64748b',
+              color:      statusFilter === f.key ? '#fff' : '#64748b',
               fontWeight: statusFilter === f.key ? 600 : 400,
             }}
           >
@@ -107,7 +106,7 @@ export default function TransferHistory() {
             Không có giao dịch nào
           </div>
         ) : filtered.map((h) => (
-          <Card key={h.id}>
+          <Card key={h.id} style={{ opacity: h._optimistic ? 0.6 : 1, transition: 'opacity 0.3s' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
                 width: 40, height: 40, borderRadius: 10,
@@ -115,22 +114,21 @@ export default function TransferHistory() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 18, flexShrink: 0,
               }}>
-                {h.status === 'success' ? '✓' : h.status === 'pending' ? '⏳' : '✕'}
+                {h._optimistic ? '⏳' : h.status === 'success' ? '✓' : h.status === 'pending' ? '⏳' : '✕'}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                   <span style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>{h.name}</span>
-                  <StatusBadge label={STATUS_LABEL[h.status]} color={STATUS_COLOR[h.status]} />
+                  {h._optimistic
+                    ? <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 8, background: '#fef9c3', color: '#92400e' }}>Đang xử lý...</span>
+                    : <StatusBadge label={STATUS_LABEL[h.status]} color={STATUS_COLOR[h.status]} />
+                  }
                 </div>
                 <div style={{ fontSize: 12, color: '#94a3b8' }}>{h.bank} · {h.account}</div>
                 {h.note && <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{h.note}</div>}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{
-                  fontWeight: 700, fontSize: 14,
-                  color: h.status === 'failed' ? '#94a3b8' : '#dc2626',
-                  textDecoration: h.status === 'failed' ? 'line-through' : 'none',
-                }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: '#dc2626' }}>
                   -{fmt(h.amount)}
                 </div>
                 <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{fmtDate(h.date)}</div>

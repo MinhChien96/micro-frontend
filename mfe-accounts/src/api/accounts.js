@@ -20,21 +20,43 @@ const MOCK_ACCOUNTS = [
   },
 ];
 
+// 120 transactions for TK001 to make virtual scrolling demo meaningful
+const DESCS_DEBIT = [
+  'Chuyển tiền đến Nguyễn Văn A', 'Thanh toán điện nước', 'Mua sắm online',
+  'Chuyển tiền đến Trần Thị B', 'Thanh toán bảo hiểm', 'Thanh toán internet/điện thoại',
+  'Mua xăng xe', 'Thanh toán ăn uống', 'Phí dịch vụ ngân hàng', 'Thanh toán học phí',
+  'Mua thuốc', 'Thanh toán taxi', 'Mua đồ gia dụng', 'Thanh toán gym', 'Mua sách',
+];
+const DESCS_CREDIT = [
+  'Nhận lương tháng', 'Hoàn tiền khuyến mãi', 'Nhận tiền hoàn từ đối tác',
+  'Nhận tiền từ người thân', 'Lãi tiền gửi', 'Hoàn tiền bảo hiểm',
+  'Thu nhập freelance', 'Nhận thưởng cuối năm', 'Hoàn thuế',
+];
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function makeDate(daysAgo) {
+  const d = new Date('2024-10-15');
+  d.setDate(d.getDate() - daysAgo);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+const TK001_TRANSACTIONS = Array.from({ length: 120 }, (_, i) => {
+  const isCredit = i % 3 === 1;
+  const amount   = isCredit
+    ? [18_000_000, 3_200_000, 10_000_000, 150_000, 500_000, 2_500_000][i % 6]
+    : [2_000_000, 850_000, 1_200_000, 5_000_000, 2_500_000, 450_000, 300_000, 680_000][i % 8];
+  const descs = isCredit ? DESCS_CREDIT : DESCS_DEBIT;
+  return {
+    id:     `t${i + 1}`,
+    date:   makeDate(i),
+    desc:   descs[i % descs.length],
+    amount: isCredit ? amount : -amount,
+    type:   isCredit ? 'credit' : 'debit',
+  };
+});
+
 const MOCK_TRANSACTIONS = {
-  TK001: [
-    { id: 't1',  date: '2024-10-15', desc: 'Chuyển tiền đến Nguyễn Văn A',   amount: -2_000_000,  type: 'debit' },
-    { id: 't2',  date: '2024-10-14', desc: 'Nhận lương tháng 10',             amount: 18_000_000,  type: 'credit' },
-    { id: 't3',  date: '2024-10-13', desc: 'Thanh toán điện nước',            amount: -850_000,    type: 'debit' },
-    { id: 't4',  date: '2024-10-12', desc: 'Mua sắm online',                  amount: -1_200_000,  type: 'debit' },
-    { id: 't5',  date: '2024-10-10', desc: 'Hoàn tiền khuyến mãi',            amount: 150_000,     type: 'credit' },
-    { id: 't6',  date: '2024-10-08', desc: 'Chuyển tiền đến Trần Thị B',     amount: -5_000_000,  type: 'debit' },
-    { id: 't7',  date: '2024-10-05', desc: 'Nhận tiền hoàn từ đối tác',       amount: 3_200_000,   type: 'credit' },
-    { id: 't8',  date: '2024-10-03', desc: 'Thanh toán bảo hiểm',             amount: -2_500_000,  type: 'debit' },
-    { id: 't9',  date: '2024-09-30', desc: 'Thanh toán internet/điện thoại',  amount: -450_000,    type: 'debit' },
-    { id: 't10', date: '2024-09-28', desc: 'Nhận tiền từ người thân',         amount: 10_000_000,  type: 'credit' },
-    { id: 't11', date: '2024-09-25', desc: 'Mua xăng xe',                     amount: -300_000,    type: 'debit' },
-    { id: 't12', date: '2024-09-20', desc: 'Thanh toán ăn uống',              amount: -680_000,    type: 'debit' },
-  ],
+  TK001: TK001_TRANSACTIONS,
   TK002: [
     { id: 't20', date: '2024-10-01', desc: 'Lãi tiết kiệm tháng 10',  amount: 229_167,     type: 'credit' },
     { id: 't21', date: '2024-09-01', desc: 'Lãi tiết kiệm tháng 9',   amount: 229_167,     type: 'credit' },
@@ -53,6 +75,8 @@ const MOCK_TRANSACTIONS = {
   ],
 };
 
+const PAGE_SIZE = 20;
+
 export const fetchAccounts = async () => {
   await delay(400);
   return MOCK_ACCOUNTS;
@@ -68,4 +92,15 @@ export const fetchAccount = async (id) => {
 export const fetchTransactions = async (accountId) => {
   await delay(200);
   return MOCK_TRANSACTIONS[accountId] || [];
+};
+
+// Paginated version for useInfiniteQuery
+export const fetchTransactionPage = async ({ accountId, pageParam = 0 }) => {
+  await delay(300);
+  const all = MOCK_TRANSACTIONS[accountId] || [];
+  return {
+    items:    all.slice(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE),
+    nextPage: (pageParam + 1) * PAGE_SIZE < all.length ? pageParam + 1 : undefined,
+    total:    all.length,
+  };
 };
