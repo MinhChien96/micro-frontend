@@ -74,7 +74,7 @@ export default function TransferDashboard() {
         </Card>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24, opacity: isLoading ? 0.4 : 1, pointerEvents: isLoading ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
         {QUICK_ACTIONS.map((a) => (
           <Link key={a.label} to={a.to} style={{ textDecoration: 'none' }}>
             <div style={{ background: a.color, borderRadius: 12, padding: '14px 8px', textAlign: 'center', cursor: 'pointer' }}>
@@ -114,7 +114,7 @@ export default function TransferDashboard() {
         </div>
       )}
 
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, opacity: isLoading ? 0.4 : 1, pointerEvents: isLoading ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
         <Link to="new" style={{ display: 'block', textAlign: 'center', padding: '14px 0', background: '#1e3a5f', color: '#fff', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 16 }}>
           + Tạo giao dịch mới
         </Link>
