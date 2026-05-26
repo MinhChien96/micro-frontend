@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, Divider } from 'shared/ui';
+import { Card, CardHeader, Divider, SkeletonCard, SkeletonList } from 'shared/ui';
 import { fetchAccounts } from '../api/accounts';
 
 const fmt = (n) =>
@@ -29,7 +29,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function TransferDashboard() {
-  const { data: accounts = [] } = useQuery({ queryKey: ['accounts'], queryFn: fetchAccounts });
+  const { data: accounts = [], isLoading } = useQuery({ queryKey: ['accounts'], queryFn: fetchAccounts });
   const user             = getUser();
   const checkingAccount  = accounts.find((a) => a.type === 'checking');
 
@@ -47,7 +47,17 @@ export default function TransferDashboard() {
 
       <h2 style={{ margin: '0 0 20px', fontSize: 22, color: '#0f172a' }}>Chuyển tiền</h2>
 
-      {checkingAccount ? (
+      {isLoading ? (
+        <div style={{ marginBottom: 20 }}>
+          {/* Skeleton cho account card gradient */}
+          <div style={{ padding: 20, borderRadius: 16, background: 'linear-gradient(135deg, #1e3a5f, #2563eb)' }}>
+            <div style={{ height: 12, width: '40%', borderRadius: 6, background: 'rgba(255,255,255,0.2)', marginBottom: 10 }} />
+            <div style={{ height: 16, width: '55%', borderRadius: 6, background: 'rgba(255,255,255,0.25)', marginBottom: 8 }} />
+            <div style={{ height: 12, width: '35%', borderRadius: 6, background: 'rgba(255,255,255,0.15)', marginBottom: 14 }} />
+            <div style={{ height: 28, width: '50%', borderRadius: 6, background: 'rgba(255,255,255,0.3)' }} />
+          </div>
+        </div>
+      ) : checkingAccount ? (
         <Card style={{ marginBottom: 20, background: 'linear-gradient(135deg, #1e3a5f, #2563eb)', color: '#fff' }}>
           <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Tài khoản nguồn mặc định</div>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{checkingAccount.name}</div>
@@ -82,23 +92,27 @@ export default function TransferDashboard() {
         <Link to="history" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>Xem tất cả →</Link>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {MOCK_RECENT.map((tx) => (
-          <Card key={tx.id}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>👤</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>{tx.name}</div>
-                <div style={{ fontSize: 12, color: '#94a3b8' }}>{tx.bank} · {tx.account}</div>
+      {isLoading ? (
+        <SkeletonList rows={3} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {MOCK_RECENT.map((tx) => (
+            <Card key={tx.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>👤</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: '#0f172a' }}>{tx.name}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{tx.bank} · {tx.account}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontWeight: 700, color: '#dc2626', fontSize: 14 }}>-{fmt(tx.amount)}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8' }}>{fmtDate(tx.date)}</div>
+                </div>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontWeight: 700, color: '#dc2626', fontSize: 14 }}>-{fmt(tx.amount)}</div>
-                <div style={{ fontSize: 11, color: '#94a3b8' }}>{fmtDate(tx.date)}</div>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div style={{ marginTop: 24 }}>
         <Link to="new" style={{ display: 'block', textAlign: 'center', padding: '14px 0', background: '#1e3a5f', color: '#fff', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 16 }}>
