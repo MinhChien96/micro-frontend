@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-pages
+  group: deploy-all
   cancel-in-progress: false
 
 permissions:
@@ -33,7 +33,7 @@ env:
   BASE: https://minhchien96.github.io/micro-frontend
 
 jobs:
-  deploy-all:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
           PUBLIC_URL: ${{ env.BASE }}/
           BASE_GH_PAGES: ${{ env.BASE }}
 
-      - name: Assemble & Deploy tất cả
+      - name: Assemble tất cả vào pages/
         run: |
           mkdir -p pages
           cp -r shell/dist/.        pages/
@@ -108,6 +108,25 @@ jobs:
           cp -r mfe-loans/dist      pages/mfe-loans
           cp -r mfe-profile/dist    pages/mfe-profile
           touch pages/.nojekyll
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pages-dist
+          path: pages
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Dùng cùng group với per-MFE deploy jobs → xếp hàng tuần tự, không race nhau push gh-pages
+    concurrency:
+      group: deploy-gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pages-dist
+          path: pages
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
