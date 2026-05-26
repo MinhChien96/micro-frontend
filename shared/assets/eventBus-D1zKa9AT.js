@@ -1,0 +1,1 @@
+const n={},o={emit(e,t){n[e]=t,window.dispatchEvent(new CustomEvent(e,{detail:t,bubbles:!0}))},on(e,t){const s=r=>t(r.detail);return window.addEventListener(e,s),()=>window.removeEventListener(e,s)},getLast(e){return n[e]??null},clear(e){delete n[e]}};export{o as default};
