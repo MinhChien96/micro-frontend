@@ -3,8 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import { ThemeProvider } from 'shared/ThemeContext';
 import { ToastProvider } from 'shared/ui';
+import { ManifestProvider, useIsEnabled } from './ManifestContext';
 import Nav from './components/Nav';
 import ProtectedRoute from './components/ProtectedRoute';
+import FeatureUnavailable from './components/FeatureUnavailable';
+import RegistryPanel, { useRegistryPanelToggle } from './components/RegistryPanel';
 import { AccountsSkeleton, TransferSkeleton, CardsSkeleton, LoansSkeleton, ProfileSkeleton } from './skeletons';
 import './styles.css';
 
@@ -36,7 +39,7 @@ class ErrorBoundary extends React.Component {
       hasError: false,
       error: null,
       retryCount: s.retryCount + 1,
-      retryKey: s.retryKey + 1,  // forces Suspense+lazy subtree to remount
+      retryKey: s.retryKey + 1,
     }));
   };
 
@@ -74,42 +77,98 @@ class ErrorBoundary extends React.Component {
       );
     }
 
-    // Keyed fragment forces the Suspense+lazy subtree to remount on retry.
     return <React.Fragment key={retryKey}>{this.props.children}</React.Fragment>;
   }
 }
 
-const mfe = (name, element, fallback) => (
-  <ErrorBoundary>
-    <Suspense fallback={fallback ?? <LoadingFallback name={name} />}>
-      {element}
-    </Suspense>
-  </ErrorBoundary>
-);
+/**
+ * Enterprise pattern: MfeGate replaces the old mfe() helper.
+ * Before mounting a remote, it checks the runtime manifest:
+ *   - enabled: false  → render FeatureUnavailable (no lazy import attempted)
+ *   - enabled: true   → ErrorBoundary + Suspense + lazy component
+ *
+ * This allows disabling a MFE across all users without redeploying shell —
+ * just flip enabled:false in remotes.manifest.json and redeploy that JSON file.
+ */
+function MfeGate({ remoteName, fallback, children }) {
+  const enabled = useIsEnabled(remoteName);
+  if (!enabled) return <FeatureUnavailable remoteName={remoteName} />;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={fallback ?? <LoadingFallback name={remoteName} />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
 
 export default function App() {
+  const [registryOpen, setRegistryOpen] = useRegistryPanelToggle();
+
   return (
+    <ManifestProvider>
     <ThemeProvider>
     <ToastProvider>
     <AuthProvider>
       <div className="app">
-        <Nav />
+        <Nav onOpenRegistry={() => setRegistryOpen(true)} />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Navigate to="/accounts" replace />} />
 
-            <Route path="/login" element={mfe('Đăng nhập', <Login />)} />
+            <Route path="/login" element={
+              <MfeGate remoteName="mfe_auth">
+                <Login />
+              </MfeGate>
+            } />
 
-            <Route path="/accounts/*" element={<ProtectedRoute>{mfe('Tài khoản', <AccountsApp />, <AccountsSkeleton />)}</ProtectedRoute>} />
-            <Route path="/transfer/*" element={<ProtectedRoute>{mfe('Chuyển tiền', <TransferApp />, <TransferSkeleton />)}</ProtectedRoute>} />
-            <Route path="/cards/*"    element={<ProtectedRoute>{mfe('Thẻ', <CardsApp />, <CardsSkeleton />)}</ProtectedRoute>} />
-            <Route path="/loans/*"    element={<ProtectedRoute>{mfe('Vay vốn', <LoansApp />, <LoansSkeleton />)}</ProtectedRoute>} />
-            <Route path="/profile/*"  element={<ProtectedRoute>{mfe('Hồ sơ', <ProfileApp />, <ProfileSkeleton />)}</ProtectedRoute>} />
+            <Route path="/accounts/*" element={
+              <ProtectedRoute>
+                <MfeGate remoteName="mfe_accounts" fallback={<AccountsSkeleton />}>
+                  <AccountsApp />
+                </MfeGate>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/transfer/*" element={
+              <ProtectedRoute>
+                <MfeGate remoteName="mfe_transfer" fallback={<TransferSkeleton />}>
+                  <TransferApp />
+                </MfeGate>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/cards/*" element={
+              <ProtectedRoute>
+                <MfeGate remoteName="mfe_cards" fallback={<CardsSkeleton />}>
+                  <CardsApp />
+                </MfeGate>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/loans/*" element={
+              <ProtectedRoute>
+                <MfeGate remoteName="mfe_loans" fallback={<LoansSkeleton />}>
+                  <LoansApp />
+                </MfeGate>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/profile/*" element={
+              <ProtectedRoute>
+                <MfeGate remoteName="mfe_profile" fallback={<ProfileSkeleton />}>
+                  <ProfileApp />
+                </MfeGate>
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
       </div>
+
+      {registryOpen && <RegistryPanel onClose={() => setRegistryOpen(false)} />}
     </AuthProvider>
     </ToastProvider>
     </ThemeProvider>
+    </ManifestProvider>
   );
 }

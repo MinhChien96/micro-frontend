@@ -1,0 +1,26 @@
+{
+  "env": { "browser": true, "es2022": true },
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module", "ecmaFeatures": { "jsx": true } },
+  "plugins": ["react"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["mfe_accounts/*", "mfe_transfer/*", "mfe_cards/*", "mfe_loans/*", "mfe_profile/*", "mfe_auth/*"],
+            "message": "Cross-MFE imports are forbidden. MFEs communicate only via shared/eventBus, shared/auth (localStorage), or URL routing. Shell is the only consumer of MFE remotes."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["shell/src/**/*.{js,jsx}"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}

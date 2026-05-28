@@ -1,0 +1,17 @@
+{
+  "name": "mfe-profile",
+  "version": "1.0.0",
+  "team": "platform-team",
+  "contact": "platform@vietbank.vn",
+  "description": "User profile — KYC info, edit profile, security settings (2FA, password)",
+  "exposes": ["./ProfileApp", "./ProfilePage"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0"
+  },
+  "changelog": {
+    "1.0.0": "Initial release — profile + edit + security settings"
+  }
+}

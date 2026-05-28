@@ -1,0 +1,17 @@
+{
+  "name": "mfe-cards",
+  "version": "1.0.0",
+  "team": "cards-team",
+  "contact": "cards@vietbank.vn",
+  "description": "Card management — list debit/credit cards, detail, controls (lock, PIN, limit)",
+  "exposes": ["./CardsApp"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0"
+  },
+  "changelog": {
+    "1.0.0": "Initial release — card list + detail with RBAC controls"
+  }
+}

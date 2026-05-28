@@ -15,7 +15,7 @@ const NAV_LINKS = [
   { to: '/loans',    label: 'Vay vốn',     tag: 'mfe-loans',    prefetch: () => import('mfe_loans/LoansApp') },
 ];
 
-export default function Nav() {
+export default function Nav({ onOpenRegistry }) {
   const user     = useAuth();
   const location = useLocation();
   const { isDark, toggle } = useTheme();
@@ -58,6 +58,16 @@ export default function Nav() {
       >
         {isDark ? '☀️' : '🌙'}
       </button>
+
+      {import.meta.env.DEV && (
+        <button
+          onClick={onOpenRegistry}
+          title="MFE Registry (Shift+R)"
+          style={{ background: 'transparent', border: '1px solid #334155', borderRadius: 8, cursor: 'pointer', padding: '4px 10px', fontSize: 12, color: '#94a3b8', fontWeight: 600 }}
+        >
+          Registry
+        </button>
+      )}
 
       <div className="navbar-user">
         {user ? (

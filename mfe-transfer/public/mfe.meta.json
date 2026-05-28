@@ -1,0 +1,19 @@
+{
+  "name": "mfe-transfer",
+  "version": "1.1.0",
+  "team": "payments-team",
+  "contact": "payments@vietbank.vn",
+  "description": "Fund transfer — new transfer wizard (3 steps), history, prefill via Event Bus",
+  "exposes": ["./TransferApp"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "@tanstack/react-query": "^5.28.0"
+  },
+  "changelog": {
+    "1.0.0": "Initial release",
+    "1.1.0": "Event Bus consumer — reads vb:transferPrefill + shell toast on success"
+  }
+}

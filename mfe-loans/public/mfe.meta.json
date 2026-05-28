@@ -1,0 +1,17 @@
+{
+  "name": "mfe-loans",
+  "version": "1.0.0",
+  "team": "lending-team",
+  "contact": "lending@vietbank.vn",
+  "description": "Loan management — list personal/property loans, detail, payment schedule",
+  "exposes": ["./LoansApp"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0"
+  },
+  "changelog": {
+    "1.0.0": "Initial release — loan list + detail + 12-kỳ payment schedule"
+  }
+}

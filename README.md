@@ -1,6 +1,6 @@
 # VietBank — Micro Frontend với Vite Module Federation
 
-> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, Cross-MFE Event Bus, Shell-level Toast, Retry ErrorBoundary, localStorage auth, và GitHub Actions CI/CD.
+> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, Cross-MFE Event Bus, Shell-level Toast, Retry ErrorBoundary, localStorage auth, và GitHub Actions CI/CD. Branch `feat/enterprise-architecture` minh hoạ thêm kiến trúc enterprise: Runtime Manifest, MFE Version Contract, Registry Panel, Standalone Dev Providers, và Import Boundary Enforcement.
 
 **Live demo:** https://minhchien96.github.io/micro-frontend/  
 **Đăng nhập:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
@@ -31,6 +31,7 @@
 12. [Quy trình làm việc theo team](#12-quy-trình-làm-việc-theo-team)
 13. [Xử lý sự cố thường gặp](#13-xử-lý-sự-cố-thường-gặp)
 14. [Công nghệ sử dụng](#14-công-nghệ-sử-dụng)
+15. [Enterprise Polyrepo Architecture (branch: feat/enterprise-architecture)](#15-enterprise-polyrepo-architecture)
 
 ---
 
@@ -1527,3 +1528,234 @@ lsof -ti :3002 | xargs kill -9
 | [GitHub Actions](https://github.com/features/actions) | — | CI/CD |
 | [GitHub Pages](https://pages.github.com/) | — | Hosting (static) |
 | [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) | v4 | Deploy to GitHub Pages |
+
+---
+
+## 15. Enterprise Polyrepo Architecture
+
+> Branch: `feat/enterprise-architecture`
+
+Khi team size lớn (>10 teams, mỗi MFE một team riêng), monorepo bắt đầu gây friction:
+- Merge queue chung → các team block lẫn nhau
+- CI chậm vì phải chạy linter/test của toàn bộ repo
+- Access control không rõ ràng
+
+Branch này demo 4 patterns cốt lõi mà enterprise sẽ áp dụng, **không cần tách repo thật** — patterns hoạt động tốt trong cả monorepo lẫn polyrepo.
+
+---
+
+### Pattern 1: Runtime Remote Manifest
+
+**Vấn đề:** URLs MFE hiện tại được bake vào `vite.config.js` lúc build. Muốn thay đổi URL của một MFE (deploy version mới, rollback), phải rebuild shell.
+
+**Giải pháp:** Shell fetch `remotes.manifest.json` lúc runtime. Manifest là file JSON độc lập, team nào cũng có thể update mà không cần rebuild shell.
+
+```json
+// shell/public/remotes.manifest.json
+{
+  "schemaVersion": "2",
+  "shellVersion": "1.0.0",
+  "remotes": {
+    "mfe_accounts": {
+      "url": "https://cdn.vietbank.vn/mfe-accounts/v1.2/remoteEntry.js",
+      "version": "1.2.0",
+      "team": "accounts-team",
+      "contact": "accounts@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true
+    }
+  }
+}
+```
+
+**Disable MFE không cần redeploy shell:**
+```bash
+# Chỉ cần update manifest.json và deploy file đó
+# Sau khi user reload → shell đọc manifest mới → MFE bị disable
+echo '{ "enabled": false }' | jq -s '.[0] * .[1]' manifest.json - > manifest.json
+```
+
+Shell sử dụng qua `ManifestContext`:
+
+```jsx
+// shell/src/ManifestContext.jsx
+export function useIsEnabled(remoteName) {
+  const ctx = useContext(ManifestContext);
+  if (!ctx?.manifest) return true; // optimistic: loading → allow
+  return ctx.manifest.remotes[remoteName]?.enabled ?? true;
+}
+```
+
+---
+
+### Pattern 2: MFE Version Contract
+
+Mỗi MFE khai báo metadata trong `public/mfe.meta.json`. File này được deploy cùng với `remoteEntry.js`.
+
+```json
+// mfe-accounts/public/mfe.meta.json
+{
+  "name": "mfe-accounts",
+  "version": "1.2.0",
+  "team": "accounts-team",
+  "exposes": ["./AccountsApp"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "@tanstack/react-query": "^5.28.0"
+  },
+  "changelog": {
+    "1.2.0": "Event Bus integration — emits vb:transferPrefill"
+  }
+}
+```
+
+Shell hoặc tooling CI có thể fetch file này để validate compatibility trước khi promote release lên production.
+
+---
+
+### Pattern 3: MfeGate — Manifest-aware Loading
+
+`MfeGate` thay thế `mfe()` helper cũ. Trước khi mount một remote, nó kiểm tra manifest:
+
+```jsx
+// shell/src/App.jsx
+function MfeGate({ remoteName, fallback, children }) {
+  const enabled = useIsEnabled(remoteName);        // đọc manifest
+  if (!enabled) return <FeatureUnavailable remoteName={remoteName} />;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={fallback}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+// Sử dụng:
+<Route path="/accounts/*" element={
+  <ProtectedRoute>
+    <MfeGate remoteName="mfe_accounts" fallback={<AccountsSkeleton />}>
+      <AccountsApp />
+    </MfeGate>
+  </ProtectedRoute>
+} />
+```
+
+**Demo:** Set `"enabled": false` trong `remotes.manifest.json` → reload → route hiện `FeatureUnavailable` thay vì crash.
+
+---
+
+### Pattern 4: Registry Panel (Service Discovery Dashboard)
+
+Trong polyrepo thực tế, shell operator cần visibility vào toàn bộ registered MFEs.
+
+**Mở:** Nhấn `Shift+R` hoặc thêm `?registry=1` vào URL.
+
+Registry Panel hiện:
+- Danh sách MFE, version, team ownership, contact
+- `enabled` / `disabled` status
+- Health probe: fetch `remoteEntry.js` bằng `no-cors` HEAD request → dot xanh/đỏ
+- Thông tin manifest (shellVersion, schemaVersion, generated date)
+
+```jsx
+// Probe health của mỗi remote
+fetch(remoteUrl, { method: 'HEAD', mode: 'no-cors' })
+  .then(() => setHealth({ ok: true, ms: Date.now() - start }))
+  .catch(() => setHealth({ ok: false }));
+```
+
+---
+
+### Pattern 5: Standalone Dev Providers
+
+**Vấn đề polyrepo:** Khi team accounts làm việc trong repo riêng, họ không có shell's `ThemeProvider`, `AuthProvider`, `ToastProvider`. MFE của họ sẽ bị lỗi context nếu chạy độc lập.
+
+**Giải pháp:** Mỗi MFE có `StandaloneProviders.jsx` — bootstrap providers riêng khi chạy standalone.
+
+```jsx
+// mfe-accounts/src/StandaloneProviders.jsx
+const STANDALONE_USER = { id: 'dev-001', name: 'Dev User', role: 'PREMIUM' };
+
+export default function StandaloneProviders({ children }) {
+  React.useEffect(() => {
+    // shared/auth.js đọc từ localStorage — inject mock auth không cần React context
+    localStorage.setItem('vietbank_user', JSON.stringify(STANDALONE_USER));
+    localStorage.setItem('vietbank_token', 'dev-standalone-token');
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+}
+```
+
+```jsx
+// mfe-accounts/src/App.jsx (standalone entry)
+export default function App() {
+  return (
+    <StandaloneProviders>
+      <div style={{ padding: 24 }}>
+        <div className="standalone-banner">
+          Standalone — mfe-accounts :3002 · Mock user: PREMIUM role
+        </div>
+        <Routes>
+          <Route path="/*" element={<AccountsApp />} />
+        </Routes>
+      </div>
+    </StandaloneProviders>
+  );
+}
+```
+
+**Team accounts workflow (polyrepo):**
+```bash
+# Terminal 1: shared server (shared là separate repo)
+cd shared && pnpm start   # port 3004
+
+# Terminal 2: chỉ cần MFE của mình
+cd mfe-accounts && pnpm start   # port 3002
+# → http://localhost:3002 — đầy đủ chức năng, mock PREMIUM user
+```
+
+---
+
+### Pattern 6: Import Boundary Enforcement
+
+ESLint rule tại root ngăn cross-MFE imports. MFEs chỉ được import từ `shared/*`, không được import từ sibling MFEs.
+
+```json
+// .eslintrc.json
+{
+  "rules": {
+    "no-restricted-imports": ["error", {
+      "patterns": [{
+        "group": ["mfe_accounts/*", "mfe_transfer/*", "mfe_cards/*", "mfe_loans/*", "mfe_profile/*", "mfe_auth/*"],
+        "message": "Cross-MFE imports forbidden. Communicate via shared/eventBus, shared/auth, or URL routing."
+      }]
+    }]
+  },
+  "overrides": [{
+    "files": ["shell/src/**/*.{js,jsx}"],
+    "rules": { "no-restricted-imports": "off" }
+  }]
+}
+```
+
+Shell được exempt (shell's job là consume remotes). MFEs không được phép import từ nhau.
+
+---
+
+### So sánh: Monorepo (main) vs Enterprise Branch
+
+| Dimension | `main` (monorepo) | `feat/enterprise-architecture` |
+|-----------|------------------|---------------------------------|
+| Remote URLs | Build-time (vite.config.js) | Runtime manifest (fetch JSON) |
+| Disable MFE | Redeploy shell | Update manifest.json |
+| Team visibility | Implicit | Registry Panel |
+| Standalone dev | Cần shell context | `StandaloneProviders` |
+| Import enforcement | Convention | ESLint rule |
+| MFE metadata | None | `mfe.meta.json` per MFE |
+| Suitable for | ≤5 teams, monorepo | 5+ teams, polyrepo-ready |

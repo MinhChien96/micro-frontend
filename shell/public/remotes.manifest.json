@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "2",
+  "generated": "2026-05-28T00:00:00Z",
+  "shellVersion": "1.0.0",
+  "description": "Runtime registry for VietBank MFEs. Shell reads this at startup to know which remotes are available, enabled, and their version metadata. In true polyrepo, each team updates this manifest when they release a new version.",
+  "remotes": {
+    "mfe_auth": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-auth/remoteEntry.js",
+      "localUrl": "http://localhost:3001/remoteEntry.js",
+      "version": "1.0.0",
+      "team": "platform-team",
+      "contact": "platform@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "Authentication — Login form, session management"
+    },
+    "mfe_accounts": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-accounts/remoteEntry.js",
+      "localUrl": "http://localhost:3002/remoteEntry.js",
+      "version": "1.2.0",
+      "team": "accounts-team",
+      "contact": "accounts@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "Account management — list, detail, transaction history"
+    },
+    "mfe_transfer": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-transfer/remoteEntry.js",
+      "localUrl": "http://localhost:3003/remoteEntry.js",
+      "version": "1.1.0",
+      "team": "payments-team",
+      "contact": "payments@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "Fund transfer — new transfer wizard, history"
+    },
+    "mfe_cards": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-cards/remoteEntry.js",
+      "localUrl": "http://localhost:3007/remoteEntry.js",
+      "version": "1.0.0",
+      "team": "cards-team",
+      "contact": "cards@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "Card management — list, detail, controls"
+    },
+    "mfe_loans": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-loans/remoteEntry.js",
+      "localUrl": "http://localhost:3006/remoteEntry.js",
+      "version": "1.0.0",
+      "team": "lending-team",
+      "contact": "lending@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "Loan management — list, detail, payment schedule"
+    },
+    "mfe_profile": {
+      "url": "https://minhchien96.github.io/micro-frontend/mfe-profile/remoteEntry.js",
+      "localUrl": "http://localhost:3005/remoteEntry.js",
+      "version": "1.0.0",
+      "team": "platform-team",
+      "contact": "platform@vietbank.vn",
+      "minShellVersion": "1.0.0",
+      "enabled": true,
+      "description": "User profile — KYC info, security settings"
+    }
+  }
+}

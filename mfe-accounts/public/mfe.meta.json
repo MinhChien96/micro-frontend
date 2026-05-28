@@ -1,0 +1,20 @@
+{
+  "name": "mfe-accounts",
+  "version": "1.2.0",
+  "team": "accounts-team",
+  "contact": "accounts@vietbank.vn",
+  "description": "Account management — list, detail, transaction history, virtual scrolling",
+  "exposes": ["./AccountsApp"],
+  "minShellVersion": "1.0.0",
+  "sharedRequired": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "@tanstack/react-query": "^5.28.0"
+  },
+  "changelog": {
+    "1.0.0": "Initial release",
+    "1.1.0": "Added TransactionList with virtual scrolling",
+    "1.2.0": "Event Bus integration — emits vb:transferPrefill on transfer CTA"
+  }
+}
