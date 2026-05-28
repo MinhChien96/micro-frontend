@@ -12,7 +12,8 @@ export function ManifestProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/remotes.manifest.json')
+    // import.meta.env.BASE_URL = '/' in dev, '/micro-frontend/' on GitHub Pages
+    fetch(`${import.meta.env.BASE_URL}remotes.manifest.json`)
       .then((r) => {
         if (!r.ok) throw new Error(`manifest fetch failed: ${r.status}`);
         return r.json();
