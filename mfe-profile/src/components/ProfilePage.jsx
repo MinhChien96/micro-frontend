@@ -14,6 +14,7 @@ const ROLE_LABELS = { CUSTOMER: 'Khách hàng', PREMIUM: 'Ưu tiên', BUSINESS: 
 const ROLE_COLOR  = { CUSTOMER: 'blue', PREMIUM: 'yellow', BUSINESS: 'purple' };
 
 const getUser = () => {
+  if (typeof window === 'undefined') return null; // SSR guard
   try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
   catch { return null; }
 };

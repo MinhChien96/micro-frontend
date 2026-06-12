@@ -4,6 +4,7 @@ import { Card, StatusBadge } from 'shared/ui';
 import PermissionGate from 'shared/PermissionGate';
 
 const getUser = () => {
+  if (typeof window === 'undefined') return null; // SSR guard
   try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
   catch { return null; }
 };

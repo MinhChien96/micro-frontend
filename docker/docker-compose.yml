@@ -1,0 +1,113 @@
+# Giả lập hạ tầng AWS trên máy local:
+#   - Mỗi service SSR = 1 container (tương đương 1 ECS service)
+#   - LocalStack = S3 (CDN static assets, dùng bởi scripts/deploy-localstack.sh)
+# Env matrix:
+#   PUBLIC_URL (build arg)     → URL browser-facing, bake vào publicPath/ssrPublicPath
+#   PORT                       → port prod server (modern serve đọc qua modern.config.ts)
+#   MODERN_MF_AUTO_CORS        → CORS middleware cho manifest/chunks cross-origin
+#   MF_INTERNAL_HOST_MAP       → (chỉ shell) rewrite host server-side: localhost → service name
+name: vietbank-mfe
+
+x-remote-defaults: &remote-defaults
+  restart: unless-stopped
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports: ["4566:4566"]
+    environment:
+      SERVICES: s3
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+  mfe-auth:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-auth, PUBLIC_URL: "http://localhost:3001/" }
+    environment: { PORT: 3001, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3001:3001"]
+
+  mfe-accounts:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-accounts, PUBLIC_URL: "http://localhost:3002/" }
+    environment: { PORT: 3002, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3002:3002"]
+
+  mfe-transfer:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-transfer, PUBLIC_URL: "http://localhost:3003/" }
+    environment: { PORT: 3003, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3003:3003"]
+
+  shared:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: shared, PUBLIC_URL: "http://localhost:3004/" }
+    environment: { PORT: 3004, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3004:3004"]
+
+  mfe-profile:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-profile, PUBLIC_URL: "http://localhost:3005/" }
+    environment: { PORT: 3005, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3005:3005"]
+
+  mfe-loans:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-loans, PUBLIC_URL: "http://localhost:3006/" }
+    environment: { PORT: 3006, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3006:3006"]
+
+  mfe-cards:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: mfe-cards, PUBLIC_URL: "http://localhost:3007/" }
+    environment: { PORT: 3007, MODERN_MF_AUTO_CORS: "true" }
+    ports: ["3007:3007"]
+
+  shell:
+    <<: *remote-defaults
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args: { APP: shell, PUBLIC_URL: "http://localhost:3000/" }
+    environment:
+      PORT: 3000
+      # Server-side fetch manifest + node bundles qua hostname nội bộ Docker;
+      # browser vẫn dùng localhost:300x (publicPath không đổi)
+      MF_INTERNAL_HOST_MAP: >-
+        {"http://localhost:3001":"http://mfe-auth:3001",
+         "http://localhost:3002":"http://mfe-accounts:3002",
+         "http://localhost:3003":"http://mfe-transfer:3003",
+         "http://localhost:3005":"http://mfe-profile:3005",
+         "http://localhost:3006":"http://mfe-loans:3006",
+         "http://localhost:3007":"http://mfe-cards:3007"}
+    ports: ["3000:3000"]
+    depends_on:
+      - mfe-auth
+      - mfe-accounts
+      - mfe-transfer
+      - mfe-profile
+      - mfe-loans
+      - mfe-cards
+
+volumes:
+  localstack-data:

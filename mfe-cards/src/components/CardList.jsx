@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, StatusBadge } from 'shared/ui';
 
 const getUser = () => {
+  if (typeof window === 'undefined') return null; // SSR guard
   try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
   catch { return null; }
 };

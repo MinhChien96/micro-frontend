@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Link, useLocation } from '@modern-js/runtime/router';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
 const ROLE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
@@ -32,7 +32,7 @@ export default function Nav() {
       <div className="navbar-brand">
         <span className="brand-icon">🏦</span>
         <span className="brand-name">VietBank</span>
-        <span className="brand-badge">Modern.js · Rspack</span>
+        <span className="brand-badge">Modern.js · Federated SSR</span>
       </div>
 
       <div className="navbar-links">

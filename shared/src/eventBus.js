@@ -8,11 +8,13 @@ const eventBus = {
   // Publish an event with an optional payload.
   emit(event, detail) {
     _last[event] = detail;
+    if (typeof window === 'undefined') return; // SSR: chỉ cache, không dispatch
     window.dispatchEvent(new CustomEvent(event, { detail, bubbles: true }));
   },
 
   // Subscribe to future events. Returns an unsubscribe function.
   on(event, handler) {
+    if (typeof window === 'undefined') return () => {}; // SSR: no-op unsubscribe
     const wrapped = (e) => handler(e.detail);
     window.addEventListener(event, wrapped);
     return () => window.removeEventListener(event, wrapped);

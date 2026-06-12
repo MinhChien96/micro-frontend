@@ -11,6 +11,7 @@ const fmtDate = (d) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit' }).format(new Date(d));
 
 const getUser = () => {
+  if (typeof window === 'undefined') return null; // SSR guard
   try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
   catch { return null; }
 };

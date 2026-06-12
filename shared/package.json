@@ -4,19 +4,23 @@
   "exports": {
     "./auth":           "./src/auth.js",
     "./ui":             "./src/ui/index.js",
-    "./PermissionGate": "./src/components/PermissionGate.jsx"
+    "./PermissionGate": "./src/components/PermissionGate.jsx",
+    "./ThemeContext":   "./src/ThemeContext.jsx",
+    "./eventBus":       "./src/eventBus.js"
   },
   "scripts": {
-    "start": "vite",
-    "build": "vite build"
+    "start": "modern dev",
+    "build": "modern build",
+    "serve": "modern serve"
   },
   "dependencies": {
+    "@modern-js/runtime": "^2.65.0",
+    "@module-federation/modern-js-v3": "^2.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@module-federation/vite": "^1.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "vite": "^6.3.5"
+    "@modern-js/app-tools": "^2.65.0",
+    "typescript": "^5.0.4"
   }
 }

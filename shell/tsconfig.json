@@ -14,6 +14,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*", "module-federation.config.ts", "modern.config.ts", "mfe-declarations.d.ts"],
+  "include": ["src/**/*", "mfe-declarations.d.ts", "module-federation.config.ts", "modern.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

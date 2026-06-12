@@ -32,8 +32,3 @@ declare module 'mfe_profile/ProfileApp' {
   const ProfileApp: React.ComponentType<any>;
   export default ProfileApp;
 }
-
-declare module 'mfe_profile/ProfilePage' {
-  const ProfilePage: React.ComponentType<any>;
-  export default ProfilePage;
-}

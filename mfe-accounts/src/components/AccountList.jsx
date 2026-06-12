@@ -8,6 +8,7 @@ const fmt = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const getUser = () => {
+  if (typeof window === 'undefined') return null; // SSR guard
   try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
   catch { return null; }
 };

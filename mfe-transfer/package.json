@@ -4,7 +4,7 @@
   "scripts": {
     "start": "modern dev",
     "build": "modern build",
-    "preview": "modern start"
+    "serve": "modern serve"
   },
   "dependencies": {
     "@modern-js/runtime": "^2.65.0",

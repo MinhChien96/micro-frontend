@@ -3,7 +3,13 @@ import { getPermissionsForRole } from './utils/permissions';
 const KEY_USER  = 'vietbank_user';
 const KEY_TOKEN = 'vietbank_token';
 
+// SSR guard: server không có localStorage (Node 22+ có global localStorage
+// nhưng không hoạt động nếu thiếu --localstorage-file) → luôn coi là chưa đăng nhập
+const hasStorage = () =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
 export const getUser = () => {
+  if (!hasStorage()) return null;
   try { return JSON.parse(localStorage.getItem(KEY_USER) || 'null'); }
   catch { return null; }
 };
@@ -11,7 +17,7 @@ export const getUser = () => {
 export const setUser = (user) =>
   localStorage.setItem(KEY_USER, JSON.stringify(user));
 
-export const getToken = () => localStorage.getItem(KEY_TOKEN);
+export const getToken = () => (hasStorage() ? localStorage.getItem(KEY_TOKEN) : null);
 
 export const setToken = (token) => localStorage.setItem(KEY_TOKEN, token);
 

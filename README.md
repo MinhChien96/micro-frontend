@@ -1,1529 +1,239 @@
-# VietBank — Micro Frontend với Vite Module Federation
+# VietBank — Micro Frontend Base: Modern.js Federated SSR
 
-> Demo ứng dụng ngân hàng micro frontend theo chuẩn production, sử dụng `@module-federation/vite` (Vite 6), pnpm workspaces, React 18 (Concurrent), React Router 6, TanStack React Query 5 (Infinite + Optimistic), Virtual Scrolling, Dark mode, Cross-MFE Event Bus, Shell-level Toast, Retry ErrorBoundary, localStorage auth, và GitHub Actions CI/CD.
+> **Base project chuẩn cho kiến trúc micro-frontend**: shell + 6 remotes đều là **Modern.js (ByteDance/TikTok) + Rspack**, Module Federation 2.0, **federated SSR toàn tuyến** (SEO-ready), deploy giả lập AWS bằng **LocalStack + Docker Compose**, kèm reference workflow deploy AWS thật (S3/CloudFront + ECR/ECS).
 
-**Live demo:** https://minhchien96.github.io/micro-frontend/  
-**Đăng nhập:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
+**Đăng nhập demo:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
 
 ---
 
 ## Mục lục
 
 1. [Tổng quan kiến trúc](#1-tổng-quan-kiến-trúc)
-2. [Cấu trúc thư mục](#2-cấu-trúc-thư-mục)
-3. [Cấu hình Module Federation](#3-cấu-hình-module-federation)
-4. [Routing — Shell + Intra-MFE](#4-routing--shell--intra-mfe)
-5. [Auth — localStorage + Custom Event](#5-auth--localstorage--custom-event)
-6. [Data Fetching — React Query per MFE](#6-data-fetching--react-query-per-mfe)
-7. [Shared Package — MF Runtime Remote](#7-shared-package--mf-runtime-remote)
-8. [Authorization — RBAC](#8-authorization--rbac)
-9. [Performance & Advanced Techniques](#9-performance--advanced-techniques)
-   - [9.1 Dark mode](#91-dark-mode--themecontext--css-custom-properties)
-   - [9.2 React 18 Concurrent](#92-react-18-concurrent--usetransition--usedeferredvalue)
-   - [9.3 Virtual Scrolling](#93-virtual-scrolling--tanstackreact-virtual)
-   - [9.4 React Query Advanced](#94-react-query-advanced)
-   - [9.5 Performance patterns](#95-các-kỹ-thuật-performance-khác)
-   - [9.6 Cross-MFE Event Bus](#96-cross-mfe-event-bus)
-   - [9.7 Shell-level Toast (Cross-MFE notification)](#97-shell-level-toast--cross-mfe-notification)
-   - [9.8 Retry ErrorBoundary / Circuit Breaker](#98-retry-errorboundary--circuit-breaker)
-10. [Chạy local](#10-chạy-local)
-11. [CI/CD — GitHub Actions](#11-cicd--github-actions)
-12. [Quy trình làm việc theo team](#12-quy-trình-làm-việc-theo-team)
-13. [Xử lý sự cố thường gặp](#13-xử-lý-sự-cố-thường-gặp)
-14. [Công nghệ sử dụng](#14-công-nghệ-sử-dụng)
+2. [Tại sao Modern.js (và khi nào dùng Next.js)](#2-tại-sao-modernjs-và-khi-nào-dùng-nextjs)
+3. [Cấu trúc workspace](#3-cấu-trúc-workspace)
+4. [Federated SSR hoạt động như thế nào](#4-federated-ssr-hoạt-động-như-thế-nào)
+5. [Routing](#5-routing)
+6. [SEO](#6-seo)
+7. [Auth & Protected Routes](#7-auth--protected-routes)
+8. [Shared package — hai vai trò](#8-shared-package--hai-vai-trò)
+9. [Chạy local](#9-chạy-local)
+10. [Deploy giả lập AWS (Docker + LocalStack)](#10-deploy-giả-lập-aws-docker--localstack)
+11. [Deploy AWS thật (reference)](#11-deploy-aws-thật-reference)
+12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
 ## 1. Tổng quan kiến trúc
 
 ```
-┌───────────────────────────────────────────────────────────────────────┐
-│                            BROWSER (Runtime)                          │
-│                                                                       │
-│  ┌────────────────────────────────────────────────────────────────┐   │
-│  │                    shell  :3000                                │   │
-│  │     HashRouter · AuthProvider · Nav · ProtectedRoute          │   │
-│  │                                                               │   │
-│  │  lazy import (Module Federation) khi user navigate:           │   │
-│  │  ┌──────────┐  ┌────────────┐  ┌────────────┐  ┌──────────┐  │   │
-│  │  │ mfe-auth │  │mfe-accounts│  │mfe-transfer│  │mfe-cards │  │   │
-│  │  │  :3001   │  │   :3002    │  │   :3003    │  │  :3007   │  │   │
-│  │  └──────────┘  └────────────┘  └────────────┘  └──────────┘  │   │
-│  │  ┌──────────┐  ┌────────────┐                                 │   │
-│  │  │mfe-loans │  │mfe-profile │                                 │   │
-│  │  │  :3006   │  │   :3005    │                                 │   │
-│  │  └──────────┘  └────────────┘                                 │   │
-│  └────────────────────────────────────────────────────────────────┘   │
-│                                                                       │
-│  ┌────────────────────────────────────────────────────────────────┐   │
-│  │  localStorage                                                  │   │
-│  │  vietbank_user  — { name, customerId, role, branch, … }       │   │
-│  │  vietbank_token — mock JWT token                               │   │
-│  └────────────────────────────────────────────────────────────────┘   │
-└───────────────────────────────────────────────────────────────────────┘
+                        BROWSER
+                           │
+            ┌──────────────▼──────────────┐
+            │   shell  :3000  (Modern.js) │  SSR stream + hydrate
+            │   host — module federation  │
+            └──┬───────┬───────┬──────────┘
+               │ mf-manifest.json (HTTP)
+   ┌───────────┼───────┬───────┼───────────┬───────────┐
+   ▼           ▼       ▼       ▼           ▼           ▼
+ mfe-auth  mfe-accounts mfe-transfer  mfe-cards   mfe-loans  mfe-profile
+  :3001      :3002       :3003         :3007       :3006      :3005
+ (Modern.js + Rspack remotes — mỗi app SSR-capable, deploy độc lập)
 
-RUNTIME (MF Remote — localhost:3004 / GitHub Pages /shared/):
-  shared/src/auth.js                 → fetch qua shared/remoteEntry.js
-  shared/src/ui/{Button,Card,…}.jsx  → fetch qua shared/remoteEntry.js
-  shared/src/components/PermissionGate.jsx → fetch qua shared/remoteEntry.js
+ shared :3004 — UI library + auth helpers + eventBus
+ (workspace package, bundle vào từng app + share-scope singleton)
 ```
 
-### Các quyết định kiến trúc quan trọng
+- **Shell (host)**: SSR stream HTML → bot/người dùng nhận nội dung ngay; routing top-level + auth + Nav + Toast.
+- **Remotes**: mỗi team một repo-trong-repo, expose một `*App` component qua `mf-manifest.json` (MF 2.0), tự chạy standalone khi dev.
+- **Hai đường tải remote**:
+  - *Browser*: tải `static/remoteEntry.js` + chunks qua `publicPath`.
+  - *Server (SSR)*: tải `bundles/remoteEntry.js` (build node riêng) qua `ssrPublicPath` — shell render markup của remote ngay trên server.
 
-| Vấn đề | Giải pháp | Lý do |
-|--------|-----------|-------|
-| Auth state cross-MFE | `localStorage` + DOM event `auth:changed` | Không cần runtime dependency, hoạt động ngay khi MFE được mount |
-| Cross-MFE communication | Event Bus (`shared/eventBus.js`) qua `window.CustomEvent` | Pub/sub decoupled — MFE không cần biết schema của nhau; last-value cache cho navigation handoff |
-| Cross-MFE notification | `ToastProvider` ở shell root + singleton context | MFE gọi `useToast()` push notification lên shell UI — không cần prop drilling qua MF boundary |
-| Shared UI/utils | MF runtime remote (:3004) | Single source of truth — update shared 1 lần, mọi MFE nhận ngay; không bundle duplicate |
-| Singleton React | `singleton: true` trong MF shared | Shell cung cấp 1 instance react/react-dom/react-router-dom cho toàn bộ |
-| Data fetching | `QueryClient` riêng mỗi MFE | Domain isolation, mỗi team tự quản lý cache |
-| Routing | Shell dùng `path="/*"`, MFE dùng `<Routes>` | MFE nhận Router context từ shell, không tạo Router mới |
-| MFE error resilience | Retry ErrorBoundary (3 lần) → circuit open | Phân biệt lỗi tạm thời (retry) vs remote chết hẳn (reload) |
-| remoteEntry type | `type: 'module'` trong remotes config | `remoteEntry.js` của Vite là ES Module, cần `<script type="module">` |
+## 2. Tại sao Modern.js (và khi nào dùng Next.js)
 
----
+| | Modern.js | Next.js |
+|---|---|---|
+| Module Federation | First-class (plugin chính chủ, SSR support) | `nextjs-mf` **đã deprecated** (EOL cuối 2026, không hỗ trợ App Router) |
+| Federated SSR | ✅ stream SSR cả host lẫn remote | ❌ không có đường chính chủ |
+| Khi nào dùng | App MFE, cần SEO nội dung remote | App độc lập không federate, hoặc shell CSR-only load remote bằng `@module-federation/enhanced/runtime` |
 
-## 2. Cấu trúc thư mục
+**Kết luận cho base này**: toàn bộ stack là Modern.js. Next.js *có thể* làm host CSR (load remote client-side bằng MF runtime API — đã từng implement trong git history, xem commit nhánh này), nhưng muốn SEO nội dung federated thì Modern.js là đường duy nhất được hỗ trợ chính thức.
 
-```
-micro-frontend/
-├── remotes.config.js        # URL registry tập trung cho shared + 6 MFE remotes
-├── pnpm-workspace.yaml      # 8 workspace packages
-├── package.json             # Root: script start + build
-│
-├── shared/                  # MF remote package — port 3004
-│   ├── index.html
-│   ├── vite.config.js       # MF remote server :3004 — exposes ui/auth/PermissionGate/ThemeContext
-│   └── src/
-│       ├── auth.js          # getUser/setUser/getToken/hasPermission/…
-│       ├── ThemeContext.jsx # ThemeProvider + useTheme — dark/light mode cross-MFE
-│       ├── eventBus.js      # Cross-MFE pub/sub — emit/on/getLast/clear
-│       ├── utils/
-│       │   └── permissions.js  # ROLE_PERMISSIONS map, getPermissionsForRole()
-│       ├── components/
-│       │   └── PermissionGate.jsx  # Gate UI dựa trên role/permission
-│       └── ui/
-│           ├── index.js     # Re-export tất cả UI components
-│           ├── Button.jsx
-│           ├── Card.jsx     # Card, CardHeader
-│           ├── Badge.jsx    # StatusBadge
-│           ├── Spinner.jsx  # PageSpinner
-│           ├── Skeleton.jsx
-│           └── Toast.jsx    # useToast hook
-│
-├── shell/                   # Host app — port 3000
-│   ├── index.html
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx         # ReactDOM.createRoot + HashRouter
-│       ├── App.jsx          # Routes + ErrorBoundary (retry+circuit) + ToastProvider + lazy MFE
-│       ├── AuthContext.jsx  # React Context + localStorage listener
-│       ├── skeletons.jsx    # Per-route skeleton fallback (5 MFE)
-│       ├── styles.css
-│       └── components/
-│           ├── Nav.jsx          # Navigation + prefetch on hover + logout
-│           └── ProtectedRoute.jsx  # Redirect /login nếu chưa auth
-│
-├── mfe-auth/     :3001  # Login form + demo role selector
-├── mfe-accounts/ :3002  # AccountList → AccountDetail → TransactionList
-├── mfe-transfer/ :3003  # TransferDashboard → NewTransfer → TransferHistory
-├── mfe-profile/  :3005  # ProfilePage → EditProfile → SecuritySettings
-├── mfe-loans/    :3006  # LoanList → LoanDetail → PaymentSchedule
-└── mfe-cards/    :3007  # CardList → CardDetail
-```
+## 3. Cấu trúc workspace
 
-Mỗi MFE có cấu trúc sau:
+| Package | Port | Vai trò | Exposes |
+|---|---|---|---|
+| `shell` | 3000 | Host SSR, routing, auth, Toast | — |
+| `mfe-auth` | 3001 | Đăng nhập | `./Login`, `./UserProfile` |
+| `mfe-accounts` | 3002 | Tài khoản + giao dịch | `./AccountsApp` |
+| `mfe-transfer` | 3003 | Chuyển tiền | `./TransferApp` |
+| `shared` | 3004 | UI lib + auth + eventBus | `./ui ./auth ./PermissionGate ./ThemeContext ./eventBus` |
+| `mfe-profile` | 3005 | Hồ sơ | `./ProfileApp`, `./ProfilePage` |
+| `mfe-loans` | 3006 | Vay vốn | `./LoansApp` |
+| `mfe-cards` | 3007 | Thẻ | `./CardsApp` |
+
+File quan trọng mỗi app:
 
 ```
-mfe-xxx/
-├── index.html               # Vite yêu cầu ở root (dùng khi chạy standalone)
-├── vite.config.js           # federation config + resolve.alias + server.origin
-├── package.json             # scripts: start / build / preview
-└── src/
-    ├── main.jsx             # Standalone entry — HashRouter + ReactDOM.createRoot
-    ├── App.jsx              # Standalone wrapper — hiện banner màu vàng
-    ├── styles.css
-    ├── api/                 # Mock API functions (thay bằng real endpoint)
-    └── components/
-        ├── XxxApp.jsx       # ← EXPOSED qua MF — dùng <Routes> không có <Router>
-        ├── XxxList.jsx      # Route index
-        ├── XxxDetail.jsx    # lazy loaded
-        └── …
+modern.config.ts             # rspack + moduleFederationPlugin + server.ssr stream + PORT
+module-federation.config.ts  # name, exposes, shared singletons, (shell: remotes + runtimePlugins)
+src/routes/                  # file-based routing (layout.tsx bắt buộc từ Modern.js 2.71)
+src/routes/page.tsx          # trang standalone dev (mock user) cho remote
 ```
 
----
+## 4. Federated SSR hoạt động như thế nào
 
-## 3. Cấu hình Module Federation
+Bật SSR chỉ cần **một dòng** trong `modern.config.ts` (MF plugin tự phát hiện):
 
-### Shell (host) — `shell/vite.config.js`
+```ts
+server: { ssr: { mode: 'stream' }, port: Number(process.env.PORT) || 3002 },
+```
 
-```js
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { federation } from '@module-federation/vite';
-import remotes from '../remotes.config.js';
+Build sẽ tạo thêm bundle node và merge metadata vào manifest:
 
-export default defineConfig({
-  base: process.env.PUBLIC_URL || '/',
-  plugins: [
-    react(),
-    federation({ dts: false,
-      name: 'shell',
-      remotes,    // object format { type:'module', name, entry } — xem remotes.config.js
-      shared: {
-        react:              { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom':        { singleton: true, requiredVersion: '^18.2.0' },
-        'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
-      },
-    }),
-  ],
-  server:  { port: 3000, cors: true },
-  preview: { port: 3000, cors: true },
-  build:   { target: 'esnext' },
+```
+dist/
+├── static/mf-manifest.json   # metaData.ssrRemoteEntry + ssrPublicPath (merge sẵn)
+├── static/remoteEntry.js     # browser
+└── bundles/remoteEntry.js    # node — host SSR require bundle này
+```
+
+Shell tiêu thụ remote qua `createLazyComponent` ([shell/src/components/remotePages.tsx](shell/src/components/remotePages.tsx)):
+
+```tsx
+// Public — SSR THẬT: markup của remote nằm trong HTML server (SEO)
+export const Login = createLazyComponent({
+  instance: getInstance(),
+  loader: () => import('mfe_auth/Login'),
+  export: 'default',
+  loading: LoginFallback,
 });
+
+// Protected — noSSR: server stream shell + skeleton, content hydrate client
+export const AccountsApp = createLazyComponent({ ..., noSSR: true, loading: <AccountsSkeleton /> });
 ```
 
-### MFE (remote) — ví dụ `mfe-accounts/vite.config.js`
+### Bài toán dual-URL (Docker/ECS)
 
-```js
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { federation } from '@module-federation/vite';
-import remotes from '../remotes.config.js';
-
-export default defineConfig({
-  base: process.env.PUBLIC_URL || '/',
-  plugins: [
-    react(),
-    federation({ dts: false,
-      name: 'mfe_accounts',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './AccountsApp': './src/components/AccountsApp',
-      },
-      remotes: { shared: remotes.shared },   // load shared/ui, shared/auth, shared/PermissionGate từ MF runtime
-      shared: {
-        react:                   { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom':             { singleton: true, requiredVersion: '^18.2.0' },
-        'react-router-dom':      { singleton: true, requiredVersion: '^6.22.0' },
-        '@tanstack/react-query': { singleton: true, requiredVersion: '^5.28.0' },
-      },
-    }),
-  ],
-  server:  { port: 3002, cors: true, origin: 'http://localhost:3002' },
-  preview: { port: 3002, cors: true },
-  build:   { target: 'esnext' },
-});
-```
-
-**Lưu ý quan trọng:**
-- `dts: false` — tắt TypeScript declaration generation (project thuần JS, không cần)
-- `server.origin` — Vite cần biết absolute URL khi serve assets cross-origin
-- `build.target: 'esnext'` — bắt buộc cho `@module-federation/vite` (dùng ES features hiện đại)
-
-### `remotes.config.js` — URL registry tập trung
-
-```js
-const base  = process.env.BASE_GH_PAGES;
-const local = (port) => `http://localhost:${port}/remoteEntry.js`;
-const pages = (path) => `${base}/${path}/remoteEntry.js`;
-
-// type: 'module' — remoteEntry.js của Vite là ESM (có import statement).
-// Nếu dùng plain URL string, MF runtime load bằng <script> classic → SyntaxError.
-const remote = (name, entry) => ({ type: 'module', name, entry });
-
-module.exports = {
-  shared:       remote('shared',       process.env.SHARED_URL       || (base ? pages('shared')       : local(3004))),
-  mfe_auth:     remote('mfe_auth',     process.env.MFE_AUTH_URL     || (base ? pages('mfe-auth')     : local(3001))),
-  mfe_accounts: remote('mfe_accounts', process.env.MFE_ACCOUNTS_URL || (base ? pages('mfe-accounts') : local(3002))),
-  mfe_transfer: remote('mfe_transfer', process.env.MFE_TRANSFER_URL || (base ? pages('mfe-transfer') : local(3003))),
-  mfe_profile:  remote('mfe_profile',  process.env.MFE_PROFILE_URL  || (base ? pages('mfe-profile')  : local(3005))),
-  mfe_loans:    remote('mfe_loans',    process.env.MFE_LOANS_URL    || (base ? pages('mfe-loans')    : local(3006))),
-  mfe_cards:    remote('mfe_cards',    process.env.MFE_CARDS_URL    || (base ? pages('mfe-cards')    : local(3007))),
-};
-```
-
-### Bảng exposed modules
-
-| MFE | Exposed | Import trong shell |
-|-----|---------|-------------------|
-| mfe-auth | `./Login`, `./UserProfile` | `import('mfe_auth/Login')` |
-| mfe-accounts | `./AccountsApp` | `import('mfe_accounts/AccountsApp')` |
-| mfe-transfer | `./TransferApp` | `import('mfe_transfer/TransferApp')` |
-| mfe-cards | `./CardsApp` | `import('mfe_cards/CardsApp')` |
-| mfe-loans | `./LoansApp` | `import('mfe_loans/LoansApp')` |
-| mfe-profile | `./ProfileApp`, `./ProfilePage` | `import('mfe_profile/ProfileApp')` |
-
----
-
-## 4. Routing — Shell + Intra-MFE
-
-### Shell lazy import và route mounting
-
-```jsx
-// shell/src/App.jsx
-const Login       = lazy(() => import('mfe_auth/Login'));
-const AccountsApp = lazy(() => import('mfe_accounts/AccountsApp'));
-const TransferApp = lazy(() => import('mfe_transfer/TransferApp'));
-const CardsApp    = lazy(() => import('mfe_cards/CardsApp'));
-const LoansApp    = lazy(() => import('mfe_loans/LoansApp'));
-const ProfileApp  = lazy(() => import('mfe_profile/ProfileApp'));
-
-// Mỗi MFE được wrap ErrorBoundary + Suspense
-const mfe = (name, element) => (
-  <ErrorBoundary>
-    <Suspense fallback={<LoadingFallback name={name} />}>
-      {element}
-    </Suspense>
-  </ErrorBoundary>
-);
-
-<Routes>
-  <Route path="/"          element={<Navigate to="/accounts" replace />} />
-  <Route path="/login"     element={mfe('Đăng nhập', <Login />)} />
-  <Route path="/accounts/*" element={<ProtectedRoute>{mfe('Tài khoản',  <AccountsApp />)}</ProtectedRoute>} />
-  <Route path="/transfer/*" element={<ProtectedRoute>{mfe('Chuyển tiền', <TransferApp />)}</ProtectedRoute>} />
-  <Route path="/cards/*"    element={<ProtectedRoute>{mfe('Thẻ',         <CardsApp />)}</ProtectedRoute>} />
-  <Route path="/loans/*"    element={<ProtectedRoute>{mfe('Vay vốn',     <LoansApp />)}</ProtectedRoute>} />
-  <Route path="/profile/*"  element={<ProtectedRoute>{mfe('Hồ sơ',       <ProfileApp />)}</ProtectedRoute>} />
-</Routes>
-```
-
-### Intra-MFE routing — MFE tự quản lý sub-routes
-
-Mỗi `*App` component exposed qua MF dùng `<Routes>` (không có `<Router>`). Router context (`HashRouter`) được cung cấp bởi shell.
-
-```jsx
-// mfe-accounts/src/components/AccountsApp.jsx
-const AccountDetail   = lazy(() => import('./AccountDetail'));
-const TransactionList = lazy(() => import('./TransactionList'));
-
-export default function AccountsApp() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Routes>
-        <Route index element={<AccountList />} />
-        <Route
-          path=":id"
-          element={<Suspense fallback={<PageSpinner label="Đang tải tài khoản..." />}><AccountDetail /></Suspense>}
-        />
-        <Route
-          path=":id/transactions"
-          element={<Suspense fallback={<PageSpinner label="Đang tải lịch sử..." />}><TransactionList /></Suspense>}
-        />
-      </Routes>
-    </QueryClientProvider>
-  );
-}
-```
-
-> **Nguyên tắc bắt buộc:** Shell khai báo `path="/accounts/*"` (có `/*`) để React Router pass phần còn lại xuống cho MFE. MFE dùng `path=":id"` (relative, không có `/`).
-
-### Bảng route đầy đủ
-
-| URL | MFE | Component | Auth |
-|-----|-----|-----------|------|
-| `/` | shell | → redirect `/accounts` | — |
-| `/login` | mfe-auth | `Login` | public |
-| `/accounts` | mfe-accounts | `AccountList` | required |
-| `/accounts/:id` | mfe-accounts | `AccountDetail` (lazy) | required |
-| `/accounts/:id/transactions` | mfe-accounts | `TransactionList` (lazy) | required |
-| `/transfer` | mfe-transfer | `TransferDashboard` | required |
-| `/transfer/new` | mfe-transfer | `NewTransfer` (lazy) | required |
-| `/transfer/history` | mfe-transfer | `TransferHistory` (lazy) | required |
-| `/cards` | mfe-cards | `CardList` | required |
-| `/cards/:id` | mfe-cards | `CardDetail` (lazy) | required |
-| `/loans` | mfe-loans | `LoanList` | required |
-| `/loans/:id` | mfe-loans | `LoanDetail` (lazy) | required |
-| `/loans/:id/schedule` | mfe-loans | `PaymentSchedule` (lazy) | required |
-| `/profile` | mfe-profile | `ProfilePage` | required |
-| `/profile/edit` | mfe-profile | `EditProfile` (lazy) | required |
-| `/profile/security` | mfe-profile | `SecuritySettings` (lazy) | required |
-
-### ProtectedRoute
-
-```jsx
-// shell/src/components/ProtectedRoute.jsx
-export default function ProtectedRoute({ children }) {
-  const user     = useAuth();          // đọc từ AuthContext
-  const location = useLocation();
-
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  return children;
-}
-```
-
-Sau khi login thành công, `Login.jsx` navigate đến `location.state?.from?.pathname || '/accounts'` để quay lại trang ban đầu.
-
----
-
-## 5. Auth — localStorage + Custom Event
-
-Không dùng Zustand store hay runtime MF remote cho auth. State lưu trong `localStorage`, sync qua DOM event.
+`ssrPublicPath` được bake từ `PUBLIC_URL` lúc build remote (URL browser-facing, vd `http://localhost:3002/`). Khi shell chạy trong container, nó **không reach được** `localhost:3002` của máy host. Giải pháp: runtime plugin [shell/src/runtime/internalHostRewrite.ts](shell/src/runtime/internalHostRewrite.ts) rewrite host **chỉ ở phía server** theo env:
 
 ```
-mfe-auth/Login                        shell/AuthContext + Nav + ProtectedRoute
-       │                                          │
-       ├─ setUser({ name, customerId,             │
-       │            role, branch, … })            │
-       ├─ setToken('mock-jwt-' + Date.now())      │
-       └─ dispatchEvent('auth:changed') ─────────►├─ handler() re-reads localStorage
-                                                  ├─ setUser(newUser) → re-render
-                                                  ├─ Nav: hiện tên + avatar + badge role
-                                                  └─ ProtectedRoute: cho qua
+MF_INTERNAL_HOST_MAP='{"http://localhost:3002":"http://mfe-accounts:3002", ...}'
 ```
 
-### AuthContext — shell
+Browser vẫn dùng URL public (không rewrite). Dev local không set env → plugin no-op. Deploy CDN thật (CloudFront) không cần map vì CDN reachable từ cả hai phía.
 
-```jsx
-// shell/src/AuthContext.jsx
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(
-    () => JSON.parse(localStorage.getItem('vietbank_user') || 'null')
-  );
+### Resilience: remote chết không kéo chết host
 
-  useEffect(() => {
-    const handler = () =>
-      setUser(JSON.parse(localStorage.getItem('vietbank_user') || 'null'));
-    window.addEventListener('auth:changed', handler);
-    return () => window.removeEventListener('auth:changed', handler);
-  }, []);
+MF runtime 2.5.x throw lỗi manifest trong promise không ai await → unhandled rejection → Node exit. Plugin trên còn cài guard `process.on('unhandledRejection')` server-side: **nuốt riêng lỗi Federation** (UI đã có ErrorBoundary/fallback hiển thị "Không thể tải MFE"), mọi lỗi khác giữ nguyên fail-fast. Kết quả: kill một remote → route đó hiện fallback, các route khác + shell sống bình thường.
 
-  return <AuthContext.Provider value={user}>{children}</AuthContext.Provider>;
-}
+### Share scope — quy tắc sắt
 
-export const useAuth = () => useContext(AuthContext);
+Trong [shell/module-federation.config.ts](shell/module-federation.config.ts) và các remote:
+
+| Module | Vì sao phải singleton |
+|---|---|
+| `react`, `react-dom` | Một React instance — không thì "invalid hook call" |
+| `react-router-dom` | Remote render `<Routes>` con phải attach vào Router context của shell |
+| `react/jsx-runtime` | Chống lệch element symbol nếu version React khác nhau giữa host/remote |
+| `shared/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
+| `shared/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
+
+## 5. Routing
+
+- Shell dùng **file-based routing** của Modern.js; route của MFE dùng **`$.tsx` (splat)** — match cả `/accounts` lẫn `/accounts/:id/...`:
+
+```
+shell/src/routes/
+├── layout.tsx        # AuthProvider > ToastProvider > Nav > <Outlet/>
+├── page.tsx          # / — landing public (SSR full nội dung)
+├── login/page.tsx    # /login — form SSR từ remote mfe_auth
+├── accounts/$.tsx    # /accounts/* → ProtectedRoute + AccountsApp
+├── transfer/$.tsx ...
+└── $.tsx             # 404
 ```
 
-### Helpers từ `shared/src/auth.js`
+- Remote expose `*App` chứa `<Routes>` **con** (không tạo Router mới) — nhận Router context từ shell qua `react-router-dom` singleton.
 
-```js
-import { getUser, setUser, getToken, setToken,
-         clearAuth, isAuthenticated, hasPermission } from 'shared/auth';
+## 6. SEO
 
-// Login
-setUser({ name: 'Nguyễn Văn Demo', customerId: '0021001', role: 'PREMIUM', … });
-setToken('mock-jwt-1234');
-window.dispatchEvent(new CustomEvent('auth:changed'));
+- **SSR stream**: bot nhận HTML đầy đủ ngay từ server — kể cả form Login do remote `mfe_auth` render (`curl localhost:3000/login | grep 0021001` để kiểm chứng).
+- **Per-route title/meta** bằng Helmet (SSR-safe):
 
-// Logout
-clearAuth();
-window.dispatchEvent(new CustomEvent('auth:changed'));
-
-// Check quyền
-if (hasPermission('transfer:international')) { /* … */ }
-
-// Đọc user trong MFE (không cần import từ shell)
-const user = getUser();   // { name, role, customerId, branch, … } | null
+```tsx
+import { Helmet } from '@modern-js/runtime/head';
+<Helmet><title>Tài khoản — VietBank</title><meta name="description" content="..." /></Helmet>
 ```
 
-### Payload user object
+- Trang protected không cần SEO → `noSSR: true`, server chỉ stream shell + skeleton (nhanh + không lộ data).
 
-```js
-{
-  name:       'Nguyễn Văn Demo',
-  customerId: '0021001',
-  email:      'demo@vietbank.vn',
-  phone:      '0901 234 567',
-  branch:     'Chi nhánh TP.HCM',
-  role:       'CUSTOMER' | 'PREMIUM' | 'BUSINESS',
-}
-```
+## 7. Auth & Protected Routes
 
----
+- Auth demo bằng localStorage (`vietbank_user` / `vietbank_token`) + event `auth:changed`.
+- Server **không có** localStorage → [AuthContext](shell/src/AuthContext.tsx) expose `{ user, ready }`: SSR và first paint luôn `{ user: null, ready: false }` (không hydration mismatch), client đọc localStorage trong `useEffect` rồi set `ready: true`.
+- [ProtectedRoute](shell/src/components/ProtectedRoute.tsx): `!ready` → render children (skeleton); `ready && !user` → `<Navigate to="/login">`.
+- Mọi helper đọc localStorage trong code remote/shared đều có guard `typeof window === 'undefined'`.
 
-## 6. Data Fetching — React Query per MFE
+## 8. Shared package — hai vai trò
 
-Mỗi MFE tạo `QueryClient` riêng, độc lập hoàn toàn. Đây là pattern của Zalando, Klarna, DAZN trong production.
+1. **Workspace package** (đường chính): các app `import { Button } from 'shared/ui'` → resolve qua `exports` map trong [shared/package.json](shared/package.json), bundle vào từng app, **đồng thời** khai báo trong MF `shared:` map để runtime dedupe thành singleton.
+2. **Remote parity build** (:3004): build/serve như một remote đầy đủ — giữ để demo expose từ shared và làm trang showcase standalone. Không app nào load `shared@...` qua MF lúc runtime.
 
-```jsx
-// mfe-accounts/src/components/AccountsApp.jsx
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
-});
-// staleTime 5 phút: navigate qua lại không trigger refetch
-
-export default function AccountsApp() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Routes>…</Routes>
-    </QueryClientProvider>
-  );
-}
-```
-
-```jsx
-// mfe-accounts/src/components/AccountList.jsx
-const { data: accounts = [], isLoading } = useQuery({
-  queryKey: ['accounts'],
-  queryFn: fetchAccounts,  // mock 400ms delay, thay bằng real API
-});
-```
-
-Mock API nằm trong `mfe-xxx/src/api/` — chỉ cần thay `queryFn`, không ảnh hưởng MFE khác.
-
----
-
-## 7. Shared Package — MF Runtime Remote
-
-`shared/` là **Module Federation remote** riêng, chạy tại port 3004. Tất cả MFE load `shared/ui`, `shared/auth`, `shared/PermissionGate` qua MF runtime — không bundle vào mỗi MFE.
-
-### Cấu hình shared remote (`shared/vite.config.js`)
-
-```js
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { federation } from '@module-federation/vite';
-
-export default defineConfig({
-  base: process.env.PUBLIC_URL || '/',
-  plugins: [
-    react(),
-    federation({
-      dts: false,
-      name: 'shared',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './ui':             './src/ui/index.js',
-        './auth':           './src/auth.js',
-        './PermissionGate': './src/components/PermissionGate.jsx',
-        './ThemeContext':   './src/ThemeContext.jsx',
-        './eventBus':       './src/eventBus.js',
-      },
-      shared: {
-        react:       { singleton: true, requiredVersion: '^18.2.0' },
-        'react-dom': { singleton: true, requiredVersion: '^18.2.0' },
-      },
-    }),
-  ],
-  server:  { port: 3004, cors: true, origin: 'http://localhost:3004' },
-  preview: { port: 3004, cors: true },
-  build:   { target: 'esnext' },
-});
-```
-
-### Dùng trong MFE — import path giống nhau
-
-```jsx
-import { Card, CardHeader, Button, PageSpinner, StatusBadge, useToast } from 'shared/ui';
-import { getUser, setUser, hasPermission, clearAuth } from 'shared/auth';
-import PermissionGate from 'shared/PermissionGate';
-import { ThemeProvider, useTheme } from 'shared/ThemeContext';
-import eventBus from 'shared/eventBus';  // Cross-MFE pub/sub
-// MF runtime tự fetch từ localhost:3004/remoteEntry.js (hoặc GitHub Pages /shared/)
-```
-
-### UI Components (`shared/src/ui/`)
-
-| Component | Props / API |
-|-----------|------------|
-| `<Button>` | `variant` (primary/secondary/danger/ghost), `size`, `loading`, `disabled` |
-| `<Card>` | container với shadow |
-| `<CardHeader>` | `title`, `subtitle`, `action` — tiêu đề section trong Card |
-| `<Divider>` | `margin` — đường kẻ ngang ngăn cách |
-| `<Badge>` | `count`, `max`, `color`, `size` — badge số đếm |
-| `<StatusBadge>` | `label`, `color` (blue/green/yellow/purple/…) — badge trạng thái |
-| `<PageSpinner>` | `label` — full-page loading indicator |
-| `<SkeletonCard>` `<SkeletonRow>` `<SkeletonList>` | placeholder loading |
-| `<ToastProvider>` | wrap component tree cần dùng `useToast` |
-| `useToast()` | `{ show }` — `show(message, type, duration)` hiển thị toast notification |
-| `<ThemeProvider>` | wrap root app — quản lý dark/light mode, persist vào localStorage |
-| `useTheme()` | `{ isDark, toggle }` — toggle dark/light từ bất kỳ component nào |
-| `eventBus` (default export từ `shared/eventBus`) | `emit(event, detail)` · `on(event, handler)` · `getLast(event)` · `clear(event)` — cross-MFE pub/sub |
-
-### Lợi ích của MF runtime remote
-
-| | Build-time alias (cũ) | MF runtime remote (hiện tại) |
-|-|-----------------------|------------------------------|
-| Shared UI trong bundle MFE | ~7KB × 6 MFE = ~42KB duplicate | Không — chỉ có ở shared/dist |
-| Update shared → cần làm gì | Rebuild tất cả 6 MFE | Chỉ deploy shared, MFE nhận ngay |
-| Shared server phải chạy | Không | Có — MFE crash nếu shared offline |
-
-### Phát triển shared components
+## 9. Chạy local
 
 ```bash
-pnpm --filter shared start   # http://localhost:3004
-```
-
-Khi thay đổi file trong `shared/src/`, Vite HMR tự cập nhật — không cần restart MFE devserver.
-
----
-
-## 8. Authorization — RBAC
-
-### Phân quyền theo role
-
-| Permission | CUSTOMER | PREMIUM | BUSINESS |
-|-----------|:--------:|:-------:|:--------:|
-| `accounts:view` | ✓ | ✓ | ✓ |
-| `accounts:download` | ✓ | ✓ | ✓ |
-| `accounts:manage` | | | ✓ |
-| `transfer:domestic` | ✓ | ✓ | ✓ |
-| `transfer:international` | | ✓ | ✓ |
-| `transfer:bulk` | | | ✓ |
-| `cards:view` | ✓ | ✓ | ✓ |
-| `cards:freeze` | ✓ | ✓ | ✓ |
-| `cards:change_pin` | ✓ | ✓ | ✓ |
-| `cards:manage_limit` | | ✓ | ✓ |
-| `loans:view` | ✓ | ✓ | ✓ |
-| `loans:apply` | | ✓ | ✓ |
-| `loans:pay_early` | | ✓ | ✓ |
-| `profile:view` | ✓ | ✓ | ✓ |
-| `profile:edit` | ✓ | ✓ | ✓ |
-| `profile:security` | ✓ | ✓ | ✓ |
-
-### `PermissionGate` component
-
-```jsx
-import PermissionGate from 'shared/PermissionGate';
-
-// Ẩn hoàn toàn khi không có quyền
-<PermissionGate permission="transfer:international">
-  <InternationalTransferForm />
-</PermissionGate>
-
-// Hiện nút bị khóa với badge "PREMIUM" khi không có quyền
-<PermissionGate permission="transfer:international" showLocked requiredRole="PREMIUM">
-  <InternationalTransferForm />
-</PermissionGate>
-
-// Custom fallback
-<PermissionGate permission="loans:apply" fallback={<UpgradePrompt />}>
-  <LoanApplicationForm />
-</PermissionGate>
-```
-
-### Check trực tiếp
-
-```js
-import { hasPermission, getPermissions } from 'shared/auth';
-
-// Check single permission
-if (hasPermission('accounts:manage')) { /* chỉ BUSINESS */ }
-
-// Lấy toàn bộ permissions của user hiện tại
-const perms = getPermissions();  // string[]
-```
-
----
-
-## 9. Performance & Advanced Techniques
-
-### 9.1 Dark mode — ThemeContext + CSS Custom Properties
-
-Dark mode được implement qua `shared/ThemeContext` — exposed từ MF runtime remote, dùng được ở mọi MFE mà không cần props drilling.
-
-```jsx
-// shared/src/ThemeContext.jsx
-export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem('vietbank_theme') === 'dark'
-  );
-
-  useEffect(() => {
-    // Set data-theme lên <html> → CSS custom properties tự kích hoạt
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('vietbank_theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
-
-  return (
-    <ThemeContext.Provider value={{ isDark, toggle: () => setIsDark((d) => !d) }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-```
-
-CSS custom properties được định nghĩa trong `shell/src/styles.css`:
-
-```css
-:root {
-  --bg-page:    #f8fafc;
-  --bg-card:    #ffffff;
-  --text-main:  #0f172a;
-  --text-muted: #64748b;
-  --border:     #e2e8f0;
-}
-
-[data-theme="dark"] {
-  --bg-page:    #0f172a;
-  --bg-card:    #1e293b;
-  --text-main:  #f1f5f9;
-  --text-muted: #94a3b8;
-  --border:     #334155;
-}
-
-.app {
-  background: var(--bg-page);
-  color: var(--text-main);
-  transition: background 0.2s, color 0.2s;
-}
-```
-
-Dùng toggle từ bất kỳ component nào:
-
-```jsx
-// shell/src/components/Nav.jsx
-import { useTheme } from 'shared/ThemeContext';
-
-const { isDark, toggle } = useTheme();
-<button onClick={toggle}>{isDark ? '☀️' : '🌙'}</button>
-```
-
-**Tại sao dùng `data-theme` + CSS vars thay vì class?** CSS custom properties tự cascade xuống tất cả elements — không cần truyền prop, không cần inline style override. `data-theme` trên `<html>` ảnh hưởng toàn bộ trang kể cả nội dung MFE.
-
----
-
-### 9.2 React 18 Concurrent — `useTransition` + `useDeferredValue`
-
-Áp dụng trong `mfe-accounts/src/components/TransactionList.jsx`:
-
-**`useTransition`** — wrap state update không khẩn cấp (filter switch) để UI input/scroll không bị block:
-
-```jsx
-const [isPending, startTransition] = useTransition();
-const [filter, setFilter] = useState('all');
-
-const handleFilter = useCallback((key) => {
-  startTransition(() => setFilter(key));
-}, []);
-
-// isPending = true trong lúc React đang re-render → hiện visual feedback
-<button style={{ opacity: isPending ? 0.6 : 1 }}>Tất cả</button>
-```
-
-**`useDeferredValue`** — search input cập nhật ngay (không lag), list filter chạy sau khi browser rảnh:
-
-```jsx
-const [searchText, setSearchText] = useState('');
-const deferredSearch = useDeferredValue(searchText);
-const isSearchStale  = searchText !== deferredSearch; // true trong lúc defer
-
-// Input dùng searchText (cập nhật ngay)
-<input value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-
-// Filter list dùng deferredSearch (chạy sau)
-const filtered = useMemo(() => {
-  return allTxns.filter((t) => t.desc.toLowerCase().includes(deferredSearch.toLowerCase()));
-}, [allTxns, deferredSearch]);
-
-// Hiện "đang lọc..." khi deferred chưa bắt kịp
-{isSearchStale && <span>đang lọc...</span>}
-```
-
-| Hook | Dùng khi | Cách hoạt động |
-|------|----------|----------------|
-| `useTransition` | User click button → state update nặng | React ưu tiên input events, defer state update |
-| `useDeferredValue` | Controlled input → tính toán đắt phụ thuộc vào value | Giữ value cũ cho expensive render, dùng value mới khi browser rảnh |
-
----
-
-### 9.3 Virtual Scrolling — `@tanstack/react-virtual`
-
-Với danh sách lớn (120+ giao dịch), DOM chỉ render rows đang visible trong viewport — không render toàn bộ list:
-
-```jsx
-import { useVirtualizer } from '@tanstack/react-virtual';
-
-const parentRef = useRef(null);
-
-const virtualizer = useVirtualizer({
-  count:            filtered.length,   // tổng số items (kể cả chưa render)
-  getScrollElement: () => parentRef.current,
-  estimateSize:     () => 80,          // chiều cao ước tính mỗi row (px)
-  overscan:         5,                 // render thêm 5 rows ngoài viewport để scroll mượt
-});
-
-// Container fixed height với overflow scroll
-<div ref={parentRef} style={{ height: 480, overflowY: 'auto' }}>
-  {/* Div cao bằng tổng chiều cao tất cả rows — tạo scrollbar đúng kích thước */}
-  <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-    {virtualizer.getVirtualItems().map((vItem) => (
-      <div
-        key={vItem.key}
-        ref={virtualizer.measureElement}   // đo chiều cao thực của row sau khi render
-        style={{
-          position:  'absolute',
-          top:       0,
-          transform: `translateY(${vItem.start}px)`,  // dịch đến vị trí đúng
-        }}
-      >
-        <TransactionRow tx={filtered[vItem.index]} />
-      </div>
-    ))}
-  </div>
-</div>
-```
-
-Khi scroll qua 120 rows: DOM chỉ có ~8 nodes thay vì 120. `overscan: 5` render sẵn 5 rows trên/dưới viewport để tránh flash khi scroll nhanh.
-
----
-
-### 9.4 React Query Advanced
-
-#### `useInfiniteQuery` — load dữ liệu theo trang
-
-Thay vì load 1 lần rồi paginate ở client, `useInfiniteQuery` fetch từng trang và gộp kết quả:
-
-```js
-// mfe-accounts/src/api/accounts.js
-export const fetchTransactionPage = async ({ accountId, pageParam = 0 }) => {
-  await delay(300);
-  const all = MOCK_TRANSACTIONS[accountId] || [];
-  return {
-    items:    all.slice(pageParam * 20, (pageParam + 1) * 20),
-    nextPage: (pageParam + 1) * 20 < all.length ? pageParam + 1 : undefined,
-    total:    all.length,
-  };
-};
-```
-
-```jsx
-// mfe-accounts/src/components/TransactionList.jsx
-const {
-  data, fetchNextPage, hasNextPage, isFetchingNextPage,
-} = useInfiniteQuery({
-  queryKey:         ['transactions', id],
-  queryFn:          ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
-  initialPageParam: 0,
-  getNextPageParam: (lastPage) => lastPage.nextPage,  // undefined = không còn trang nào
-});
-
-// Gộp tất cả trang đã load
-const allTxns = useMemo(
-  () => data?.pages.flatMap((p) => p.items) ?? [],
-  [data],
-);
-
-// Nút tải thêm
-{hasNextPage && (
-  <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-    {isFetchingNextPage ? 'Đang tải...' : `Tải thêm (còn ${total - allTxns.length})`}
-  </button>
-)}
-```
-
-#### `useMutation` + Optimistic Update
-
-Khi user submit chuyển tiền, item xuất hiện ngay trong `TransferHistory` trước khi API trả về. Nếu API lỗi → rollback tự động:
-
-```jsx
-// mfe-transfer/src/components/NewTransfer.jsx
-const queryClient = useQueryClient();
-
-const mutation = useMutation({
-  mutationFn: submitTransfer,
-
-  // 1. Chạy TRƯỚC API call — thêm item vào cache ngay lập tức
-  onMutate: async (newForm) => {
-    await queryClient.cancelQueries({ queryKey: ['transfer-history'] });
-    const previousHistory = queryClient.getQueryData(['transfer-history']);
-
-    queryClient.setQueryData(['transfer-history'], (old = []) => [
-      { id: `optimistic-${Date.now()}`, ...newForm, status: 'pending', _optimistic: true },
-      ...old,
-    ]);
-
-    return { previousHistory };  // context để rollback
-  },
-
-  // 2. Rollback nếu API thất bại
-  onError: (_err, _form, context) => {
-    queryClient.setQueryData(['transfer-history'], context.previousHistory);
-  },
-
-  // 3. Luôn invalidate sau khi xong — fetch lại data thật từ server
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ['transfer-history'] });
-  },
-});
-```
-
-`TransferHistory` đọc từ cùng `queryKey: ['transfer-history']` nên tự nhận optimistic item:
-
-```jsx
-// mfe-transfer/src/components/TransferHistory.jsx
-const { data: history = [] } = useQuery({
-  queryKey: ['transfer-history'],
-  queryFn:  fetchTransferHistory,
-});
-
-// Item optimistic có flag _optimistic: true → render "Đang xử lý..."
-{h._optimistic && <span>Đang xử lý...</span>}
-```
-
-**Flow optimistic update:**
-
-```
-User nhấn "Xác nhận"
-  │
-  ├─ onMutate: cache['transfer-history'] = [optimisticItem, ...old]
-  │            TransferHistory re-render ngay — hiện item mờ "Đang xử lý..."
-  │
-  ├─ API call (1.2s delay mock)
-  │    │
-  │    ├─ Success → onSettled: invalidate → refetch → item thật thay thế optimistic
-  │    │
-  │    └─ Error → onError: rollback cache về previousHistory → item biến mất
-  │               onSettled: invalidate → refetch để chắc chắn đồng bộ
-```
-
----
-
-### 9.5 Các kỹ thuật performance khác
-
-#### Prefetch MFE khi hover nav link
-
-```jsx
-// shell/src/components/Nav.jsx
-const NAV_LINKS = [
-  { to: '/accounts', label: 'Tài khoản',   prefetch: () => import('mfe_accounts/AccountsApp') },
-  { to: '/transfer', label: 'Chuyển tiền', prefetch: () => import('mfe_transfer/TransferApp') },
-  { to: '/cards',    label: 'Thẻ',         prefetch: () => import('mfe_cards/CardsApp') },
-  { to: '/loans',    label: 'Vay vốn',     prefetch: () => import('mfe_loans/LoansApp') },
-];
-
-<Link onMouseEnter={prefetch}>…</Link>
-// Khi user hover vào nav link, MFE đã được download trước → navigate instant
-```
-
-#### Lazy load sub-pages trong MFE
-
-```jsx
-// mfe-accounts/src/components/AccountsApp.jsx
-const AccountDetail   = lazy(() => import('./AccountDetail'));
-const TransactionList = lazy(() => import('./TransactionList'));
-// Vite tự động code-split, chỉ download khi navigate đến
-```
-
-#### React.memo + useMemo + useCallback
-
-```jsx
-// Tránh re-render khi virtualizer scroll — chỉ re-render khi props thực sự thay đổi
-const TransactionRow = memo(function TransactionRow({ tx }) { … });
-
-// Tính toán đắt chỉ chạy khi dependency thay đổi
-const filtered = useMemo(() => allTxns.filter(…), [allTxns, filter, deferredSearch]);
-
-// Stable reference cho event handler — tránh re-render child
-const handleFilter = useCallback((key) => { startTransition(() => setFilter(key)); }, []);
-```
-
-#### React Query staleTime
-
-```js
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } },  // 5 phút
-});
-// Navigate /accounts → /transfer → /accounts: không refetch, dùng cache
-```
-
-#### Chunk caching strategy
-
-| File | Caching |
-|------|---------|
-| `assets/main-[hash8].js` | `max-age=31536000, immutable` (hash thay đổi khi code thay đổi) |
-| `assets/[chunk]-[hash8].js` | `max-age=31536000, immutable` |
-| `remoteEntry.js` | `max-age=0, must-revalidate` (không có hash, phải check mỗi lần) |
-
----
-
-### 9.6 Cross-MFE Event Bus
-
-Pattern pub/sub qua `window.CustomEvent` + **last-value cache** cho phép hai MFE giao tiếp mà không cần mount cùng lúc và không cần biết schema store của nhau.
-
-**Tại sao không dùng Zustand store?**
-
-| | Zustand `accountStore` | Event Bus |
-|-|------------------------|-----------|
-| Dùng cho | State persisted, nhiều subscriber cùng lúc | One-time intent — navigation handoff, user action |
-| Coupling | MFE phải biết store schema | Không — chỉ cần biết event name + payload shape |
-| Phù hợp với | accounts[] cần persist và sync | Pre-fill context khi navigate |
-
-```js
-// shared/src/eventBus.js
-const _last = {};  // last-value cache
-
-const eventBus = {
-  emit(event, detail) {
-    _last[event] = detail;
-    window.dispatchEvent(new CustomEvent(event, { detail, bubbles: true }));
-  },
-  on(event, handler) {
-    const wrapped = (e) => handler(e.detail);
-    window.addEventListener(event, wrapped);
-    return () => window.removeEventListener(event, wrapped);
-  },
-  getLast(event) { return _last[event] ?? null; },
-  clear(event)   { delete _last[event]; },
-};
-
-export default eventBus;
-```
-
-**Flow demo — AccountDetail → NewTransfer:**
-
-```
-mfe-accounts/AccountDetail
-  User click "Chuyển tiền từ đây"
-  → eventBus.emit('vb:transferPrefill', { accountId, accountName, accountNumber, balance })
-  → navigate('/transfer/new')
-
-  [MFE unmounted — không còn trong DOM]
-
-mfe-transfer/NewTransfer (mount mới)
-  const prefill = eventBus.getLast('vb:transferPrefill')
-  → form.sourceId = prefill.accountId   (tự chọn sẵn tài khoản nguồn)
-  → hiện banner "Đã chọn sẵn từ mfe-accounts: [tên tài khoản]"
-  useEffect(() => () => eventBus.clear('vb:transferPrefill'), [])  // cleanup on unmount
-```
-
-```jsx
-// mfe-accounts/src/components/AccountDetail.jsx
-import eventBus from 'shared/eventBus';
-
-<button onClick={() => {
-  eventBus.emit('vb:transferPrefill', {
-    accountId: account.id, accountName: account.name,
-    accountNumber: account.number, balance: account.balance,
-  });
-  navigate('/transfer/new');
-}}>
-  Chuyển tiền từ đây
-</button>
-```
-
-```jsx
-// mfe-transfer/src/components/NewTransfer.jsx
-import eventBus from 'shared/eventBus';
-
-export default function NewTransfer() {
-  const prefill = eventBus.getLast('vb:transferPrefill');
-  const [form, setForm] = useState({ ...INITIAL_FORM, sourceId: prefill?.accountId ?? '' });
-
-  useEffect(() => () => eventBus.clear('vb:transferPrefill'), []);
-
-  // Hiện indicator nếu có prefill
-  {prefill && (
-    <div className="prefill-banner">
-      ⚡ Đã chọn sẵn từ <strong>mfe-accounts</strong>: {prefill.accountName}
-    </div>
-  )}
-}
-```
-
-**Tại sao cần `getLast` (last-value cache)?** `CustomEvent` là fire-and-forget — subscriber phải mount TRƯỚC khi event được emit mới nhận được. Vì user navigate đi trước khi NewTransfer mount, ta cần cache payload để component đọc được khi nó khởi tạo.
-
----
-
-### 9.7 Shell-level Toast — Cross-MFE notification
-
-`ToastProvider` được mount ở **shell root** (bao quanh toàn bộ cây). Vì `shared` là singleton MF module, `ToastContext` chỉ có một instance duy nhất trong runtime. Bất kỳ MFE nào gọi `useToast()` đều nhận được context từ shell — không phải context cục bộ của MFE.
-
-```
-shell/App.jsx
-  <ThemeProvider>
-    <ToastProvider>           ← provide ở đây
-      <AuthProvider>
-        <Nav />
-        <Routes>
-          <Route path="/transfer/*" → <TransferApp />
-            → <NewTransfer />
-              const { show: toast } = useToast()   ← nhận ToastContext từ shell
-```
-
-```jsx
-// shell/src/App.jsx
-import { ToastProvider } from 'shared/ui';
-
-export default function App() {
-  return (
-    <ThemeProvider>
-      <ToastProvider>          {/* Toast render tại đây, trong shell DOM */}
-        <AuthProvider>
-          <div className="app">…</div>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
-  );
-}
-```
-
-```jsx
-// mfe-transfer/src/components/NewTransfer.jsx
-import { useToast } from 'shared/ui';
-
-export default function NewTransfer() {
-  const { show: toast } = useToast();
-
-  const handleSubmit = () => {
-    mutation.mutate(form, {
-      onSuccess: () => {
-        // Toast xuất hiện ở góc phải shell (không phải trong mfe-transfer DOM)
-        toast('Chuyển tiền thành công!', 'success');
-      },
-    });
-  };
-}
-```
-
-**`useToast()` resilient fallback** — khi MFE chạy standalone (không có shell `<ToastProvider>`), hook trả về noop thay vì throw:
-
-```js
-// shared/src/ui/Toast.jsx
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  // Standalone mode (no shell): return noop instead of throwing
-  if (!ctx) return { show: () => {} };
-  return ctx;
-}
-```
-
----
-
-### 9.8 Retry ErrorBoundary / Circuit Breaker
-
-Shell's `ErrorBoundary` được nâng cấp từ "chỉ hiện lỗi" thành circuit breaker 3-stage:
-
-```
-Lần 1-3: Remote load fail
-  → ErrorBoundary catch
-  → Hiện "Thử lại (N lần còn lại)" button
-  → User click → retryKey++ → React Fragment key thay đổi
-  → Suspense+lazy subtree remount → MF runtime thử load lại
-
-Sau 3 lần fail:
-  → "Circuit open" message
-  → Hiện nút "Tải lại trang" → window.location.reload()
-  → Full reload: browser fetch lại remoteEntry.js từ đầu (bypass React.lazy cache)
-```
-
-```jsx
-// shell/src/App.jsx
-const MAX_RETRIES = 3;
-
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null, retryCount: 0, retryKey: 0 };
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  handleRetry = () => {
-    this.setState((s) => ({
-      hasError:   false,
-      error:      null,
-      retryCount: s.retryCount + 1,
-      retryKey:   s.retryKey + 1,  // keyed Fragment → force subtree remount
-    }));
-  };
-
-  render() {
-    const { hasError, error, retryCount, retryKey } = this.state;
-    const attemptsLeft = MAX_RETRIES - retryCount;
-
-    if (hasError) {
-      return (
-        <div className="error-box">
-          <strong>Không thể tải MFE</strong>
-          <br /><small>{error?.message}</small>
-          <br />
-          {attemptsLeft > 0 ? (
-            <button onClick={this.handleRetry}>
-              Thử lại ({attemptsLeft} lần còn lại)
-            </button>
-          ) : (
-            <>
-              <small>⚡ Circuit open — Remote không phản hồi sau {MAX_RETRIES} lần thử.</small>
-              <button onClick={() => window.location.reload()}>Tải lại trang</button>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    // key trick: React.Fragment với key thay đổi → unmount + remount toàn bộ children
-    return <React.Fragment key={retryKey}>{this.props.children}</React.Fragment>;
-  }
-}
-```
-
-**Tại sao cần `window.location.reload()` thay vì chỉ retry?** `React.lazy()` cache promise — nếu import fail, promise bị đánh dấu rejected vĩnh viễn trong cùng một page lifetime. Keyed Fragment remount giúp với lỗi runtime trong MFE component, nhưng với lỗi load chunk từ network thì full reload mới thực sự retry được.
-
----
-
-## 10. Chạy local
-
-### Yêu cầu
-
-- Node.js 18+
-- pnpm 10+
-
-### Cài đặt
-
-```bash
-git clone https://github.com/MinhChien96/micro-frontend.git
-cd micro-frontend
 pnpm install
+pnpm start          # 8 dev servers (concurrently) — tất cả SSR mode
 ```
 
-### Chạy toàn bộ stack
+- App: http://localhost:3000 — Mỗi MFE chạy standalone: http://localhost:3002 (mock user PREMIUM)…
+- Kiểm chứng SSR: `curl -s localhost:3000/login | grep 0021001` → thấy markup form từ remote.
+- Smoke E2E (cần Chrome): `pnpm test:e2e` — login → accounts → detail → 4 MFE → reload authed → logout, assert 0 console error ([scripts/e2e-smoke.mjs](scripts/e2e-smoke.mjs)).
+
+## 10. Deploy giả lập AWS (Docker + LocalStack)
+
+Mô phỏng: **container = ECS service**, **LocalStack S3 = CDN static assets**.
 
 ```bash
-pnpm start
+pnpm docker:build    # build 8 image (docker/Dockerfile dùng chung, ARG APP)
+pnpm docker:up       # 7 SSR services + LocalStack — http://localhost:3000
+pnpm docker:down
 ```
 
-Khởi động 8 devserver song song:
+Shell container nhận `MF_INTERNAL_HOST_MAP` để fetch manifest/bundles qua hostname nội bộ (`http://mfe-accounts:3002`), browser vẫn dùng `localhost:300x` — xem [docker/docker-compose.yml](docker/docker-compose.yml).
 
-```
-[shared]   VITE ready in ~500ms  →  http://localhost:3004  (shared MF remote)
-[auth]     VITE ready in ~600ms  →  http://localhost:3001  (mfe-auth)
-[accounts] VITE ready in ~650ms  →  http://localhost:3002  (mfe-accounts)
-[transfer] VITE ready in ~650ms  →  http://localhost:3003  (mfe-transfer)
-[profile]  VITE ready in ~620ms  →  http://localhost:3005  (mfe-profile)
-[loans]    VITE ready in ~650ms  →  http://localhost:3006  (mfe-loans)
-[cards]    VITE ready in ~660ms  →  http://localhost:3007  (mfe-cards)
-[shell]    VITE ready in ~660ms  →  http://localhost:3000  ← mở tại đây
-```
-
-> Shared server (:3004) phải chạy trước khi MFE fetch `shared/ui`. Nếu chạy MFE riêng lẻ mà thiếu shared server, các components sẽ resolve thành `undefined`.
-
-### Chạy từng MFE độc lập (standalone mode)
-
-Mỗi MFE có `src/main.jsx` + `src/App.jsx` riêng để dev/test độc lập:
+Đẩy static assets lên S3 LocalStack (giả lập CDN):
 
 ```bash
-pnpm --filter mfe-auth     start   # http://localhost:3001
-pnpm --filter mfe-accounts start   # http://localhost:3002
-pnpm --filter mfe-transfer start   # http://localhost:3003
-pnpm --filter mfe-profile  start   # http://localhost:3005
-pnpm --filter mfe-loans    start   # http://localhost:3006
-pnpm --filter mfe-cards    start   # http://localhost:3007
+pnpm deploy:local    # scripts/deploy-localstack.sh
+# build từng remote với PUBLIC_URL=http://localhost:4566/vietbank-static/<app>/
+# rồi s3 sync dist/static + dist/bundles
 ```
 
-Khi mở browser, sẽ thấy banner vàng "Standalone — mfe-xxx" ở trên cùng. MFE chạy hoàn toàn độc lập với HashRouter riêng — không cần shell hay các MFE khác.
+## 11. Deploy AWS thật (reference)
 
-```
-┌─ Standalone — mfe-accounts :3002 ─────────────────────┐  ← banner vàng
-│                                                        │
-│  Danh sách tài khoản                                   │
-│  ┌──────────────────────┐  ┌──────────────────────┐    │
-│  │ Tài khoản thanh toán │  │ Tài khoản tiết kiệm  │    │
-│  └──────────────────────┘  └──────────────────────┘    │
-└────────────────────────────────────────────────────────┘
-```
+[.github/workflows/deploy-aws.yml](.github/workflows/deploy-aws.yml) — 2 job:
 
-### Build production
+1. **static-assets**: build các remote với `PUBLIC_URL=https://<CDN_DOMAIN>/<app>/` → `aws s3 sync` static + bundles → invalidate CloudFront.
+2. **ssr-services** (matrix 7 app): build image từ `docker/Dockerfile` → push ECR → `aws ecs update-service`.
 
-```bash
-pnpm build          # build tất cả 8 packages
-pnpm -r run build   # tương đương
-```
+Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS_REGION`, `S3_BUCKET`, `CDN_DOMAIN`, `CF_DISTRIBUTION_ID`, `ECS_CLUSTER`, và ECS task definitions + ALB cho 7 service `vietbank-*`. Trên CDN thật **không cần** `MF_INTERNAL_HOST_MAP` (CloudFront reachable từ cả server lẫn browser).
 
-Output của mỗi package:
+## 12. Troubleshooting
 
-```
-mfe-accounts/dist/
-├── remoteEntry.js          # MF entry — không có hash, phải serve với no-cache
-├── assets/
-│   ├── AccountsApp-[hash].js
-│   ├── AccountDetail-[hash].js   # lazy chunk
-│   └── TransactionList-[hash].js # lazy chunk
-└── index.html              # standalone entry
-```
-
-### Preview production build
-
-```bash
-# Chạy từng package ở production mode
-pnpm --filter shell       preview   # :3000
-pnpm --filter mfe-auth    preview   # :3001
-pnpm --filter mfe-accounts preview  # :3002
-# … tương tự các MFE khác
-```
+| Triệu chứng | Nguyên nhân / Fix |
+|---|---|
+| `Không thể tải MFE — remote ... có đang chạy không?` | Remote chết hoặc port bị chiếm. `curl localhost:300x/static/mf-manifest.json` rồi `pnpm --filter <mfe> start` xem log. |
+| Browser fetch manifest bị CORS (prod server) | Container remote cần `MODERN_MF_AUTO_CORS=true` (đã set trong compose). |
+| SSR log `ECONNREFUSED localhost:300x` trong Docker | Thiếu/sai `MF_INTERNAL_HOST_MAP` — server phải fetch qua service name. |
+| `"path" is a built-in Node.js module...` khi dev | Race trong MF ssrPlugin kéo `@module-federation/node` vào web bundle — đã chặn bằng `chain.externals` trong mọi `modern.config.ts` (giữ nguyên dòng đó). |
+| Dev server chết hàng loạt, log `write EPIPE` từ dts-plugin | MF DTS generation (dev-only) crash RPC child process → đã tắt `dts: false` trong mọi `module-federation.config.ts` (type khai báo tay ở `shell/mfe-declarations.d.ts`). |
+| `SSR Error ... <Router> inside another <Router>` lác đác khi dev | Triệu chứng transient khi node-bundle đang rebuild / server chết giữa chừng — restart fleet sạch; không phải lỗi code (fleet khỏe không có lỗi này). |
+| `The root layout component is required` | Modern.js ≥2.71 bắt buộc `src/routes/layout.tsx` (Outlet tối thiểu). |
+| Hydration mismatch quanh auth | Không đọc localStorage lúc render đầu — dùng pattern `{ user, ready }` của AuthContext. |
+| `localStorage.getItem is not a function` trong SSR log | Code chạy server thiếu guard `typeof window === 'undefined'`. |
+| Toast / eventBus `getLast()` không cross-MFE | Thiếu `shared/ui` / `shared/eventBus` trong MF `shared:` map (host **và** remote). |
 
 ---
 
-## 11. CI/CD — GitHub Actions
-
-### Tổng quan workflow
-
-```
-push to main
-     │
-     ├─ changed: shared/** hoặc remotes.config.js hoặc pnpm-lock.yaml
-     │   └─► deploy-all.yml  ── rebuild + deploy toàn bộ 8 packages
-     │
-     ├─ changed: mfe-auth/**
-     │   └─► deploy-mfe-auth.yml  ── build shared + mfe-auth, deploy chỉ mfe-auth/
-     │
-     ├─ changed: mfe-accounts/**
-     │   └─► deploy-mfe-accounts.yml ── build shared + mfe-accounts, deploy mfe-accounts/
-     │
-     ├─ changed: shell/**
-     │   └─► deploy-shell.yml ── build shared + shell, deploy shell (root Pages)
-     │
-     └─ changed: .github/workflows/**
-         └─► deploy-all.yml ── full rebuild
-```
-
-### Per-MFE deploy (ví dụ `deploy-mfe-accounts.yml`)
-
-Tách thành 2 job để tránh race condition khi nhiều MFE deploy đồng thời:
-
-```yaml
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'mfe-accounts/**'
-
-concurrency:
-  group: deploy-mfe-accounts   # ngăn cùng workflow chạy song song
-  cancel-in-progress: true
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - run: pnpm install --frozen-lockfile
-
-      - name: Build shared        # cần build shared trước để MFE resolve remoteEntry URL
-        run: pnpm --filter shared build
-        env:
-          PUBLIC_URL: ${{ env.BASE }}/shared/
-
-      - name: Build mfe-accounts
-        run: pnpm --filter mfe-accounts build
-        env:
-          PUBLIC_URL: ${{ env.BASE }}/mfe-accounts/
-          BASE_GH_PAGES: ${{ env.BASE }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mfe-accounts-dist
-          path: mfe-accounts/dist
-          retention-days: 1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-gh-pages      # shared với mọi workflow — xếp hàng, không tranh nhau push gh-pages
-      cancel-in-progress: false
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: mfe-accounts-dist
-          path: mfe-accounts/dist
-
-      - uses: peaceiris/actions-gh-pages@v4
-        with:
-          publish_dir: ./mfe-accounts/dist
-          destination_dir: mfe-accounts
-          keep_files: true    # chỉ update mfe-accounts/, giữ nguyên các folder khác
-```
-
-**Tại sao cần 2 job?** Khi merge PR thay đổi nhiều MFE, các workflow build song song — nhưng nếu cùng push lên `gh-pages` thì bị reject ("cannot lock ref"). `deploy` job dùng shared concurrency group `deploy-gh-pages, cancel-in-progress: false` → xếp hàng tuần tự, không race condition.
-
-### Full deploy (`deploy-all.yml`)
-
-Build tất cả theo thứ tự, assemble vào 1 thư mục rồi deploy:
-
-```yaml
-steps:
-  - build shared, mfe-auth, mfe-accounts, mfe-transfer,
-    mfe-cards, mfe-loans, mfe-profile, shell  (tuần tự để tránh conflict)
-
-  - name: Assemble
-    run: |
-      mkdir -p pages
-      cp -r shell/dist/.        pages/           # index.html + shell assets
-      cp -r mfe-auth/dist       pages/mfe-auth
-      cp -r mfe-accounts/dist   pages/mfe-accounts
-      cp -r mfe-transfer/dist   pages/mfe-transfer
-      cp -r mfe-cards/dist      pages/mfe-cards
-      cp -r mfe-loans/dist      pages/mfe-loans
-      cp -r mfe-profile/dist    pages/mfe-profile
-      touch pages/.nojekyll
-
-  - uses: peaceiris/actions-gh-pages@v4
-    with:
-      publish_dir: ./pages
-      keep_files: false   # full replace — xóa sạch, deploy lại toàn bộ
-```
-
-### GitHub Pages layout
-
-```
-https://minhchien96.github.io/micro-frontend/
-├── index.html                      # shell
-├── assets/                         # shell chunks
-├── mfe-auth/
-│   ├── remoteEntry.js
-│   └── assets/
-├── mfe-accounts/
-│   ├── remoteEntry.js
-│   └── assets/
-├── mfe-transfer/ …
-├── mfe-cards/    …
-├── mfe-loans/    …
-└── mfe-profile/  …
-```
-
-### Tại sao `shared` thay đổi → `deploy-all`?
-
-`deploy-shared.yml` (chỉ deploy shared) và `deploy-all.yml` đều trigger khi `shared/**` thay đổi. `deploy-all` đảm bảo shared/dist được đặt đúng vị trí trong cây Pages cùng với toàn bộ MFE. Nếu chỉ chạy `deploy-shared`, cấu trúc folder `/shared/` trên Pages phải đã tồn tại — dùng `deploy-all` cho lần đầu hoặc khi cần rebuild toàn bộ.
-
----
-
-## 12. Quy trình làm việc theo team
-
-### Phát triển feature mới
-
-```bash
-# 1. Chạy standalone — không cần các MFE khác
-pnpm --filter mfe-accounts start
-# Mở http://localhost:3002, dev với HMR
-
-# 2. Test tích hợp với shell — chạy full stack
-pnpm start
-# Mở http://localhost:3000
-
-# 3. Commit và push
-git add mfe-accounts/
-git commit -m "feat: thêm filter giao dịch theo ngày"
-git push
-# → deploy-mfe-accounts.yml tự động chạy (~60s) → live trên GitHub Pages
-```
-
-### Thay đổi shared components
-
-```bash
-# 1. Phát triển shared — HMR tự cập nhật, không cần restart
-pnpm --filter shared start   # http://localhost:3004
-
-# 2. Test trong full stack (MFE nhận shared update qua HMR)
-pnpm start
-
-# 3. Commit
-git add shared/
-git commit -m "feat: thêm variant danger cho Button"
-git push
-# → deploy-all.yml chạy — build shared + toàn bộ MFE (~3-4 phút)
-# Sau khi deploy shared lên GitHub Pages, mọi MFE nhận update ngay khi user reload
-```
-
-### Concurrency — tránh conflict deploy
-
-Hai tầng concurrency group để giải quyết hai vấn đề khác nhau:
-
-**Tầng 1 — top-level (ngăn duplicate run của cùng workflow):**
-
-| Workflow | Group | cancel-in-progress |
-|----------|-------|--------------------|
-| `deploy-all` | `deploy-pages` | `false` — full rebuild không bị interrupt |
-| `deploy-shell` | `deploy-shell` | `true` |
-| `deploy-mfe-auth` | `deploy-mfe-auth` | `true` |
-| `deploy-mfe-accounts` | `deploy-mfe-accounts` | `true` |
-| … (các MFE khác) | `deploy-mfe-{name}` | `true` |
-
-**Tầng 2 — job-level `deploy` (ngăn race condition khi nhiều workflow push gh-pages cùng lúc):**
-
-Tất cả job `deploy` dùng chung `group: deploy-gh-pages, cancel-in-progress: false` → xếp hàng tuần tự.
-
-`remotes.config.js` thay đổi chỉ trigger `deploy-all` (không trigger per-MFE), tránh tình huống 8 workflows race nhau cùng một push.
-
----
-
-## 13. Xử lý sự cố thường gặp
-
-### `SyntaxError: Cannot use import statement outside a module`
-
-`remoteEntry.js` của Vite là ES Module. MF runtime phải load nó bằng `<script type="module">`.
-
-**Fix:** Dùng object format trong `remotes.config.js`:
-```js
-// SAI — plain URL string → classic <script>
-mfe_auth: 'http://localhost:3001/remoteEntry.js'
-
-// ĐÚNG — object với type:'module'
-mfe_auth: { type: 'module', name: 'mfe_auth', entry: 'http://localhost:3001/remoteEntry.js' }
-```
-
-### `useNavigate() may be used only in the context of a <Router>`
-
-Xảy ra khi chạy MFE standalone mà `src/main.jsx` thiếu `HashRouter`.
-
-**Fix:** Wrap `App` trong `HashRouter`:
-```jsx
-// mfe-xxx/src/main.jsx
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <HashRouter><App /></HashRouter>
-);
-```
-
-### MFE không render khi mount vào shell — lỗi routing
-
-`react-router-dom` bị khởi tạo 2 lần (shell + MFE mỗi bên 1 instance).
-
-**Fix:** Khai báo `singleton: true` trong `shared` của **cả** shell lẫn MFE:
-```js
-'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
-```
-MFE tuyệt đối không dùng `<BrowserRouter>` hay `<HashRouter>` trong exposed component — chỉ dùng `<Routes>`.
-
-### Devserver crash: `Cannot read file 'tsconfig.json'`
-
-`@module-federation/dts-plugin` fork worker để generate TypeScript types, crash vì không có `tsconfig.json`.
-
-**Fix:** Thêm `dts: false` trong federation config:
-```js
-federation({ dts: false, name: 'mfe_xxx', … })
-```
-
-### `Element type is invalid: expected a string...but got: undefined`
-
-Xảy ra khi shared server không chạy. MFE fetch `shared/remoteEntry.js` thất bại → component resolve thành `undefined` → React throw khi render.
-
-**Fix:** Đảm bảo shared server đang chạy:
-```bash
-pnpm start           # khởi động shared cùng tất cả MFE
-# hoặc riêng lẻ:
-pnpm --filter shared start   # :3004
-```
-
-### Lỗi CORS khi shell fetch remoteEntry.js
-
-Kiểm tra `server.cors: true` trong vite.config.js của MFE:
-
-```bash
-curl -I http://localhost:3002/remoteEntry.js
-# Phải có: Access-Control-Allow-Origin: *
-```
-
-### Port bị chiếm sau khi kill process
-
-```bash
-lsof -ti :3002 | xargs kill -9
-```
-
----
-
-## 14. Công nghệ sử dụng
-
-| Công nghệ | Version | Vai trò |
-|-----------|---------|---------|
-| [Vite](https://vitejs.dev/) | 6.4 | Build tool, HMR, dev server |
-| [@module-federation/vite](https://github.com/module-federation/vite) | 1.15 | Module Federation plugin cho Vite |
-| [React](https://react.dev/) | 18.3 | UI framework (Concurrent: useTransition, useDeferredValue, Suspense) |
-| [React Router](https://reactrouter.com/) | 6.22 | Client-side routing (HashRouter) |
-| [TanStack React Query](https://tanstack.com/query) | 5.28 | Data fetching + cache, useInfiniteQuery, useMutation + optimistic update |
-| [TanStack Virtual](https://tanstack.com/virtual) | 3.x | Virtual scrolling — chỉ render visible rows trong danh sách lớn |
-| [Zustand](https://github.com/pmndrs/zustand) | 4.x | Shared state (authStore + accountStore) với subscribeWithSelector + persist |
-| Event Bus (built-in) | — | Cross-MFE pub/sub qua `window.CustomEvent` + last-value cache |
-| [pnpm](https://pnpm.io/) | 10 | Workspace package manager |
-| [GitHub Actions](https://github.com/features/actions) | — | CI/CD |
-| [GitHub Pages](https://pages.github.com/) | — | Hosting (static) |
-| [peaceiris/actions-gh-pages](https://github.com/peaceiris/actions-gh-pages) | v4 | Deploy to GitHub Pages |
+**Lịch sử kiến trúc** (git history): webpack MF → Vite → Modern.js CSR (`d377b08`) → Next.js shell + MF runtime → **Modern.js federated SSR (hiện tại)**.

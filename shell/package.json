@@ -4,14 +4,15 @@
   "scripts": {
     "start": "modern dev",
     "build": "modern build",
-    "preview": "modern start"
+    "serve": "modern serve"
   },
   "dependencies": {
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0"
+    "react-router-dom": "^6.22.0",
+    "shared": "workspace:*"
   },
   "devDependencies": {
     "@modern-js/app-tools": "^2.65.0",

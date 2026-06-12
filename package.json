@@ -1,16 +1,26 @@
 {
   "name": "micro-frontend",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "start": "concurrently -n shared,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter shared start\" \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-accounts start\" \"pnpm --filter mfe-transfer start\" \"pnpm --filter mfe-cards start\" \"pnpm --filter mfe-loans start\" \"pnpm --filter mfe-profile start\" \"pnpm --filter shell start\"",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "docker:build": "docker compose -f docker/docker-compose.yml build",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "deploy:local": "bash scripts/deploy-localstack.sh",
+    "test:e2e": "node scripts/e2e-smoke.mjs"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "playwright-core": "^1.60.0"
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["@types/react", "@types/react-dom"]
+      "ignoreMissing": [
+        "@types/react",
+        "@types/react-dom"
+      ]
     }
   }
 }
