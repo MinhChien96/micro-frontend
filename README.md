@@ -1,6 +1,8 @@
-# VietBank — Micro Frontend Base: Modern.js Federated SSR
+# Micro Frontend Base Template — Modern.js Federated SSR
 
-> **Base project chuẩn cho kiến trúc micro-frontend**: shell + 6 remotes đều là **Modern.js (ByteDance/TikTok) + Rspack**, Module Federation 2.0, **federated SSR toàn tuyến** (SEO-ready), deploy giả lập AWS bằng **LocalStack + Docker Compose**, kèm reference workflow deploy AWS thật (S3/CloudFront + ECR/ECS).
+> **Base template chuẩn production cho micro-frontend**: shell + 6 remotes đều là **Modern.js (ByteDance/TikTok) + Rspack**, Module Federation 2.0, **federated SSR toàn tuyến** (SEO-ready), scoped namespace `@app/*`, **TypeScript strict**, tooling đầy đủ (Biome + Vitest + Lefthook + Changesets), **generator `pnpm gen:mfe`** tạo MFE mới tự đăng ký, deploy giả lập AWS (LocalStack + Docker) + reference workflow AWS thật.
+
+> 🧩 **Đây là template** — domain banking (accounts/transfer/cards/loans/profile/auth) chỉ là **example để tham khảo**. Đổi brand ở `@app/shared/brand`, scope `@app/*` → `@<org>`, thay/ thêm MFE bằng `pnpm gen:mfe`. Xem [docs/adr/0004](docs/adr/0004-scoped-namespace-brand.md).
 
 **Đăng nhập demo:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
 
@@ -20,6 +22,9 @@
 10. [Deploy giả lập AWS (Docker + LocalStack)](#10-deploy-giả-lập-aws-docker--localstack)
 11. [Deploy AWS thật (reference)](#11-deploy-aws-thật-reference)
 12. [Troubleshooting](#12-troubleshooting)
+13. [Tooling, test & mở rộng](#13-tooling-test--mở-rộng)
+
+> Tài liệu thêm: [CONTRIBUTING.md](CONTRIBUTING.md) · [Thêm MFE mới](docs/add-new-mfe.md) · [ADR](docs/adr/)
 
 ---
 
@@ -136,8 +141,8 @@ Trong [shell/module-federation.config.ts](shell/module-federation.config.ts) và
 | `react`, `react-dom` | Một React instance — không thì "invalid hook call" |
 | `react-router-dom` | Remote render `<Routes>` con phải attach vào Router context của shell |
 | `react/jsx-runtime` | Chống lệch element symbol nếu version React khác nhau giữa host/remote |
-| `shared/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
-| `shared/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
+| `@app/shared/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
+| `@app/shared/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
 
 ## 5. Routing
 
@@ -217,7 +222,7 @@ pnpm deploy:local    # scripts/deploy-localstack.sh
 1. **static-assets**: build các remote với `PUBLIC_URL=https://<CDN_DOMAIN>/<app>/` → `aws s3 sync` static + bundles → invalidate CloudFront.
 2. **ssr-services** (matrix 7 app): build image từ `docker/Dockerfile` → push ECR → `aws ecs update-service`.
 
-Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS_REGION`, `S3_BUCKET`, `CDN_DOMAIN`, `CF_DISTRIBUTION_ID`, `ECS_CLUSTER`, và ECS task definitions + ALB cho 7 service `vietbank-*`. Trên CDN thật **không cần** `MF_INTERNAL_HOST_MAP` (CloudFront reachable từ cả server lẫn browser).
+Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS_REGION`, `S3_BUCKET`, `CDN_DOMAIN`, `CF_DISTRIBUTION_ID`, `ECS_CLUSTER`, và ECS task definitions + ALB cho 7 service `app-*`. Trên CDN thật **không cần** `MF_INTERNAL_HOST_MAP` (CloudFront reachable từ cả server lẫn browser).
 
 ## 12. Troubleshooting
 
@@ -232,8 +237,34 @@ Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS
 | `The root layout component is required` | Modern.js ≥2.71 bắt buộc `src/routes/layout.tsx` (Outlet tối thiểu). |
 | Hydration mismatch quanh auth | Không đọc localStorage lúc render đầu — dùng pattern `{ user, ready }` của AuthContext. |
 | `localStorage.getItem is not a function` trong SSR log | Code chạy server thiếu guard `typeof window === 'undefined'`. |
-| Toast / eventBus `getLast()` không cross-MFE | Thiếu `shared/ui` / `shared/eventBus` trong MF `shared:` map (host **và** remote). |
+| Toast / eventBus `getLast()` không cross-MFE | Thiếu `@app/shared/ui` / `@app/shared/eventBus` trong MF `shared:` map (host **và** remote). |
 
 ---
 
-**Lịch sử kiến trúc** (git history): webpack MF → Vite → Modern.js CSR (`d377b08`) → Next.js shell + MF runtime → **Modern.js federated SSR (hiện tại)**.
+## 13. Tooling, test & mở rộng
+
+**Chất lượng code** (chi tiết: [CONTRIBUTING.md](CONTRIBUTING.md)):
+
+| Công cụ | Lệnh | Vai trò |
+|---|---|---|
+| Biome | `pnpm lint` / `pnpm lint:fix` | lint + format (1 binary) |
+| tsc | `pnpm typecheck` | TypeScript strict mọi package |
+| Vitest | `pnpm test` / `pnpm test:watch` | unit test (jsdom + Testing Library) |
+| Lefthook | tự chạy | pre-commit (Biome) + commit-msg (commitlint) |
+| Changesets | `pnpm changeset` | versioning độc lập từng package |
+
+CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) chạy lint → typecheck → test → build (matrix) trên mọi PR.
+
+**Mở rộng — tạo MFE mới trong 1 lệnh:**
+
+```bash
+pnpm gen:mfe payments 3008 "Thanh toán"
+```
+
+Generator (Plop) sinh package đầy đủ + **tự đăng ký 10 điểm nối** (workspace, shell remotes/declarations/remotePages/Nav/route, start script, docker-compose, deploy-aws). Chi tiết + bước thủ công còn lại: [docs/add-new-mfe.md](docs/add-new-mfe.md).
+
+**Test E2E** (smoke, cần Chrome + fleet đang chạy): `pnpm test:e2e` — login → accounts → detail → các MFE → logout, assert 0 console error.
+
+---
+
+**Lịch sử kiến trúc** (git history): webpack MF → Vite → Modern.js CSR (`d377b08`) → Next.js shell + MF runtime → Modern.js federated SSR → **base template (scoped `@app/*`, TS strict, tooling + generator) — hiện tại**.

@@ -7,9 +7,9 @@
 # SSR servers chạy ECS (image build từ docker/Dockerfile).
 name: Deploy AWS
 
+# CHỈ chạy thủ công: cần AWS secrets/vars + ECS/ALB cấu hình trước.
+# Bật push trigger khi hạ tầng AWS đã sẵn sàng.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
