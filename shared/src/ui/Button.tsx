@@ -1,4 +1,9 @@
-const VARIANTS = {
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
+
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
+const VARIANTS: Record<ButtonVariant, CSSProperties> = {
   primary: { background: '#667eea', color: '#fff', border: 'none' },
   secondary: { background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1' },
   danger: { background: '#ef4444', color: '#fff', border: 'none' },
@@ -6,11 +11,22 @@ const VARIANTS = {
   success: { background: '#22c55e', color: '#fff', border: 'none' },
 };
 
-const SIZES = {
+const SIZES: Record<ButtonSize, CSSProperties> = {
   sm: { padding: '6px 12px', fontSize: '13px', borderRadius: '6px' },
   md: { padding: '10px 20px', fontSize: '14px', borderRadius: '8px' },
   lg: { padding: '14px 28px', fontSize: '16px', borderRadius: '10px' },
 };
+
+interface ButtonProps {
+  children: ReactNode;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  icon?: ReactNode;
+}
 
 export function Button({
   children,
@@ -21,15 +37,15 @@ export function Button({
   fullWidth = false,
   type = 'button',
   icon,
-}) {
+}: ButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
       style={{
-        ...(VARIANTS[variant] || VARIANTS.primary),
-        ...(SIZES[size] || SIZES.md),
+        ...VARIANTS[variant],
+        ...SIZES[size],
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

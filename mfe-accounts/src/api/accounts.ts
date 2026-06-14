@@ -1,6 +1,37 @@
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// Example domain (banking) — thay bằng API thật khi làm dự án.
+export type AccountType = 'checking' | 'savings';
+export type TxnType = 'credit' | 'debit';
 
-const MOCK_ACCOUNTS = [
+export interface Account {
+  id: string;
+  type: AccountType;
+  typeLabel: string;
+  name: string;
+  number: string;
+  balance: number;
+  currency: string;
+  status: string;
+  interestRate?: number;
+  maturity?: string;
+}
+
+export interface Transaction {
+  id: string;
+  date: string;
+  desc: string;
+  amount: number;
+  type: TxnType;
+}
+
+export interface TransactionPage {
+  items: Transaction[];
+  nextPage: number | undefined;
+  total: number;
+}
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const MOCK_ACCOUNTS: Account[] = [
   {
     id: 'TK001',
     type: 'checking',
@@ -37,7 +68,7 @@ const MOCK_ACCOUNTS = [
   },
 ];
 
-// 120 transactions for TK001 to make virtual scrolling demo meaningful
+// 120 transactions cho TK001 để demo virtual scrolling có ý nghĩa
 const DESCS_DEBIT = [
   'Chuyển tiền đến Nguyễn Văn A',
   'Thanh toán điện nước',
@@ -67,16 +98,16 @@ const DESCS_CREDIT = [
   'Hoàn thuế',
 ];
 
-function pad(n) {
+function pad(n: number): string {
   return String(n).padStart(2, '0');
 }
-function makeDate(daysAgo) {
+function makeDate(daysAgo: number): string {
   const d = new Date('2024-10-15');
   d.setDate(d.getDate() - daysAgo);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const TK001_TRANSACTIONS = Array.from({ length: 120 }, (_, i) => {
+const TK001_TRANSACTIONS: Transaction[] = Array.from({ length: 120 }, (_, i): Transaction => {
   const isCredit = i % 3 === 1;
   const amount = isCredit
     ? [18_000_000, 3_200_000, 10_000_000, 150_000, 500_000, 2_500_000][i % 6]
@@ -91,7 +122,7 @@ const TK001_TRANSACTIONS = Array.from({ length: 120 }, (_, i) => {
   };
 });
 
-const MOCK_TRANSACTIONS = {
+const MOCK_TRANSACTIONS: Record<string, Transaction[]> = {
   TK001: TK001_TRANSACTIONS,
   TK002: [
     {
@@ -185,25 +216,31 @@ const MOCK_TRANSACTIONS = {
 
 const PAGE_SIZE = 20;
 
-export const fetchAccounts = async () => {
+export const fetchAccounts = async (): Promise<Account[]> => {
   await delay(400);
   return MOCK_ACCOUNTS;
 };
 
-export const fetchAccount = async (id) => {
+export const fetchAccount = async (id: string): Promise<Account> => {
   await delay(200);
   const acc = MOCK_ACCOUNTS.find((a) => a.id === id);
   if (!acc) throw new Error(`Không tìm thấy tài khoản ${id}`);
   return acc;
 };
 
-export const fetchTransactions = async (accountId) => {
+export const fetchTransactions = async (accountId: string): Promise<Transaction[]> => {
   await delay(200);
   return MOCK_TRANSACTIONS[accountId] || [];
 };
 
-// Paginated version for useInfiniteQuery
-export const fetchTransactionPage = async ({ accountId, pageParam = 0 }) => {
+// Bản phân trang cho useInfiniteQuery
+export const fetchTransactionPage = async ({
+  accountId,
+  pageParam = 0,
+}: {
+  accountId: string;
+  pageParam?: number;
+}): Promise<TransactionPage> => {
   await delay(300);
   const all = MOCK_TRANSACTIONS[accountId] || [];
   return {

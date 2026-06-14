@@ -1,13 +1,31 @@
+import type { Permission } from '@app/shared/auth';
 import eventBus from '@app/shared/eventBus';
 import PermissionGate from '@app/shared/PermissionGate';
 import { Card, CardHeader, Divider, PageSpinner, useToast } from '@app/shared/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAccounts } from '../api/accounts';
-import { submitTransfer } from '../api/transfer';
+import { submitTransfer, type TransferForm, type TransferRecord } from '../api/transfer';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+// Payload eventBus phát từ mfe-accounts/AccountDetail (vb:transferPrefill)
+interface TransferPrefill {
+  accountId: string;
+  accountName: string;
+  accountNumber: string;
+  balance: number;
+}
+
+type TransferFieldConfig = {
+  label: string;
+  field: keyof TransferForm;
+  type: 'select' | 'text';
+  options?: string[];
+  placeholder?: string;
+};
 
 const BANKS = [
   'Vietcombank',
@@ -39,7 +57,7 @@ export default function NewTransfer() {
   const { show: toast } = useToast();
 
   // Event Bus: read prefill context emitted by mfe-accounts/AccountDetail
-  const prefill = eventBus.getLast('vb:transferPrefill');
+  const prefill = eventBus.getLast<TransferPrefill>('vb:transferPrefill');
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts'],
@@ -48,13 +66,19 @@ export default function NewTransfer() {
 
   const [transferType, setTransferType] = useState('domestic');
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ ...INITIAL_FORM, sourceId: prefill?.accountId ?? '' });
+  const [form, setForm] = useState<TransferForm>({
+    ...INITIAL_FORM,
+    sourceId: prefill?.accountId ?? '',
+  });
 
   // Clear prefill cache when this component unmounts to avoid stale data on next visit
   useEffect(() => () => eventBus.clear('vb:transferPrefill'), []);
 
   const source = accounts.find((a) => a.id === form.sourceId);
-  const update = useCallback((field, value) => setForm((f) => ({ ...f, [field]: value })), []);
+  const update = useCallback(
+    (field: keyof TransferForm, value: string) => setForm((f) => ({ ...f, [field]: value })),
+    [],
+  );
 
   // ── useMutation với optimistic update ──
   const mutation = useMutation({
@@ -69,7 +93,7 @@ export default function NewTransfer() {
       const previousHistory = queryClient.getQueryData(['transfer-history']);
 
       // Thêm optimistic item vào đầu cache
-      const optimisticItem = {
+      const optimisticItem: TransferRecord = {
         id: `optimistic-${Date.now()}`,
         date: new Date().toISOString().slice(0, 10),
         name: newForm.recipientName,
@@ -81,14 +105,17 @@ export default function NewTransfer() {
         _optimistic: true, // flag để TransferHistory render trạng thái "đang xử lý"
       };
 
-      queryClient.setQueryData(['transfer-history'], (old = []) => [optimisticItem, ...old]);
+      queryClient.setQueryData<TransferRecord[]>(['transfer-history'], (old = []) => [
+        optimisticItem,
+        ...old,
+      ]);
 
       return { previousHistory }; // context truyền vào onError
     },
 
     // 2. onError: rollback về state cũ nếu API thất bại
     onError: (_err, _form, context) => {
-      queryClient.setQueryData(['transfer-history'], context.previousHistory);
+      queryClient.setQueryData(['transfer-history'], context?.previousHistory);
     },
 
     // 3. onSettled: luôn invalidate sau khi xong (thành công hoặc lỗi)
@@ -225,7 +252,7 @@ export default function NewTransfer() {
           return (
             <PermissionGate
               key={key}
-              permission={permission}
+              permission={permission as Permission}
               requiredRole="PREMIUM"
               fallback={
                 <button
@@ -255,7 +282,7 @@ export default function NewTransfer() {
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 28 }}>
         {STEPS.map((s, i) => (
-          <React.Fragment key={s}>
+          <Fragment key={s}>
             <div
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
             >
@@ -299,7 +326,7 @@ export default function NewTransfer() {
                 }}
               />
             )}
-          </React.Fragment>
+          </Fragment>
         ))}
       </div>
 
@@ -372,26 +399,28 @@ export default function NewTransfer() {
               </div>
             </Card>
           )}
-          {[
-            {
-              label: 'Ngân hàng thụ hưởng',
-              field: 'recipientBank',
-              type: 'select',
-              options: BANKS,
-            },
-            {
-              label: 'Số tài khoản thụ hưởng',
-              field: 'recipientAccount',
-              type: 'text',
-              placeholder: 'Nhập số tài khoản',
-            },
-            {
-              label: 'Tên người thụ hưởng',
-              field: 'recipientName',
-              type: 'text',
-              placeholder: 'Nhập tên người nhận',
-            },
-          ].map(({ label, field, type, options, placeholder }) => (
+          {(
+            [
+              {
+                label: 'Ngân hàng thụ hưởng',
+                field: 'recipientBank',
+                type: 'select',
+                options: BANKS,
+              },
+              {
+                label: 'Số tài khoản thụ hưởng',
+                field: 'recipientAccount',
+                type: 'text',
+                placeholder: 'Nhập số tài khoản',
+              },
+              {
+                label: 'Tên người thụ hưởng',
+                field: 'recipientName',
+                type: 'text',
+                placeholder: 'Nhập tên người nhận',
+              },
+            ] satisfies TransferFieldConfig[]
+          ).map(({ label, field, type, options, placeholder }) => (
             <div key={field}>
               <label
                 style={{
@@ -418,7 +447,7 @@ export default function NewTransfer() {
                   }}
                 >
                   <option value="">-- Chọn ngân hàng --</option>
-                  {options.map((o) => (
+                  {(options ?? []).map((o) => (
                     <option key={o}>{o}</option>
                   ))}
                 </select>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchTransferHistory } from '../api/transfer';
 
-function useDebounce(value, delay = 300) {
+function useDebounce<T>(value: T, delay = 300): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value), delay);
@@ -13,9 +13,10 @@ function useDebounce(value, delay = 300) {
   return debounced;
 }
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const fmtDate = (d) =>
+const fmtDate = (d: string) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
     new Date(d),
   );
@@ -43,7 +44,7 @@ export default function TransferHistory() {
   const [dateFilter, setDateFilter] = useState('');
   const debouncedDate = useDebounce(dateFilter, 300);
 
-  const handleStatus = useCallback((key) => setStatusFilter(key), []);
+  const handleStatus = useCallback((key: string) => setStatusFilter(key), []);
 
   const filtered = useMemo(
     () =>

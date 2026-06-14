@@ -11,11 +11,12 @@ import {
   useTransition,
 } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchAccount, fetchTransactionPage } from '../api/accounts';
+import { fetchAccount, fetchTransactionPage, type Transaction } from '../api/accounts';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const fmtDate = (d) =>
+const fmtDate = (d: string) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
     new Date(d),
   );
@@ -27,7 +28,7 @@ const FILTERS = [
 ];
 
 // memo để tránh re-render khi virtualizer scroll
-const TransactionRow = memo(function TransactionRow({ tx }) {
+const TransactionRow = memo(function TransactionRow({ tx }: { tx: Transaction }) {
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -72,7 +73,7 @@ const TransactionRow = memo(function TransactionRow({ tx }) {
 });
 
 export default function TransactionList() {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const navigate = useNavigate();
 
   // ── useInfiniteQuery: load trang theo trang, không load hết 1 lúc ──
@@ -96,7 +97,7 @@ export default function TransactionList() {
   const [isPending, startTransition] = useTransition();
   const [filter, setFilter] = useState('all');
 
-  const handleFilter = useCallback((key) => {
+  const handleFilter = useCallback((key: string) => {
     startTransition(() => setFilter(key));
   }, []);
 
@@ -126,7 +127,7 @@ export default function TransactionList() {
   }, [allTxns, filter, deferredSearch]);
 
   // ── Virtual scrolling: chỉ render rows đang visible trong viewport ──
-  const parentRef = useRef(null);
+  const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => parentRef.current,

@@ -1,13 +1,29 @@
-import { useState } from 'react';
+import { type CSSProperties, type MouseEvent, type ReactNode, useState } from 'react';
 
-const PADDING = { sm: 12, md: 20, lg: 32 };
+const PADDING = { sm: 12, md: 20, lg: 32 } as const;
 
-export function Card({ children, onClick, hoverable = false, padding = 'md', style: extra }) {
+interface CardProps {
+  children: ReactNode;
+  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
+  hoverable?: boolean;
+  padding?: keyof typeof PADDING;
+  style?: CSSProperties;
+}
+
+export function Card({
+  children,
+  onClick,
+  hoverable = false,
+  padding = 'md',
+  style: extra,
+}: CardProps) {
   const [hovered, setHovered] = useState(false);
   const pad = PADDING[padding] ?? PADDING.md;
   const active = hoverable && hovered;
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: card tùy chọn clickable, không phải control chính
+    // biome-ignore lint/a11y/noStaticElementInteractions: wrapper trình bày, hành vi do onClick caller quyết định
     <div
       onClick={onClick}
       onMouseEnter={() => hoverable && setHovered(true)}
@@ -29,7 +45,27 @@ export function Card({ children, onClick, hoverable = false, padding = 'md', sty
   );
 }
 
-export function CardHeader({ title, subtitle, action }) {
+interface CardHeaderProps {
+  /** Mode 1: heading có cấu trúc (title + subtitle + action) */
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  action?: ReactNode;
+  /** Mode 2: heading đơn giản — truyền text/markup làm children */
+  children?: ReactNode;
+  style?: CSSProperties;
+}
+
+export function CardHeader({ title, subtitle, action, children, style }: CardHeaderProps) {
+  // Mode 2: children → render heading đơn giản
+  if (children != null) {
+    return (
+      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b', ...style }}>
+        {children}
+      </h3>
+    );
+  }
+
+  // Mode 1: title/subtitle/action
   return (
     <div
       style={{
@@ -38,6 +74,7 @@ export function CardHeader({ title, subtitle, action }) {
         justifyContent: 'space-between',
         marginBottom: 16,
         gap: 12,
+        ...style,
       }}
     >
       <div>
@@ -51,7 +88,7 @@ export function CardHeader({ title, subtitle, action }) {
   );
 }
 
-export function Divider({ margin = 16 }) {
+export function Divider({ margin = 16 }: { margin?: number }) {
   return (
     <hr
       style={{

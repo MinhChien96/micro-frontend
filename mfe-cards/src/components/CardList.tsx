@@ -9,7 +9,8 @@ const getUser = () => {
   }
 };
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_CARDS = [
   {
@@ -177,7 +178,7 @@ export default function CardList() {
                     <>
                       <div style={{ fontSize: 11, opacity: 0.7 }}>Dư nợ / Hạn mức</div>
                       <div style={{ fontWeight: 700, fontSize: 15 }}>
-                        {fmt(card.balance)} / {fmt(card.limit)}
+                        {fmt(card.balance)} / {fmt(card.limit ?? 0)}
                       </div>
                     </>
                   ) : (

@@ -1,30 +1,21 @@
+import { getUser, setUser } from '@app/shared/auth';
 import { Button, Card, CardHeader, useToast } from '@app/shared/ui';
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import '../styles.css';
 
-const getUser = () => {
-  if (typeof window === 'undefined') return null; // SSR guard
-  try {
-    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
-  } catch {
-    return null;
-  }
-};
-
-export default function EditProfile({ onDone }) {
+export default function EditProfile({ onDone }: { onDone: () => void }) {
   const user = getUser();
   const { show } = useToast();
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
     await new Promise((r) => setTimeout(r, 600));
 
-    const updated = { ...user, name: name.trim() };
-    localStorage.setItem('vietbank_user', JSON.stringify(updated));
+    if (user) setUser({ ...user, name: name.trim() });
     window.dispatchEvent(new CustomEvent('auth:changed'));
 
     setSaving(false);

@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { getPermissions } from '../auth';
+import type { Permission } from '../utils/permissions';
 
-const UpgradeBadge = ({ requiredRole = 'PREMIUM' }) => (
+const UpgradeBadge = ({ requiredRole = 'PREMIUM' }: { requiredRole?: string }) => (
   <span
     style={{
       display: 'inline-block',
@@ -18,27 +20,30 @@ const UpgradeBadge = ({ requiredRole = 'PREMIUM' }) => (
   </span>
 );
 
-/**
- * Ẩn/hiện children dựa trên permission của user hiện tại.
- *
- * Props:
- *   permission   — chuỗi như "transfer:international"
- *   fallback     — node hiển thị khi không có quyền (mặc định: null)
- *   requiredRole — label hiển thị trong UpgradeBadge (mặc định: 'PREMIUM')
- *   showLocked   — khi true + không có fallback, tự render nút bị khoá
- */
+interface PermissionGateProps {
+  /** permission như "transfer:international" */
+  permission: Permission;
+  /** node hiển thị khi không có quyền (mặc định: null) */
+  fallback?: ReactNode;
+  /** label trong UpgradeBadge (mặc định: 'PREMIUM') */
+  requiredRole?: string;
+  /** true + không có fallback → render nút bị khóa */
+  showLocked?: boolean;
+  children: ReactNode;
+}
+
+/** Ẩn/hiện children dựa trên permission của user hiện tại. */
 export default function PermissionGate({
   permission,
   fallback = null,
   requiredRole = 'PREMIUM',
   showLocked = false,
   children,
-}) {
-  const hasPermission = getPermissions().includes(permission);
+}: PermissionGateProps) {
+  const allowed = getPermissions().includes(permission);
 
-  if (hasPermission) return children;
-
-  if (fallback) return fallback;
+  if (allowed) return <>{children}</>;
+  if (fallback) return <>{fallback}</>;
 
   if (showLocked) {
     return (

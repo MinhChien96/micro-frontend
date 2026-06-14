@@ -1,5 +1,7 @@
+import type { Role } from '@app/shared/auth';
+import { getUser } from '@app/shared/auth';
 import { Button, Card, CardHeader, Divider, PageSpinner, StatusBadge } from '@app/shared/ui';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useState } from 'react';
 import '../styles.css';
 
 const EditProfile = lazy(
@@ -11,16 +13,15 @@ const EditProfile = lazy(
     ),
 );
 
-const ROLE_LABELS = { CUSTOMER: 'Khách hàng', PREMIUM: 'Ưu tiên', BUSINESS: 'Doanh nghiệp' };
-const ROLE_COLOR = { CUSTOMER: 'blue', PREMIUM: 'yellow', BUSINESS: 'purple' };
-
-const getUser = () => {
-  if (typeof window === 'undefined') return null; // SSR guard
-  try {
-    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
-  } catch {
-    return null;
-  }
+const ROLE_LABELS: Record<Role, string> = {
+  CUSTOMER: 'Khách hàng',
+  PREMIUM: 'Ưu tiên',
+  BUSINESS: 'Doanh nghiệp',
+};
+const ROLE_COLOR: Record<Role, string> = {
+  CUSTOMER: 'blue',
+  PREMIUM: 'yellow',
+  BUSINESS: 'purple',
 };
 
 export default function ProfilePage() {
@@ -36,7 +37,7 @@ export default function ProfilePage() {
     );
   }
 
-  const role = (user.role || 'CUSTOMER').toUpperCase();
+  const role = (String(user.role || 'CUSTOMER').toUpperCase() as Role) || 'CUSTOMER';
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -96,7 +97,7 @@ export default function ProfilePage() {
   );
 }
 
-function InfoRow({ label, value }) {
+function InfoRow({ label, value }: { label: ReactNode; value: ReactNode }) {
   return (
     <div style={{ display: 'flex', gap: 12 }}>
       <span style={{ width: 140, fontSize: 13, color: '#94a3b8', fontWeight: 600, flexShrink: 0 }}>

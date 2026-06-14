@@ -4,15 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchAccount, fetchTransactions } from '../api/accounts';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const fmtDate = (d) =>
+const fmtDate = (d: string) =>
   new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
     new Date(d),
   );
 
 export default function AccountDetail() {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const navigate = useNavigate();
 
   const { data: account, isLoading: loadingAccount } = useQuery({
@@ -136,7 +137,7 @@ export default function AccountDetail() {
           marginBottom: 14,
         }}
       >
-        <CardHeader>Giao dịch gần đây</CardHeader>
+        <CardHeader title="Giao dịch gần đây" />
         <Link
           to={`${id}/transactions`}
           style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}

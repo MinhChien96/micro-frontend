@@ -1,7 +1,32 @@
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// Example domain (banking) — thay bằng API thật khi làm dự án.
+export type TransferStatus = 'success' | 'pending' | 'failed';
+
+export interface TransferRecord {
+  id: string;
+  date: string;
+  name: string;
+  bank: string;
+  account: string;
+  amount: number;
+  status: TransferStatus;
+  note: string;
+  /** đánh dấu record đang optimistic (chưa server-confirm) */
+  _optimistic?: boolean;
+}
+
+export interface TransferForm {
+  sourceId: string;
+  recipientName: string;
+  recipientBank: string;
+  recipientAccount: string;
+  amount: string;
+  note: string;
+}
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Module-level store — tồn tại trong lifetime của MFE session
-let _history = [
+let _history: TransferRecord[] = [
   {
     id: 'h1',
     date: '2024-10-15',
@@ -84,17 +109,17 @@ let _history = [
   },
 ];
 
-export const fetchTransferHistory = async () => {
+export const fetchTransferHistory = async (): Promise<TransferRecord[]> => {
   await delay(400);
   return [..._history];
 };
 
-export const submitTransfer = async (form) => {
+export const submitTransfer = async (form: TransferForm): Promise<TransferRecord> => {
   // Giả lập API call 1.2s
   await delay(1200);
   // 10% xác suất thất bại để demo onError rollback
   if (Math.random() < 0.1) throw new Error('Lỗi kết nối ngân hàng đích');
-  const newItem = {
+  const newItem: TransferRecord = {
     id: `h${Date.now()}`,
     date: new Date().toISOString().slice(0, 10),
     name: form.recipientName,

@@ -2,7 +2,8 @@ import { StatusBadge } from '@app/shared/ui';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const LOAN_META = {
   LOAN001: {
@@ -23,7 +24,13 @@ const LOAN_META = {
   },
 };
 
-function generateSchedule(principal, annualRate, termMonths, startDate, paidMonths) {
+function generateSchedule(
+  principal: number,
+  annualRate: number,
+  termMonths: number,
+  startDate: string,
+  paidMonths: number,
+) {
   const monthlyRate = annualRate / 100 / 12;
   const payment =
     (principal * monthlyRate * (1 + monthlyRate) ** termMonths) /
@@ -53,9 +60,9 @@ function generateSchedule(principal, annualRate, termMonths, startDate, paidMont
 }
 
 export default function PaymentSchedule() {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const navigate = useNavigate();
-  const meta = LOAN_META[id];
+  const meta = LOAN_META[id as keyof typeof LOAN_META];
 
   // useMemo phải gọi trước mọi early return (Rules of Hooks).
   // amortization table tốn kém — chỉ tính lại khi metadata khoản vay đổi.
@@ -188,7 +195,10 @@ export default function PaymentSchedule() {
             <span style={{ textAlign: 'right', color: '#dc2626' }}>{fmt(row.interest)}</span>
             <span style={{ textAlign: 'right', color: '#64748b' }}>{fmt(row.balance)}</span>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <StatusBadge label={STATUS_LABEL[row.status]} color={STATUS_COLOR[row.status]} />
+              <StatusBadge
+                label={STATUS_LABEL[row.status as keyof typeof STATUS_LABEL]}
+                color={STATUS_COLOR[row.status as keyof typeof STATUS_COLOR]}
+              />
             </div>
           </div>
         ))}

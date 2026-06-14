@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 let keyframesInjected = false;
 function injectKeyframes() {
@@ -14,9 +14,23 @@ function injectKeyframes() {
   document.head.appendChild(style);
 }
 
-const ToastContext = createContext(null);
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-const TYPE = {
+interface ToastItem {
+  id: number;
+  message: string;
+  type: ToastType;
+}
+
+type ShowToast = (message: string, type?: ToastType, duration?: number) => number;
+
+interface ToastContextValue {
+  show: ShowToast;
+}
+
+const ToastContext = createContext<ToastContextValue | null>(null);
+
+const TYPE: Record<ToastType, { background: string; icon: string }> = {
   success: { background: '#22c55e', icon: '✓' },
   error: { background: '#ef4444', icon: '✕' },
   warning: { background: '#f59e0b', icon: '⚠' },
@@ -25,14 +39,14 @@ const TYPE = {
 
 let toastId = 0;
 
-export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => {
     injectKeyframes();
   }, []);
 
-  const show = useCallback((message, type = 'info', duration = 3000) => {
+  const show = useCallback<ShowToast>((message, type = 'info', duration = 3000) => {
     const id = ++toastId;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -57,7 +71,7 @@ export function ToastProvider({ children }) {
         }}
       >
         {toasts.map(({ id, message, type }) => {
-          const t = TYPE[type] || TYPE.info;
+          const t = TYPE[type] ?? TYPE.info;
           return (
             <div
               key={id}
@@ -88,9 +102,9 @@ export function ToastProvider({ children }) {
   );
 }
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
-  // Return a noop when running in standalone MFE dev mode (no shell ToastProvider).
-  if (!ctx) return { show: () => {} };
+  // noop khi chạy standalone MFE dev (không có shell ToastProvider)
+  if (!ctx) return { show: () => 0 };
   return ctx;
 }

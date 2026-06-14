@@ -1,23 +1,25 @@
+import type { User } from '@app/shared/auth';
 import { Card, PageSpinner, StatusBadge } from '@app/shared/ui';
 import { useQuery } from '@tanstack/react-query';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchAccounts } from '../api/accounts';
+import { type Account, type AccountType, fetchAccounts } from '../api/accounts';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const getUser = () => {
+const getUser = (): User | null => {
   if (typeof window === 'undefined') return null; // SSR guard
   try {
-    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
+    return JSON.parse(localStorage.getItem('vietbank_user') || 'null') as User | null;
   } catch {
     return null;
   }
 };
 
-const ACCOUNT_ICON = { checking: '🏦', savings: '💰' };
+const ACCOUNT_ICON: Record<AccountType, string> = { checking: '🏦', savings: '💰' };
 
-const AccountItem = memo(function AccountItem({ acc }) {
+const AccountItem = memo(function AccountItem({ acc }: { acc: Account }) {
   return (
     <Link to={acc.id} style={{ textDecoration: 'none' }}>
       <Card hoverable>

@@ -2,11 +2,11 @@
   "name": "@app/shared",
   "version": "1.0.0",
   "exports": {
-    "./auth": "./src/auth.js",
-    "./ui": "./src/ui/index.js",
-    "./PermissionGate": "./src/components/PermissionGate.jsx",
-    "./ThemeContext": "./src/ThemeContext.jsx",
-    "./eventBus": "./src/eventBus.js"
+    "./auth": "./src/auth.ts",
+    "./ui": "./src/ui/index.ts",
+    "./PermissionGate": "./src/components/PermissionGate.tsx",
+    "./ThemeContext": "./src/ThemeContext.tsx",
+    "./eventBus": "./src/eventBus.ts"
   },
   "scripts": {
     "start": "modern dev",

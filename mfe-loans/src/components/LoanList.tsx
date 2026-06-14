@@ -11,7 +11,8 @@ const getUser = () => {
   }
 };
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_LOANS = [
   {
@@ -152,7 +153,7 @@ export default function LoanList() {
                       flexShrink: 0,
                     }}
                   >
-                    {LOAN_ICON[loan.type]}
+                    {LOAN_ICON[loan.type as keyof typeof LOAN_ICON]}
                   </div>
 
                   <div style={{ flex: 1 }}>

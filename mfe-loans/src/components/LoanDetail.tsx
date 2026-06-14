@@ -1,7 +1,8 @@
 import { Card, CardHeader, Divider, StatusBadge } from '@app/shared/ui';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_LOANS = {
   LOAN001: {
@@ -41,9 +42,9 @@ const MOCK_LOANS = {
 };
 
 export default function LoanDetail() {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const navigate = useNavigate();
-  const loan = MOCK_LOANS[id];
+  const loan = MOCK_LOANS[id as keyof typeof MOCK_LOANS];
 
   if (!loan) {
     return (

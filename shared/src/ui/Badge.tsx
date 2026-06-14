@@ -1,4 +1,13 @@
-export function Badge({ count, max = 99, color = '#ef4444', size = 'sm' }) {
+import type { CSSProperties } from 'react';
+
+interface BadgeProps {
+  count?: number | null;
+  max?: number;
+  color?: string;
+  size?: 'sm' | 'md';
+}
+
+export function Badge({ count, max = 99, color = '#ef4444', size = 'sm' }: BadgeProps) {
   if (count == null || count === 0) return null;
   const display = count > max ? `${max}+` : count;
   const isSmall = size === 'sm';
@@ -22,7 +31,9 @@ export function Badge({ count, max = 99, color = '#ef4444', size = 'sm' }) {
   );
 }
 
-const STATUS_COLORS = {
+type StatusColor = 'blue' | 'green' | 'yellow' | 'red' | 'gray' | 'purple';
+
+const STATUS_COLORS: Record<StatusColor, CSSProperties> = {
   blue: { background: '#dbeafe', color: '#1d4ed8' },
   green: { background: '#dcfce7', color: '#15803d' },
   yellow: { background: '#fef9c3', color: '#a16207' },
@@ -31,8 +42,14 @@ const STATUS_COLORS = {
   purple: { background: '#f3e8ff', color: '#7c3aed' },
 };
 
-export function StatusBadge({ label, color = 'blue' }) {
-  const scheme = STATUS_COLORS[color] || STATUS_COLORS.blue;
+interface StatusBadgeProps {
+  label: string;
+  // chấp nhận string (vd 'default' từ domain code) → fallback blue
+  color?: string;
+}
+
+export function StatusBadge({ label, color = 'blue' }: StatusBadgeProps) {
+  const scheme = STATUS_COLORS[color as StatusColor] ?? STATUS_COLORS.blue;
   return (
     <span
       style={{

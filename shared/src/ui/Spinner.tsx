@@ -9,9 +9,14 @@ function injectKeyframes() {
   document.head.appendChild(style);
 }
 
-const PX = { sm: 16, md: 32, lg: 48 };
+const PX = { sm: 16, md: 32, lg: 48 } as const;
 
-export function Spinner({ size = 'md', color = '#667eea' }) {
+interface SpinnerProps {
+  size?: keyof typeof PX;
+  color?: string;
+}
+
+export function Spinner({ size = 'md', color = '#667eea' }: SpinnerProps) {
   useEffect(() => {
     injectKeyframes();
   }, []);
@@ -35,7 +40,7 @@ export function Spinner({ size = 'md', color = '#667eea' }) {
   );
 }
 
-export function PageSpinner({ label = 'Loading...' }) {
+export function PageSpinner({ label = 'Loading...' }: { label?: string }) {
   return (
     <div
       style={{

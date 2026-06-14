@@ -1,9 +1,9 @@
-import { setToken, setUser } from '@app/shared/auth';
-import { useState } from 'react';
+import { type Role, setToken, setUser } from '@app/shared/auth';
+import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles.css';
 
-const DEMO_ROLES = [
+const DEMO_ROLES: { value: Role; label: string; desc: string }[] = [
   { value: 'CUSTOMER', label: 'Khách hàng thường', desc: 'Chuyển trong nước, xem thẻ/vay' },
   {
     value: 'PREMIUM',
@@ -16,15 +16,16 @@ const DEMO_ROLES = [
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/accounts';
+  const from =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/accounts';
 
   const [customerId, setCustomerId] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('CUSTOMER');
+  const [selectedRole, setSelectedRole] = useState<Role>('CUSTOMER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);

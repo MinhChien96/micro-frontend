@@ -3,7 +3,8 @@ import { Card, CardHeader, Divider } from '@app/shared/ui';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_CARDS = {
   CARD001: {
@@ -60,9 +61,9 @@ const MOCK_CARDS = {
 };
 
 export default function CardDetail() {
-  const { id } = useParams();
+  const { id = '' } = useParams();
   const navigate = useNavigate();
-  const card = MOCK_CARDS[id];
+  const card = MOCK_CARDS[id as keyof typeof MOCK_CARDS];
 
   const [isLocked, setIsLocked] = useState(card?.status === 'locked');
   const [showPinModal, setShowPinModal] = useState(false);
