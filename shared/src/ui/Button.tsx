@@ -1,20 +1,20 @@
-import type { CSSProperties, MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
-const VARIANTS: Record<ButtonVariant, CSSProperties> = {
-  primary: { background: '#667eea', color: '#fff', border: 'none' },
-  secondary: { background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1' },
-  danger: { background: '#ef4444', color: '#fff', border: 'none' },
-  ghost: { background: 'transparent', color: '#667eea', border: '1px solid #667eea' },
-  success: { background: '#22c55e', color: '#fff', border: 'none' },
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'bg-primary text-white border-0',
+  secondary: 'bg-slate-100 text-slate-700 border border-slate-300',
+  danger: 'bg-red-500 text-white border-0',
+  ghost: 'bg-transparent text-primary border border-primary',
+  success: 'bg-green-500 text-white border-0',
 };
 
-const SIZES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '6px 12px', fontSize: '13px', borderRadius: '6px' },
-  md: { padding: '10px 20px', fontSize: '14px', borderRadius: '8px' },
-  lg: { padding: '14px 28px', fontSize: '16px', borderRadius: '10px' },
+const SIZES: Record<ButtonSize, string> = {
+  sm: 'px-3 py-1.5 text-[13px] rounded-md',
+  md: 'px-5 py-2.5 text-sm rounded-lg',
+  lg: 'px-7 py-3.5 text-base rounded-[10px]',
 };
 
 interface ButtonProps {
@@ -43,27 +43,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      style={{
-        ...VARIANTS[variant],
-        ...SIZES[size],
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '6px',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.6 : 1,
-        fontWeight: 500,
-        lineHeight: 1,
-        transition: 'opacity 0.15s, box-shadow 0.15s',
-        width: fullWidth ? '100%' : 'auto',
-        fontFamily: 'inherit',
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) e.currentTarget.style.opacity = '0.85';
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) e.currentTarget.style.opacity = '1';
-      }}
+      className={`inline-flex cursor-pointer items-center justify-center gap-1.5 font-medium leading-none transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? 'w-full' : 'w-auto'} ${VARIANTS[variant]} ${SIZES[size]}`}
     >
       {icon && <span>{icon}</span>}
       {children}

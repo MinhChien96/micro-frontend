@@ -1,6 +1,6 @@
-import { type CSSProperties, type MouseEvent, type ReactNode, useState } from 'react';
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 
-const PADDING = { sm: 12, md: 20, lg: 32 } as const;
+const PADDING = { sm: 'p-3', md: 'p-5', lg: 'p-8' } as const;
 
 interface CardProps {
   children: ReactNode;
@@ -10,35 +10,16 @@ interface CardProps {
   style?: CSSProperties;
 }
 
-export function Card({
-  children,
-  onClick,
-  hoverable = false,
-  padding = 'md',
-  style: extra,
-}: CardProps) {
-  const [hovered, setHovered] = useState(false);
-  const pad = PADDING[padding] ?? PADDING.md;
-  const active = hoverable && hovered;
-
+export function Card({ children, onClick, hoverable = false, padding = 'md', style }: CardProps) {
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: card tùy chọn clickable, không phải control chính
     // biome-ignore lint/a11y/noStaticElementInteractions: wrapper trình bày, hành vi do onClick caller quyết định
     <div
       onClick={onClick}
-      onMouseEnter={() => hoverable && setHovered(true)}
-      onMouseLeave={() => hoverable && setHovered(false)}
-      style={{
-        background: '#fff',
-        borderRadius: 12,
-        padding: pad,
-        boxShadow: active ? '0 8px 24px rgba(102, 126, 234, 0.18)' : '0 2px 8px rgba(0,0,0,0.06)',
-        border: '1px solid #f1f5f9',
-        transition: 'box-shadow 0.2s, transform 0.2s',
-        transform: active ? 'translateY(-2px)' : 'none',
-        cursor: onClick ? 'pointer' : 'default',
-        ...extra,
-      }}
+      className={`rounded-xl border border-border bg-bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition ${PADDING[padding]} ${
+        hoverable ? 'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(102,126,234,0.18)]' : ''
+      } ${onClick ? 'cursor-pointer' : ''}`}
+      style={style}
     >
       {children}
     </div>
@@ -46,20 +27,18 @@ export function Card({
 }
 
 interface CardHeaderProps {
-  /** Mode 1: heading có cấu trúc (title + subtitle + action) */
   title?: ReactNode;
   subtitle?: ReactNode;
   action?: ReactNode;
-  /** Mode 2: heading đơn giản — truyền text/markup làm children */
   children?: ReactNode;
   style?: CSSProperties;
 }
 
 export function CardHeader({ title, subtitle, action, children, style }: CardHeaderProps) {
-  // Mode 2: children → render heading đơn giản
+  // Mode 2: children → heading đơn giản
   if (children != null) {
     return (
-      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b', ...style }}>
+      <h3 className="m-0 text-lg font-bold text-text-main" style={style}>
         {children}
       </h3>
     );
@@ -67,35 +46,16 @@ export function CardHeader({ title, subtitle, action, children, style }: CardHea
 
   // Mode 1: title/subtitle/action
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-        gap: 12,
-        ...style,
-      }}
-    >
+    <div className="mb-4 flex items-start justify-between gap-3" style={style}>
       <div>
-        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{title}</h3>
-        {subtitle && (
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>{subtitle}</p>
-        )}
+        <h3 className="m-0 text-lg font-bold text-text-main">{title}</h3>
+        {subtitle && <p className="mt-1 mb-0 text-[13px] text-text-muted">{subtitle}</p>}
       </div>
-      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
 export function Divider({ margin = 16 }: { margin?: number }) {
-  return (
-    <hr
-      style={{
-        border: 'none',
-        borderTop: '1px solid #f1f5f9',
-        margin: `${margin}px 0`,
-      }}
-    />
-  );
+  return <hr className="border-0 border-t border-border" style={{ margin: `${margin}px 0` }} />;
 }

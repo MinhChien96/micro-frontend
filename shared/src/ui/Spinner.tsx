@@ -1,14 +1,3 @@
-import { useEffect } from 'react';
-
-let keyframesInjected = false;
-function injectKeyframes() {
-  if (keyframesInjected || typeof document === 'undefined') return;
-  keyframesInjected = true;
-  const style = document.createElement('style');
-  style.textContent = '@keyframes mfe-spin { to { transform: rotate(360deg); } }';
-  document.head.appendChild(style);
-}
-
 const PX = { sm: 16, md: 32, lg: 48 } as const;
 
 interface SpinnerProps {
@@ -17,23 +6,19 @@ interface SpinnerProps {
 }
 
 export function Spinner({ size = 'md', color = '#667eea' }: SpinnerProps) {
-  useEffect(() => {
-    injectKeyframes();
-  }, []);
-  const px = PX[size] ?? PX.md;
+  const px = PX[size];
   const border = Math.max(2, Math.round(px / 8));
   return (
-    <span role="status" style={{ display: 'inline-flex', alignItems: 'center' }}>
+    <span role="status" className="inline-flex items-center">
       <span
+        className="inline-block shrink-0 animate-spin rounded-full"
         style={{
           width: px,
           height: px,
-          borderRadius: '50%',
-          border: `${border}px solid ${color}33`,
+          borderWidth: border,
+          borderStyle: 'solid',
+          borderColor: `${color}33`,
           borderTopColor: color,
-          display: 'inline-block',
-          animation: 'mfe-spin 0.7s linear infinite',
-          flexShrink: 0,
         }}
       />
     </span>
@@ -42,18 +27,9 @@ export function Spinner({ size = 'md', color = '#667eea' }: SpinnerProps) {
 
 export function PageSpinner({ label = 'Loading...' }: { label?: string }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 200,
-        gap: 12,
-      }}
-    >
+    <div className="flex min-h-[200px] flex-col items-center justify-center gap-3">
       <Spinner size="lg" />
-      <p style={{ color: '#94a3b8', fontSize: 14, margin: 0 }}>{label}</p>
+      <p className="m-0 text-sm text-text-muted">{label}</p>
     </div>
   );
 }

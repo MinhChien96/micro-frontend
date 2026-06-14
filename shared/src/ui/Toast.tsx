@@ -1,18 +1,4 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-
-let keyframesInjected = false;
-function injectKeyframes() {
-  if (keyframesInjected || typeof document === 'undefined') return;
-  keyframesInjected = true;
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes mfe-toast-in {
-      from { opacity: 0; transform: translateX(100%); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-  `;
-  document.head.appendChild(style);
-}
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -30,21 +16,17 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const TYPE: Record<ToastType, { background: string; icon: string }> = {
-  success: { background: '#22c55e', icon: '✓' },
-  error: { background: '#ef4444', icon: '✕' },
-  warning: { background: '#f59e0b', icon: '⚠' },
-  info: { background: '#667eea', icon: 'ℹ' },
+const TYPE: Record<ToastType, { bg: string; icon: string }> = {
+  success: { bg: 'bg-green-500', icon: '✓' },
+  error: { bg: 'bg-red-500', icon: '✕' },
+  warning: { bg: 'bg-amber-500', icon: '⚠' },
+  info: { bg: 'bg-primary', icon: 'ℹ' },
 };
 
 let toastId = 0;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-
-  useEffect(() => {
-    injectKeyframes();
-  }, []);
 
   const show = useCallback<ShowToast>((message, type = 'info', duration = 3000) => {
     const id = ++toastId;
@@ -58,41 +40,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
-      <div
-        style={{
-          position: 'fixed',
-          top: 20,
-          right: 20,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          pointerEvents: 'none',
-        }}
-      >
+      <div className="pointer-events-none fixed top-5 right-5 z-[9999] flex flex-col gap-2">
         {toasts.map(({ id, message, type }) => {
           const t = TYPE[type] ?? TYPE.info;
           return (
             <div
               key={id}
-              style={{
-                background: t.background,
-                color: '#fff',
-                padding: '12px 18px',
-                borderRadius: 10,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                fontSize: 14,
-                fontWeight: 500,
-                minWidth: 240,
-                maxWidth: 380,
-                animation: 'mfe-toast-in 0.25s ease',
-                pointerEvents: 'auto',
-              }}
+              className={`pointer-events-auto flex max-w-[380px] min-w-[240px] animate-toast-in items-center gap-2.5 rounded-[10px] px-4.5 py-3 text-sm font-medium text-white shadow-[0_4px_16px_rgba(0,0,0,0.2)] ${t.bg}`}
             >
-              <span style={{ fontSize: 16 }}>{t.icon}</span>
+              <span className="text-base">{t.icon}</span>
               <span>{message}</span>
             </div>
           );

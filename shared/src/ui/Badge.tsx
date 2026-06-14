@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react';
-
 interface BadgeProps {
   count?: number | null;
   max?: number;
@@ -13,18 +11,10 @@ export function Badge({ count, max = 99, color = '#ef4444', size = 'sm' }: Badge
   const isSmall = size === 'sm';
   return (
     <span
-      style={{
-        background: color,
-        color: '#fff',
-        borderRadius: '9999px',
-        padding: isSmall ? '1px 6px' : '3px 10px',
-        fontSize: isSmall ? '11px' : '13px',
-        fontWeight: 700,
-        lineHeight: 1.4,
-        display: 'inline-block',
-        minWidth: isSmall ? '18px' : '24px',
-        textAlign: 'center',
-      }}
+      className={`inline-block rounded-full text-center font-bold leading-tight text-white ${
+        isSmall ? 'min-w-[18px] px-1.5 py-px text-[11px]' : 'min-w-[24px] px-2.5 py-0.5 text-[13px]'
+      }`}
+      style={{ backgroundColor: color }}
     >
       {display}
     </span>
@@ -33,13 +23,13 @@ export function Badge({ count, max = 99, color = '#ef4444', size = 'sm' }: Badge
 
 type StatusColor = 'blue' | 'green' | 'yellow' | 'red' | 'gray' | 'purple';
 
-const STATUS_COLORS: Record<StatusColor, CSSProperties> = {
-  blue: { background: '#dbeafe', color: '#1d4ed8' },
-  green: { background: '#dcfce7', color: '#15803d' },
-  yellow: { background: '#fef9c3', color: '#a16207' },
-  red: { background: '#fee2e2', color: '#dc2626' },
-  gray: { background: '#f1f5f9', color: '#475569' },
-  purple: { background: '#f3e8ff', color: '#7c3aed' },
+const STATUS_COLORS: Record<StatusColor, string> = {
+  blue: 'bg-blue-100 text-blue-700',
+  green: 'bg-green-100 text-green-700',
+  yellow: 'bg-yellow-100 text-yellow-700',
+  red: 'bg-red-100 text-red-600',
+  gray: 'bg-slate-100 text-slate-600',
+  purple: 'bg-purple-100 text-violet-600',
 };
 
 interface StatusBadgeProps {
@@ -51,16 +41,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ label, color = 'blue' }: StatusBadgeProps) {
   const scheme = STATUS_COLORS[color as StatusColor] ?? STATUS_COLORS.blue;
   return (
-    <span
-      style={{
-        ...scheme,
-        padding: '3px 10px',
-        borderRadius: '9999px',
-        fontSize: '12px',
-        fontWeight: 600,
-        display: 'inline-block',
-      }}
-    >
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${scheme}`}>
       {label}
     </span>
   );
