@@ -1,6 +1,5 @@
-import React from 'react';
-import { Outlet } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
+import { Outlet } from '@modern-js/runtime/router';
 import { ToastProvider } from 'shared/ui';
 import { AuthProvider } from '../AuthContext';
 import Nav from '../components/Nav';

@@ -1,16 +1,17 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, StatusBadge } from 'shared/ui';
 import PermissionGate from 'shared/PermissionGate';
+import { Card, StatusBadge } from 'shared/ui';
 
 const getUser = () => {
   if (typeof window === 'undefined') return null; // SSR guard
-  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
+  } catch {
+    return null;
+  }
 };
 
-const fmt = (n) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_LOANS = [
   {
@@ -51,7 +52,15 @@ export default function LoanList() {
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
-      <div style={{ marginBottom: 6, fontSize: 12, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.5px' }}>
+      <div
+        style={{
+          marginBottom: 6,
+          fontSize: 12,
+          color: '#94a3b8',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+        }}
+      >
         MFE-LOANS TEAM
       </div>
 
@@ -73,24 +82,50 @@ export default function LoanList() {
         permission="loans:apply"
         requiredRole="PREMIUM"
         fallback={
-          <div style={{
-            marginBottom: 20, padding: '12px 18px', borderRadius: 10,
-            border: '1px dashed #e2e8f0', background: '#f8fafc',
-            display: 'flex', alignItems: 'center', gap: 10, color: '#94a3b8',
-          }}>
+          <div
+            style={{
+              marginBottom: 20,
+              padding: '12px 18px',
+              borderRadius: 10,
+              border: '1px dashed #e2e8f0',
+              background: '#f8fafc',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              color: '#94a3b8',
+            }}
+          >
             <span style={{ fontSize: 18 }}>📋</span>
             <span style={{ fontSize: 14 }}>Đăng ký khoản vay mới</span>
-            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 10 }}>PREMIUM</span>
+            <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: 11,
+                fontWeight: 700,
+                background: '#fef3c7',
+                color: '#d97706',
+                padding: '2px 8px',
+                borderRadius: 10,
+              }}
+            >
+              PREMIUM
+            </span>
           </div>
         }
       >
         <button
           onClick={() => alert('Tính năng đang phát triển — vui lòng liên hệ chi nhánh gần nhất.')}
           style={{
-            width: '100%', marginBottom: 20, padding: '13px 20px',
-            borderRadius: 10, border: '2px dashed #2563eb',
-            background: '#eff6ff', color: '#2563eb',
-            cursor: 'pointer', fontWeight: 700, fontSize: 15,
+            width: '100%',
+            marginBottom: 20,
+            padding: '13px 20px',
+            borderRadius: 10,
+            border: '2px dashed #2563eb',
+            background: '#eff6ff',
+            color: '#2563eb',
+            cursor: 'pointer',
+            fontWeight: 700,
+            fontSize: 15,
           }}
         >
           + Đăng ký khoản vay mới
@@ -104,18 +139,27 @@ export default function LoanList() {
             <Link key={loan.id} to={loan.id} style={{ textDecoration: 'none' }}>
               <Card hoverable>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 12,
-                    background: loan.type === 'personal' ? '#ede9fe' : '#dcfce7',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 24, flexShrink: 0,
-                  }}>
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      background: loan.type === 'personal' ? '#ede9fe' : '#dcfce7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 24,
+                      flexShrink: 0,
+                    }}
+                  >
                     {LOAN_ICON[loan.type]}
                   </div>
 
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{loan.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>
+                        {loan.name}
+                      </span>
                       <StatusBadge
                         label={loan.typeLabel}
                         color={loan.type === 'personal' ? 'purple' : 'green'}
@@ -128,18 +172,36 @@ export default function LoanList() {
 
                     <div style={{ marginBottom: 4 }}>
                       <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                        <div style={{ height: '100%', borderRadius: 3, background: '#2563eb', width: `${progress}%` }} />
+                        <div
+                          style={{
+                            height: '100%',
+                            borderRadius: 3,
+                            background: '#2563eb',
+                            width: `${progress}%`,
+                          }}
+                        />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94a3b8' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: 11,
+                        color: '#94a3b8',
+                      }}
+                    >
                       <span>Đã trả: {fmt(loan.principal - loan.outstanding)}</span>
                       <span>{progress.toFixed(0)}%</span>
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: '#dc2626' }}>{fmt(loan.outstanding)}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Dư nợ còn lại</div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#dc2626' }}>
+                      {fmt(loan.outstanding)}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                      Dư nợ còn lại
+                    </div>
                     <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 4, fontWeight: 500 }}>
                       Đến hạn {loan.nextDue}
                     </div>

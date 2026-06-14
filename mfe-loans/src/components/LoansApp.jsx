@@ -1,22 +1,24 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { PageSpinner } from 'shared/ui';
 import LoanList from './LoanList';
 
-const LoanDetail = lazy(() =>
-  import(
-    /* webpackChunkName: "loan-detail" */
-    /* webpackPrefetch: true */
-    './LoanDetail'
-  )
+const LoanDetail = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "loan-detail" */
+      /* webpackPrefetch: true */
+      './LoanDetail'
+    ),
 );
 
-const PaymentSchedule = lazy(() =>
-  import(
-    /* webpackChunkName: "payment-schedule" */
-    /* webpackPrefetch: true */
-    './PaymentSchedule'
-  )
+const PaymentSchedule = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "payment-schedule" */
+      /* webpackPrefetch: true */
+      './PaymentSchedule'
+    ),
 );
 
 // Không có <Router> — Router context đến từ shell (HashRouter)

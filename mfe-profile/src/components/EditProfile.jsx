@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, Button, useToast } from 'shared/ui';
+import { useState } from 'react';
+import { Button, Card, CardHeader, useToast } from 'shared/ui';
 import '../styles.css';
 
 const getUser = () => {
   if (typeof window === 'undefined') return null; // SSR guard
-  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
+  } catch {
+    return null;
+  }
 };
 
 export default function EditProfile({ onDone }) {
-  const user       = getUser();
-  const { show }   = useToast();
-  const [name,     setName]    = useState(user?.name || '');
-  const [saving,   setSaving]  = useState(false);
+  const user = getUser();
+  const { show } = useToast();
+  const [name, setName] = useState(user?.name || '');
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,20 +37,38 @@ export default function EditProfile({ onDone }) {
       <CardHeader title="Chỉnh sửa hồ sơ" subtitle="Lazy loaded — webpackChunkName: edit-profile" />
       <form onSubmit={handleSubmit}>
         <div className="field-group">
-          <label className="field-label" htmlFor="edit-name">Họ tên</label>
-          <input id="edit-name" className="field-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập họ tên" />
+          <label className="field-label" htmlFor="edit-name">
+            Họ tên
+          </label>
+          <input
+            id="edit-name"
+            className="field-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nhập họ tên"
+          />
         </div>
 
         <div className="field-group">
-          <label className="field-label" htmlFor="edit-email">Email (chỉ đọc)</label>
-          <input id="edit-email" className="field-input" value={user?.email || ''} readOnly style={{ background: '#f8fafc', color: '#94a3b8', cursor: 'not-allowed' }} />
+          <label className="field-label" htmlFor="edit-email">
+            Email (chỉ đọc)
+          </label>
+          <input
+            id="edit-email"
+            className="field-input"
+            value={user?.email || ''}
+            readOnly
+            style={{ background: '#f8fafc', color: '#94a3b8', cursor: 'not-allowed' }}
+          />
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
           <Button type="submit" disabled={saving || !name.trim()}>
             {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
-          <Button variant="secondary" onClick={onDone} type="button">Huỷ</Button>
+          <Button variant="secondary" onClick={onDone} type="button">
+            Huỷ
+          </Button>
         </div>
       </form>
     </Card>

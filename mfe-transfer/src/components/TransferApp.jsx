@@ -1,6 +1,6 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { PageSpinner } from 'shared/ui';
 import TransferDashboard from './TransferDashboard';
 
@@ -8,20 +8,22 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 5, retry: 1 } },
 });
 
-const NewTransfer = lazy(() =>
-  import(
-    /* webpackChunkName: "new-transfer" */
-    /* webpackPrefetch: true */
-    './NewTransfer'
-  )
+const NewTransfer = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "new-transfer" */
+      /* webpackPrefetch: true */
+      './NewTransfer'
+    ),
 );
 
-const TransferHistory = lazy(() =>
-  import(
-    /* webpackChunkName: "transfer-history" */
-    /* webpackPrefetch: true */
-    './TransferHistory'
-  )
+const TransferHistory = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "transfer-history" */
+      /* webpackPrefetch: true */
+      './TransferHistory'
+    ),
 );
 
 export default function TransferApp() {

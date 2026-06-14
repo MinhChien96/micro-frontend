@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import type React from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 interface User {
   id?: string;
@@ -18,8 +19,11 @@ interface AuthState {
 const KEY = 'vietbank_user';
 
 const readUser = (): User | null => {
-  try { return JSON.parse(localStorage.getItem(KEY) || 'null'); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || 'null');
+  } catch {
+    return null;
+  }
 };
 
 const AuthContext = createContext<AuthState>({ user: null, ready: false });

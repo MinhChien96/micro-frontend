@@ -1,22 +1,29 @@
-import React, {
-  useState, useMemo, useCallback, useTransition, useDeferredValue, useRef, memo,
-} from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Card, StatusBadge, PageSpinner } from 'shared/ui';
+import {
+  memo,
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Card, PageSpinner, StatusBadge } from 'shared/ui';
 import { fetchAccount, fetchTransactionPage } from '../api/accounts';
 
-const fmt = (n) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const fmtDate = (d) =>
-  new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(d));
+  new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+    new Date(d),
+  );
 
 const FILTERS = [
-  { key: 'all',    label: 'Tất cả' },
+  { key: 'all', label: 'Tất cả' },
   { key: 'credit', label: 'Tiền vào' },
-  { key: 'debit',  label: 'Tiền ra' },
+  { key: 'debit', label: 'Tiền ra' },
 ];
 
 // memo để tránh re-render khi virtualizer scroll
@@ -24,12 +31,19 @@ const TransactionRow = memo(function TransactionRow({ tx }) {
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: tx.type === 'credit' ? '#dcfce7' : '#fee2e2',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16, flexShrink: 0,
-        }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            background: tx.type === 'credit' ? '#dcfce7' : '#fee2e2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 16,
+            flexShrink: 0,
+          }}
+        >
           {tx.type === 'credit' ? '↓' : '↑'}
         </div>
         <div style={{ flex: 1 }}>
@@ -37,10 +51,20 @@ const TransactionRow = memo(function TransactionRow({ tx }) {
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{fmtDate(tx.date)}</div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: tx.type === 'credit' ? '#16a34a' : '#dc2626' }}>
-            {tx.type === 'credit' ? '+' : ''}{fmt(tx.amount)}
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 15,
+              color: tx.type === 'credit' ? '#16a34a' : '#dc2626',
+            }}
+          >
+            {tx.type === 'credit' ? '+' : ''}
+            {fmt(tx.amount)}
           </div>
-          <StatusBadge label={tx.type === 'credit' ? 'Vào' : 'Ra'} color={tx.type === 'credit' ? 'green' : 'red'} />
+          <StatusBadge
+            label={tx.type === 'credit' ? 'Vào' : 'Ra'}
+            color={tx.type === 'credit' ? 'green' : 'red'}
+          />
         </div>
       </div>
     </Card>
@@ -48,29 +72,24 @@ const TransactionRow = memo(function TransactionRow({ tx }) {
 });
 
 export default function TransactionList() {
-  const { id }   = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
   // ── useInfiniteQuery: load trang theo trang, không load hết 1 lúc ──
-  const {
-    data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading,
-  } = useInfiniteQuery({
-    queryKey:       ['transactions', id],
-    queryFn:        ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+    queryKey: ['transactions', id],
+    queryFn: ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
   const { data: account } = useQuery({
     queryKey: ['account', id],
-    queryFn:  () => fetchAccount(id),
+    queryFn: () => fetchAccount(id),
   });
 
   // Gộp tất cả items đã load từ nhiều trang
-  const allTxns = useMemo(
-    () => data?.pages.flatMap((p) => p.items) ?? [],
-    [data],
-  );
+  const allTxns = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data]);
   const total = data?.pages[0]?.total ?? 0;
 
   // ── useTransition: filter switch không block UI ──
@@ -84,11 +103,17 @@ export default function TransactionList() {
   // ── useDeferredValue: search text — UI input đáp ứng ngay, filter chạy sau ──
   const [searchText, setSearchText] = useState('');
   const deferredSearch = useDeferredValue(searchText);
-  const isSearchStale  = searchText !== deferredSearch;
+  const isSearchStale = searchText !== deferredSearch;
 
   // Summary stats (tính trên toàn bộ đã load)
-  const totalIn  = useMemo(() => allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0), [allTxns]);
-  const totalOut = useMemo(() => allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0), [allTxns]);
+  const totalIn = useMemo(
+    () => allTxns.filter((t) => t.type === 'credit').reduce((s, t) => s + t.amount, 0),
+    [allTxns],
+  );
+  const totalOut = useMemo(
+    () => allTxns.filter((t) => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0),
+    [allTxns],
+  );
 
   // Filter + search dùng deferredSearch để không block input
   const filtered = useMemo(() => {
@@ -103,10 +128,10 @@ export default function TransactionList() {
   // ── Virtual scrolling: chỉ render rows đang visible trong viewport ──
   const parentRef = useRef(null);
   const virtualizer = useVirtualizer({
-    count:           filtered.length,
+    count: filtered.length,
     getScrollElement: () => parentRef.current,
-    estimateSize:    () => 80,
-    overscan:        5, // render thêm 5 rows ngoài viewport để scroll mượt
+    estimateSize: () => 80,
+    overscan: 5, // render thêm 5 rows ngoài viewport để scroll mượt
   });
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -115,20 +140,41 @@ export default function TransactionList() {
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
-      <div style={{ marginBottom: 6, fontSize: 12, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.5px' }}>
+      <div
+        style={{
+          marginBottom: 6,
+          fontSize: 12,
+          color: '#94a3b8',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+        }}
+      >
         MFE-ACCOUNTS TEAM
       </div>
 
       <button
         onClick={() => navigate(-1)}
-        style={{ marginBottom: 20, padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontSize: 13, color: '#64748b' }}
+        style={{
+          marginBottom: 20,
+          padding: '6px 14px',
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          cursor: 'pointer',
+          background: '#fff',
+          fontSize: 13,
+          color: '#64748b',
+        }}
       >
         ← Chi tiết tài khoản
       </button>
 
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 20, color: '#0f172a' }}>Lịch sử giao dịch</h2>
-        {account && <div style={{ fontSize: 13, color: '#64748b', fontFamily: 'monospace' }}>{account.number}</div>}
+        {account && (
+          <div style={{ fontSize: 13, color: '#64748b', fontFamily: 'monospace' }}>
+            {account.number}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -149,11 +195,15 @@ export default function TransactionList() {
             key={f.key}
             onClick={() => handleFilter(f.key)}
             style={{
-              padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13,
+              padding: '6px 16px',
+              borderRadius: 20,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
               background: filter === f.key ? '#1e3a5f' : '#f1f5f9',
-              color:      filter === f.key ? '#fff' : '#64748b',
+              color: filter === f.key ? '#fff' : '#64748b',
               fontWeight: filter === f.key ? 600 : 400,
-              opacity:    isPending ? 0.6 : 1,
+              opacity: isPending ? 0.6 : 1,
               transition: 'opacity 0.15s',
             }}
           >
@@ -173,14 +223,39 @@ export default function TransactionList() {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           style={{
-            width: '100%', padding: '8px 12px 8px 32px', borderRadius: 8,
-            border: '1px solid #e2e8f0', fontSize: 13, boxSizing: 'border-box',
-            opacity: isSearchStale ? 0.7 : 1, transition: 'opacity 0.1s',
+            width: '100%',
+            padding: '8px 12px 8px 32px',
+            borderRadius: 8,
+            border: '1px solid #e2e8f0',
+            fontSize: 13,
+            boxSizing: 'border-box',
+            opacity: isSearchStale ? 0.7 : 1,
+            transition: 'opacity 0.1s',
           }}
         />
-        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: 14 }}>🔍</span>
+        <span
+          style={{
+            position: 'absolute',
+            left: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#94a3b8',
+            fontSize: 14,
+          }}
+        >
+          🔍
+        </span>
         {isSearchStale && (
-          <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8' }}>
+          <span
+            style={{
+              position: 'absolute',
+              right: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: 11,
+              color: '#94a3b8',
+            }}
+          >
             đang lọc...
           </span>
         )}
@@ -202,7 +277,9 @@ export default function TransactionList() {
           </div>
         ) : (
           /* Container cao bằng tổng chiều cao của tất cả rows (kể cả chưa render) */
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative', padding: '8px 8px' }}>
+          <div
+            style={{ height: virtualizer.getTotalSize(), position: 'relative', padding: '8px 8px' }}
+          >
             {virtualItems.map((vItem) => (
               <div
                 key={vItem.key}
@@ -231,8 +308,14 @@ export default function TransactionList() {
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
             style={{
-              padding: '10px 28px', borderRadius: 8, border: 'none', cursor: isFetchingNextPage ? 'default' : 'pointer',
-              background: '#1e3a5f', color: '#fff', fontWeight: 600, fontSize: 14,
+              padding: '10px 28px',
+              borderRadius: 8,
+              border: 'none',
+              cursor: isFetchingNextPage ? 'default' : 'pointer',
+              background: '#1e3a5f',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 14,
               opacity: isFetchingNextPage ? 0.6 : 1,
             }}
           >

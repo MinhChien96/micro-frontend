@@ -1,12 +1,19 @@
-import React from 'react';
 import { getPermissions } from '../auth';
 
 const UpgradeBadge = ({ requiredRole = 'PREMIUM' }) => (
-  <span style={{
-    display: 'inline-block', fontSize: 11, fontWeight: 700, letterSpacing: '0.3px',
-    background: '#fef3c7', color: '#d97706',
-    padding: '2px 8px', borderRadius: 10, marginLeft: 8,
-  }}>
+  <span
+    style={{
+      display: 'inline-block',
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: '0.3px',
+      background: '#fef3c7',
+      color: '#d97706',
+      padding: '2px 8px',
+      borderRadius: 10,
+      marginLeft: 8,
+    }}
+  >
     {requiredRole}
   </span>
 );
@@ -35,12 +42,20 @@ export default function PermissionGate({
 
   if (showLocked) {
     return (
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 16px', borderRadius: 10,
-        border: '1px solid #e2e8f0', background: '#f8fafc',
-        color: '#94a3b8', fontSize: 14, cursor: 'not-allowed',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 16px',
+          borderRadius: 10,
+          border: '1px solid #e2e8f0',
+          background: '#f8fafc',
+          color: '#94a3b8',
+          fontSize: 14,
+          cursor: 'not-allowed',
+        }}
+      >
         <span>🔒</span>
         <span>Tính năng bị khóa</span>
         <UpgradeBadge requiredRole={requiredRole} />

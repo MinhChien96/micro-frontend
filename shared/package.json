@@ -2,11 +2,11 @@
   "name": "shared",
   "version": "1.0.0",
   "exports": {
-    "./auth":           "./src/auth.js",
-    "./ui":             "./src/ui/index.js",
+    "./auth": "./src/auth.js",
+    "./ui": "./src/ui/index.js",
     "./PermissionGate": "./src/components/PermissionGate.jsx",
-    "./ThemeContext":   "./src/ThemeContext.jsx",
-    "./eventBus":       "./src/eventBus.js"
+    "./ThemeContext": "./src/ThemeContext.jsx",
+    "./eventBus": "./src/eventBus.js"
   },
   "scripts": {
     "start": "modern dev",

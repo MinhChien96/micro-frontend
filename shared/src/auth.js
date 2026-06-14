@@ -1,6 +1,6 @@
 import { getPermissionsForRole } from './utils/permissions';
 
-const KEY_USER  = 'vietbank_user';
+const KEY_USER = 'vietbank_user';
 const KEY_TOKEN = 'vietbank_token';
 
 // SSR guard: server không có localStorage (Node 22+ có global localStorage
@@ -10,12 +10,14 @@ const hasStorage = () =>
 
 export const getUser = () => {
   if (!hasStorage()) return null;
-  try { return JSON.parse(localStorage.getItem(KEY_USER) || 'null'); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem(KEY_USER) || 'null');
+  } catch {
+    return null;
+  }
 };
 
-export const setUser = (user) =>
-  localStorage.setItem(KEY_USER, JSON.stringify(user));
+export const setUser = (user) => localStorage.setItem(KEY_USER, JSON.stringify(user));
 
 export const getToken = () => (hasStorage() ? localStorage.getItem(KEY_TOKEN) : null);
 
@@ -34,5 +36,4 @@ export const getPermissions = () => {
   return getPermissionsForRole((user.role || 'CUSTOMER').toUpperCase());
 };
 
-export const hasPermission = (permission) =>
-  getPermissions().includes(permission);
+export const hasPermission = (permission) => getPermissions().includes(permission);

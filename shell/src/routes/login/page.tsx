@@ -1,6 +1,5 @@
-import React from 'react';
-import { Navigate, useLocation } from '@modern-js/runtime/router';
 import { Helmet } from '@modern-js/runtime/head';
+import { Navigate, useLocation } from '@modern-js/runtime/router';
 import { useAuth } from '../../AuthContext';
 import RemoteErrorBoundary from '../../components/RemoteErrorBoundary';
 import { Login } from '../../components/remotePages';
@@ -19,7 +18,10 @@ export default function LoginPage() {
     <>
       <Helmet>
         <title>Đăng nhập — VietBank</title>
-        <meta name="description" content="Đăng nhập ngân hàng số VietBank bằng số CIF. An toàn, nhanh chóng." />
+        <meta
+          name="description"
+          content="Đăng nhập ngân hàng số VietBank bằng số CIF. An toàn, nhanh chóng."
+        />
       </Helmet>
       <RemoteErrorBoundary remote="mfe_auth/Login">
         <Login />

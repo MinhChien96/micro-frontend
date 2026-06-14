@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const PADDING = { sm: 12, md: 20, lg: 32 };
 
@@ -16,9 +16,7 @@ export function Card({ children, onClick, hoverable = false, padding = 'md', sty
         background: '#fff',
         borderRadius: 12,
         padding: pad,
-        boxShadow: active
-          ? '0 8px 24px rgba(102, 126, 234, 0.18)'
-          : '0 2px 8px rgba(0,0,0,0.06)',
+        boxShadow: active ? '0 8px 24px rgba(102, 126, 234, 0.18)' : '0 2px 8px rgba(0,0,0,0.06)',
         border: '1px solid #f1f5f9',
         transition: 'box-shadow 0.2s, transform 0.2s',
         transform: active ? 'translateY(-2px)' : 'none',
@@ -33,13 +31,15 @@ export function Card({ children, onClick, hoverable = false, padding = 'md', sty
 
 export function CardHeader({ title, subtitle, action }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      marginBottom: 16,
-      gap: 12,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        gap: 12,
+      }}
+    >
       <div>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1e293b' }}>{title}</h3>
         {subtitle && (
@@ -53,10 +53,12 @@ export function CardHeader({ title, subtitle, action }) {
 
 export function Divider({ margin = 16 }) {
   return (
-    <hr style={{
-      border: 'none',
-      borderTop: '1px solid #f1f5f9',
-      margin: `${margin}px 0`,
-    }} />
+    <hr
+      style={{
+        border: 'none',
+        borderTop: '1px solid #f1f5f9',
+        margin: `${margin}px 0`,
+      }}
+    />
   );
 }

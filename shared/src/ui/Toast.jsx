@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 let keyframesInjected = false;
 function injectKeyframes() {
@@ -18,9 +18,9 @@ const ToastContext = createContext(null);
 
 const TYPE = {
   success: { background: '#22c55e', icon: '✓' },
-  error:   { background: '#ef4444', icon: '✕' },
+  error: { background: '#ef4444', icon: '✕' },
   warning: { background: '#f59e0b', icon: '⚠' },
-  info:    { background: '#667eea', icon: 'ℹ' },
+  info: { background: '#667eea', icon: 'ℹ' },
 };
 
 let toastId = 0;
@@ -28,7 +28,9 @@ let toastId = 0;
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  useEffect(() => { injectKeyframes(); }, []);
+  useEffect(() => {
+    injectKeyframes();
+  }, []);
 
   const show = useCallback((message, type = 'info', duration = 3000) => {
     const id = ++toastId;
@@ -42,35 +44,40 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
-      <div style={{
-        position: 'fixed',
-        top: 20,
-        right: 20,
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        pointerEvents: 'none',
-      }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          pointerEvents: 'none',
+        }}
+      >
         {toasts.map(({ id, message, type }) => {
           const t = TYPE[type] || TYPE.info;
           return (
-            <div key={id} style={{
-              background: t.background,
-              color: '#fff',
-              padding: '12px 18px',
-              borderRadius: 10,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              fontSize: 14,
-              fontWeight: 500,
-              minWidth: 240,
-              maxWidth: 380,
-              animation: 'mfe-toast-in 0.25s ease',
-              pointerEvents: 'auto',
-            }}>
+            <div
+              key={id}
+              style={{
+                background: t.background,
+                color: '#fff',
+                padding: '12px 18px',
+                borderRadius: 10,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                fontSize: 14,
+                fontWeight: 500,
+                minWidth: 240,
+                maxWidth: 380,
+                animation: 'mfe-toast-in 0.25s ease',
+                pointerEvents: 'auto',
+              }}
+            >
               <span style={{ fontSize: 16 }}>{t.icon}</span>
               <span>{message}</span>
             </div>

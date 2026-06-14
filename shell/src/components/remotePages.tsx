@@ -1,22 +1,26 @@
-import React from 'react';
 import { createLazyComponent } from '@module-federation/modern-js-v3/react';
 import { getInstance } from '@module-federation/modern-js-v3/runtime';
+import type React from 'react';
 import {
   AccountsSkeleton,
-  TransferSkeleton,
   CardsSkeleton,
   LoansSkeleton,
   ProfileSkeleton,
+  TransferSkeleton,
 } from '../skeletons';
 
 const LoginFallback = (
-  <div className="loading-box"><div className="spinner" /><p>Đang tải đăng nhập...</p></div>
+  <div className="loading-box">
+    <div className="spinner" />
+    <p>Đang tải đăng nhập...</p>
+  </div>
 );
 
 const RemoteLoadError = ({ remote, error }: { remote: string; error?: Error }) => (
   <div className="error-box">
     <strong>Không thể tải MFE</strong> — remote <code>{remote}</code> có đang chạy không?
-    <br /><small style={{ opacity: 0.7 }}>{error?.message}</small>
+    <br />
+    <small style={{ opacity: 0.7 }}>{error?.message}</small>
   </div>
 );
 
@@ -26,7 +30,9 @@ export const Login = createLazyComponent({
   loader: () => import('mfe_auth/Login'),
   export: 'default',
   loading: LoginFallback,
-  fallback: ({ error }: { error?: Error }) => <RemoteLoadError remote="mfe_auth/Login" error={error} />,
+  fallback: ({ error }: { error?: Error }) => (
+    <RemoteLoadError remote="mfe_auth/Login" error={error} />
+  ),
 });
 
 // Protected — noSSR: server stream shell + skeleton, nội dung hydrate client

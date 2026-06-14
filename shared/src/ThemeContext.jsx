@@ -1,11 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext({ isDark: false, toggle: () => {} });
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(
-    () => localStorage.getItem('vietbank_theme') === 'dark'
-  );
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('vietbank_theme') === 'dark');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
@@ -14,11 +12,7 @@ export function ThemeProvider({ children }) {
 
   const toggle = () => setIsDark((d) => !d);
 
-  return (
-    <ThemeContext.Provider value={{ isDark, toggle }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ isDark, toggle }}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = () => useContext(ThemeContext);

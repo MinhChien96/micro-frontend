@@ -5,8 +5,10 @@ const log = (...a) => console.log('•', ...a);
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await browser.newPage();
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 250)); });
-page.on('pageerror', (e) => errors.push('PAGEERROR: ' + String(e).slice(0, 250)));
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push(m.text().slice(0, 250));
+});
+page.on('pageerror', (e) => errors.push(`PAGEERROR: ${String(e).slice(0, 250)}`));
 
 // 1. Landing public SSR + hydrate
 await page.goto('http://localhost:3000/', { waitUntil: 'networkidle' });
@@ -58,6 +60,9 @@ await browser.close();
 const fatal = errors.filter((e) =>
   /invalid hook call|Minified React error|Hydration failed|PAGEERROR|ChunkLoadError/i.test(e),
 );
-console.log('\nConsole errors:', errors.length ? '\n  ' + errors.join('\n  ') : '(none)');
-if (fatal.length) { console.log('\n❌ FATAL:\n' + fatal.join('\n')); process.exit(1); }
+console.log('\nConsole errors:', errors.length ? `\n  ${errors.join('\n  ')}` : '(none)');
+if (fatal.length) {
+  console.log(`\n❌ FATAL:\n${fatal.join('\n')}`);
+  process.exit(1);
+}
 console.log('\n✅ SSR E2E PASS');

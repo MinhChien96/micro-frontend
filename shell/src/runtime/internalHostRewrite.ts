@@ -15,7 +15,7 @@ const isServer = typeof window === 'undefined';
 if (isServer && !(globalThis as any).__vbMfRejectionGuard) {
   (globalThis as any).__vbMfRejectionGuard = true;
   process.on('unhandledRejection', (reason: any) => {
-    const msg = String((reason && reason.message) ?? reason ?? '');
+    const msg = String(reason?.message ?? reason ?? '');
     if (msg.includes('Federation Runtime') || msg.includes('RUNTIME-')) {
       console.error('[mf-resilience] Remote không phản hồi (host vẫn sống):', msg.slice(0, 200));
       return;
@@ -25,9 +25,7 @@ if (isServer && !(globalThis as any).__vbMfRejectionGuard) {
 }
 
 const map: Record<string, string> =
-  isServer && process.env.MF_INTERNAL_HOST_MAP
-    ? JSON.parse(process.env.MF_INTERNAL_HOST_MAP)
-    : {};
+  isServer && process.env.MF_INTERNAL_HOST_MAP ? JSON.parse(process.env.MF_INTERNAL_HOST_MAP) : {};
 
 const rewrite = (url?: string): string | undefined => {
   if (!url) return url;

@@ -1,21 +1,36 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
 const ROLE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  PREMIUM:  { label: 'Ưu tiên', bg: '#fef3c7', color: '#d97706' },
-  BUSINESS: { label: 'DN',      bg: '#ede9fe', color: '#7c3aed' },
+  PREMIUM: { label: 'Ưu tiên', bg: '#fef3c7', color: '#d97706' },
+  BUSINESS: { label: 'DN', bg: '#ede9fe', color: '#7c3aed' },
 };
 
 const NAV_LINKS = [
-  { to: '/accounts', label: 'Tài khoản',   tag: 'mfe-accounts', prefetch: () => import('mfe_accounts/AccountsApp') },
-  { to: '/transfer', label: 'Chuyển tiền', tag: 'mfe-transfer', prefetch: () => import('mfe_transfer/TransferApp') },
-  { to: '/cards',    label: 'Thẻ',          tag: 'mfe-cards',    prefetch: () => import('mfe_cards/CardsApp') },
-  { to: '/loans',    label: 'Vay vốn',     tag: 'mfe-loans',    prefetch: () => import('mfe_loans/LoansApp') },
+  {
+    to: '/accounts',
+    label: 'Tài khoản',
+    tag: 'mfe-accounts',
+    prefetch: () => import('mfe_accounts/AccountsApp'),
+  },
+  {
+    to: '/transfer',
+    label: 'Chuyển tiền',
+    tag: 'mfe-transfer',
+    prefetch: () => import('mfe_transfer/TransferApp'),
+  },
+  { to: '/cards', label: 'Thẻ', tag: 'mfe-cards', prefetch: () => import('mfe_cards/CardsApp') },
+  {
+    to: '/loans',
+    label: 'Vay vốn',
+    tag: 'mfe-loans',
+    prefetch: () => import('mfe_loans/LoansApp'),
+  },
 ];
 
 export default function Nav() {
-  const user     = useAuth();
+  const user = useAuth();
   const location = useLocation();
   const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -53,7 +68,16 @@ export default function Nav() {
         {user ? (
           <>
             {roleBadge && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: roleBadge.bg, color: roleBadge.color }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  background: roleBadge.bg,
+                  color: roleBadge.color,
+                }}
+              >
                 {roleBadge.label}
               </span>
             )}
@@ -61,7 +85,9 @@ export default function Nav() {
               <span className="avatar">{user.name[0].toUpperCase()}</span>
               <span>{user.name}</span>
             </Link>
-            <button onClick={handleLogout} className="btn-logout">Đăng xuất</button>
+            <button onClick={handleLogout} className="btn-logout">
+              Đăng xuất
+            </button>
           </>
         ) : (
           <Link to="/login" className={`nav-link ${isActive('/login') ? 'active' : ''}`}>

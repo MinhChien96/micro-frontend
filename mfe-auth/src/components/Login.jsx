@@ -1,24 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { setUser, setToken } from 'shared/auth';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { setToken, setUser } from 'shared/auth';
 import '../styles.css';
 
 const DEMO_ROLES = [
   { value: 'CUSTOMER', label: 'Khách hàng thường', desc: 'Chuyển trong nước, xem thẻ/vay' },
-  { value: 'PREMIUM',  label: 'Khách hàng ưu tiên', desc: '+ Chuyển quốc tế, đổi hạn mức, đăng ký vay' },
+  {
+    value: 'PREMIUM',
+    label: 'Khách hàng ưu tiên',
+    desc: '+ Chuyển quốc tế, đổi hạn mức, đăng ký vay',
+  },
   { value: 'BUSINESS', label: 'Doanh nghiệp', desc: '+ Chuyển hàng loạt, quản lý tài khoản' },
 ];
 
 export default function Login() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const from      = location.state?.from?.pathname || '/accounts';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/accounts';
 
-  const [customerId,    setCustomerId]    = useState('');
-  const [password,      setPassword]      = useState('');
-  const [selectedRole,  setSelectedRole]  = useState('CUSTOMER');
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState('CUSTOMER');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,14 +33,14 @@ export default function Login() {
 
     if (customerId === '0021001' && password === '123456') {
       setUser({
-        name:       'Nguyễn Văn Demo',
+        name: 'Nguyễn Văn Demo',
         customerId: '0021001',
-        email:      'demo@vietbank.vn',
-        phone:      '0901 234 567',
-        branch:     'Chi nhánh TP.HCM',
-        role:       selectedRole,
+        email: 'demo@vietbank.vn',
+        phone: '0901 234 567',
+        branch: 'Chi nhánh TP.HCM',
+        role: selectedRole,
       });
-      setToken('mock-jwt-' + Date.now());
+      setToken(`mock-jwt-${Date.now()}`);
       window.dispatchEvent(new CustomEvent('auth:changed'));
       navigate(from, { replace: true });
     } else {
@@ -88,8 +92,13 @@ export default function Login() {
               <label
                 key={value}
                 style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
-                  padding: '8px 12px', borderRadius: 8, border: '1px solid',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  cursor: 'pointer',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid',
                   borderColor: selectedRole === value ? '#1e3a5f' : '#e2e8f0',
                   background: selectedRole === value ? '#f0f4ff' : '#fff',
                 }}
@@ -111,25 +120,48 @@ export default function Login() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 12 }}>
-          <a href="#" style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}
-            onClick={(e) => { e.preventDefault(); alert('Vui lòng liên hệ 1800-xxxx để khôi phục mật khẩu.'); }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 12 }}
+        >
+          <a
+            href="#"
+            style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none' }}
+            onClick={(e) => {
+              e.preventDefault();
+              alert('Vui lòng liên hệ 1800-xxxx để khôi phục mật khẩu.');
+            }}
+          >
             Quên mật khẩu?
           </a>
         </div>
 
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+            <span
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid rgba(255,255,255,0.4)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  display: 'inline-block',
+                  animation: 'spin 0.7s linear infinite',
+                }}
+              />
               Đang đăng nhập...
             </span>
-          ) : 'Đăng nhập'}
+          ) : (
+            'Đăng nhập'
+          )}
         </button>
       </form>
 
       <div className="auth-otp-hint">
-        <span>🔒</span> Sau khi đăng nhập, hệ thống có thể gửi OTP về số <strong>090x xxx xxx</strong> để xác thực
+        <span>🔒</span> Sau khi đăng nhập, hệ thống có thể gửi OTP về số{' '}
+        <strong>090x xxx xxx</strong> để xác thực
       </div>
 
       <div className="auth-hint">

@@ -1,5 +1,3 @@
-import React from 'react';
-
 const SHIMMER_CSS = `@keyframes vb-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`;
 let cssInjected = false;
 function ensureCSS() {
@@ -51,7 +49,9 @@ export function SkeletonRow() {
 export function SkeletonList({ rows = 3 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {Array.from({ length: rows }, (_, i) => <SkeletonRow key={i} />)}
+      {Array.from({ length: rows }, (_, i) => (
+        <SkeletonRow key={i} />
+      ))}
     </div>
   );
 }

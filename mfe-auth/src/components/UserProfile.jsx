@@ -1,10 +1,12 @@
-import React from 'react';
 import '../styles.css';
 
 const getUser = () => {
   if (typeof window === 'undefined') return null; // SSR guard
-  try { return JSON.parse(localStorage.getItem('vietbank_user') || 'null'); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
+  } catch {
+    return null;
+  }
 };
 
 export default function UserProfile() {

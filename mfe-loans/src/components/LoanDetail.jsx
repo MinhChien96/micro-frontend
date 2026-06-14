@@ -1,26 +1,40 @@
-import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Card, CardHeader, Divider, StatusBadge } from 'shared/ui';
 
-const fmt = (n) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
 const MOCK_LOANS = {
   LOAN001: {
-    id: 'LOAN001', type: 'personal', typeLabel: 'Vay cá nhân',
+    id: 'LOAN001',
+    type: 'personal',
+    typeLabel: 'Vay cá nhân',
     name: 'Vay tiêu dùng cá nhân',
-    principal: 50_000_000, outstanding: 32_400_000, monthlyPayment: 1_850_000,
-    interestRate: 12.5, termMonths: 36, paidMonths: 19,
-    disbursedDate: '2023-03-05', nextDue: '2024-11-05', endDate: '2026-03-05',
+    principal: 50_000_000,
+    outstanding: 32_400_000,
+    monthlyPayment: 1_850_000,
+    interestRate: 12.5,
+    termMonths: 36,
+    paidMonths: 19,
+    disbursedDate: '2023-03-05',
+    nextDue: '2024-11-05',
+    endDate: '2026-03-05',
     purpose: 'Sửa chữa nhà ở, mua sắm thiết bị gia đình',
     status: 'active',
   },
   LOAN002: {
-    id: 'LOAN002', type: 'mortgage', typeLabel: 'Vay bất động sản',
+    id: 'LOAN002',
+    type: 'mortgage',
+    typeLabel: 'Vay bất động sản',
     name: 'Vay mua nhà ở xã hội',
-    principal: 800_000_000, outstanding: 687_500_000, monthlyPayment: 8_200_000,
-    interestRate: 8.5, termMonths: 240, paidMonths: 14,
-    disbursedDate: '2023-09-15', nextDue: '2024-11-01', endDate: '2043-09-15',
+    principal: 800_000_000,
+    outstanding: 687_500_000,
+    monthlyPayment: 8_200_000,
+    interestRate: 8.5,
+    termMonths: 240,
+    paidMonths: 14,
+    disbursedDate: '2023-09-15',
+    nextDue: '2024-11-01',
+    endDate: '2043-09-15',
     purpose: 'Mua căn hộ chung cư tại TP.HCM',
     status: 'active',
   },
@@ -35,8 +49,20 @@ export default function LoanDetail() {
     return (
       <div style={{ textAlign: 'center', padding: 48 }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-        <p style={{ color: '#64748b' }}>Không tìm thấy khoản vay <strong>{id}</strong></p>
-        <button onClick={() => navigate(-1)} style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff' }}>
+        <p style={{ color: '#64748b' }}>
+          Không tìm thấy khoản vay <strong>{id}</strong>
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            marginTop: 12,
+            padding: '8px 20px',
+            borderRadius: 8,
+            border: '1px solid #e2e8f0',
+            cursor: 'pointer',
+            background: '#fff',
+          }}
+        >
           ← Quay lại
         </button>
       </div>
@@ -48,13 +74,30 @@ export default function LoanDetail() {
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto' }}>
-      <div style={{ marginBottom: 6, fontSize: 12, color: '#94a3b8', fontWeight: 600, letterSpacing: '0.5px' }}>
+      <div
+        style={{
+          marginBottom: 6,
+          fontSize: 12,
+          color: '#94a3b8',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+        }}
+      >
         MFE-LOANS TEAM
       </div>
 
       <button
         onClick={() => navigate(-1)}
-        style={{ marginBottom: 20, padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', fontSize: 13, color: '#64748b' }}
+        style={{
+          marginBottom: 20,
+          padding: '6px 14px',
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          cursor: 'pointer',
+          background: '#fff',
+          fontSize: 13,
+          color: '#64748b',
+        }}
       >
         ← Danh sách khoản vay
       </button>
@@ -67,7 +110,10 @@ export default function LoanDetail() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ fontWeight: 700, fontSize: 18, color: '#0f172a' }}>{loan.name}</span>
-              <StatusBadge label={loan.typeLabel} color={loan.type === 'personal' ? 'purple' : 'green'} />
+              <StatusBadge
+                label={loan.typeLabel}
+                color={loan.type === 'personal' ? 'purple' : 'green'}
+              />
               <StatusBadge label="Đang vay" color="blue" />
             </div>
             <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>{loan.purpose}</div>
@@ -94,15 +140,41 @@ export default function LoanDetail() {
       </div>
 
       <Card style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b', marginBottom: 8 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: 13,
+            color: '#64748b',
+            marginBottom: 8,
+          }}
+        >
           <span>Tiến độ trả nợ</span>
-          <span>{loan.paidMonths}/{loan.termMonths} kỳ · còn {remainingMonths} kỳ</span>
+          <span>
+            {loan.paidMonths}/{loan.termMonths} kỳ · còn {remainingMonths} kỳ
+          </span>
         </div>
         <div style={{ height: 10, background: '#f1f5f9', borderRadius: 5, marginBottom: 6 }}>
-          <div style={{ height: '100%', borderRadius: 5, background: 'linear-gradient(90deg, #16a34a, #2563eb)', width: `${progress}%` }} />
+          <div
+            style={{
+              height: '100%',
+              borderRadius: 5,
+              background: 'linear-gradient(90deg, #16a34a, #2563eb)',
+              width: `${progress}%`,
+            }}
+          />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#94a3b8' }}>
-          <span>Đã trả: {fmt(loan.principal - loan.outstanding)} ({progress.toFixed(1)}%)</span>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: 12,
+            color: '#94a3b8',
+          }}
+        >
+          <span>
+            Đã trả: {fmt(loan.principal - loan.outstanding)} ({progress.toFixed(1)}%)
+          </span>
           <span>Kết thúc: {loan.endDate}</span>
         </div>
       </Card>
@@ -117,7 +189,16 @@ export default function LoanDetail() {
           ['Số hợp đồng', loan.id],
           ['Chi nhánh phụ trách', 'Chi nhánh TP.HCM'],
         ].map(([label, value]) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14 }}>
+          <div
+            key={label}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '8px 0',
+              borderBottom: '1px solid #f1f5f9',
+              fontSize: 14,
+            }}
+          >
             <span style={{ color: '#64748b' }}>{label}</span>
             <span style={{ fontWeight: 500 }}>{value}</span>
           </div>
@@ -128,15 +209,31 @@ export default function LoanDetail() {
         <Link
           to={`${loan.id}/schedule`}
           style={{
-            flex: 1, textAlign: 'center', padding: '12px 0',
-            background: '#1e3a5f', color: '#fff', borderRadius: 10,
-            textDecoration: 'none', fontWeight: 600, fontSize: 14,
+            flex: 1,
+            textAlign: 'center',
+            padding: '12px 0',
+            background: '#1e3a5f',
+            color: '#fff',
+            borderRadius: 10,
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: 14,
           }}
         >
           Xem lịch trả nợ
         </Link>
         <button
-          style={{ flex: 1, padding: '12px 0', background: '#f1f5f9', color: '#1e3a5f', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
+          style={{
+            flex: 1,
+            padding: '12px 0',
+            background: '#f1f5f9',
+            color: '#1e3a5f',
+            borderRadius: 10,
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: 14,
+          }}
           onClick={() => alert('Tính năng đang phát triển')}
         >
           Trả trước hạn

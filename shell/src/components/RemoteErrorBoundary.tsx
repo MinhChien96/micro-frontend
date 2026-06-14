@@ -37,13 +37,23 @@ export default class RemoteErrorBoundary extends React.Component<Props, State> {
       const attemptsLeft = MAX_RETRIES - retryCount;
       return (
         <div className="error-box">
-          <strong>Không thể tải MFE</strong> — remote <code>{this.props.remote}</code> có đang chạy không?
-          <br /><small style={{ opacity: 0.7 }}>{error?.message}</small>
+          <strong>Không thể tải MFE</strong> — remote <code>{this.props.remote}</code> có đang chạy
+          không?
+          <br />
+          <small style={{ opacity: 0.7 }}>{error?.message}</small>
           <br />
           {attemptsLeft > 0 ? (
             <button
               onClick={this.handleRetry}
-              style={{ marginTop: 10, padding: '6px 16px', borderRadius: 8, border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff', fontSize: 13 }}
+              style={{
+                marginTop: 10,
+                padding: '6px 16px',
+                borderRadius: 8,
+                border: '1px solid #cbd5e1',
+                cursor: 'pointer',
+                background: '#fff',
+                fontSize: 13,
+              }}
             >
               Thử lại ({attemptsLeft} lần còn lại)
             </button>
@@ -54,7 +64,15 @@ export default class RemoteErrorBoundary extends React.Component<Props, State> {
               </small>
               <button
                 onClick={() => window.location.reload()}
-                style={{ padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontSize: 13 }}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: '#ef4444',
+                  color: '#fff',
+                  fontSize: 13,
+                }}
               >
                 Tải lại trang
               </button>
