@@ -1,10 +1,9 @@
+import { isAuthenticated, setToken } from '@app/shared/auth';
 import Login from '../components/Login';
 
-const MOCK_TOKEN = 'dev-standalone-token';
-
 export default function Page() {
-  if (typeof window !== 'undefined' && !localStorage.getItem('vietbank_token')) {
-    localStorage.setItem('vietbank_token', MOCK_TOKEN);
+  if (typeof window !== 'undefined' && !isAuthenticated()) {
+    setToken('dev-standalone-token');
   }
 
   return (

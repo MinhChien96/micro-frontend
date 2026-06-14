@@ -1,13 +1,13 @@
+import { BRAND } from '@app/shared/brand';
 import { appTools, defineConfig } from '@modern-js/app-tools';
 import { moduleFederationPlugin } from '@module-federation/modern-js-v3';
 
 export default defineConfig({
   plugins: [appTools({ bundler: 'rspack' }), moduleFederationPlugin()],
   html: {
-    title: 'VietBank — Ngân hàng số',
+    title: `${BRAND.name} — Ngân hàng số`,
     meta: {
-      description:
-        'VietBank — ngân hàng số: tài khoản, chuyển tiền, thẻ, vay vốn. Micro-frontend base với Modern.js federated SSR.',
+      description: BRAND.description,
     },
   },
   output: { assetPrefix: process.env.PUBLIC_URL || '/' },

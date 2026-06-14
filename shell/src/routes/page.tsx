@@ -1,3 +1,4 @@
+import { BRAND } from '@app/shared/brand';
 import { Helmet } from '@modern-js/runtime/head';
 import { Link } from '@modern-js/runtime/router';
 
@@ -33,15 +34,15 @@ export default function HomePage() {
   return (
     <div className="landing">
       <Helmet>
-        <title>VietBank — Ngân hàng số: tài khoản, chuyển tiền, thẻ, vay vốn</title>
+        <title>{`${BRAND.name} — Ngân hàng số: tài khoản, chuyển tiền, thẻ, vay vốn`}</title>
         <meta
           name="description"
-          content="Mở tài khoản VietBank miễn phí: chuyển tiền 24/7 không mất phí, thẻ hoàn tiền 2%, vay vốn lãi suất từ 6.8%/năm. Đăng nhập ngân hàng số ngay."
+          content={`Mở tài khoản ${BRAND.name} miễn phí: chuyển tiền 24/7 không mất phí, thẻ hoàn tiền 2%, vay vốn lãi suất từ 6.8%/năm. Đăng nhập ngân hàng số ngay.`}
         />
       </Helmet>
 
       <section style={{ textAlign: 'center', padding: '48px 16px 32px' }}>
-        <h1 style={{ fontSize: 32, marginBottom: 12 }}>Ngân hàng số VietBank</h1>
+        <h1 style={{ fontSize: 32, marginBottom: 12 }}>Ngân hàng số {BRAND.name}</h1>
         <p style={{ color: '#64748b', maxWidth: 520, margin: '0 auto 24px' }}>
           Tài khoản, chuyển tiền, thẻ và vay vốn — tất cả trong một nền tảng, xây dựng theo kiến
           trúc micro-frontend với Modern.js federated SSR.

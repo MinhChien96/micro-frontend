@@ -1,3 +1,4 @@
+import { BRAND } from '@app/shared/brand';
 import { Helmet } from '@modern-js/runtime/head';
 import { Navigate, useLocation } from '@modern-js/runtime/router';
 import { useAuth } from '../../AuthContext';
@@ -17,10 +18,10 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title>Đăng nhập — VietBank</title>
+        <title>{`Đăng nhập — ${BRAND.name}`}</title>
         <meta
           name="description"
-          content="Đăng nhập ngân hàng số VietBank bằng số CIF. An toàn, nhanh chóng."
+          content={`Đăng nhập ${BRAND.name} bằng số CIF. An toàn, nhanh chóng.`}
         />
       </Helmet>
       <RemoteErrorBoundary remote="mfe_auth/Login">

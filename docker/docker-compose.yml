@@ -6,7 +6,7 @@
 #   PORT                       → port prod server (modern serve đọc qua modern.config.ts)
 #   MODERN_MF_AUTO_CORS        → CORS middleware cho manifest/chunks cross-origin
 #   MF_INTERNAL_HOST_MAP       → (chỉ shell) rewrite host server-side: localhost → service name
-name: vietbank-mfe
+name: app-mfe
 
 x-remote-defaults: &remote-defaults
   restart: unless-stopped

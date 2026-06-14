@@ -1,4 +1,5 @@
 import { type Role, setToken, setUser } from '@app/shared/auth';
+import { BRAND } from '@app/shared/brand';
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles.css';
@@ -36,7 +37,7 @@ export default function Login() {
       setUser({
         name: 'Nguyễn Văn Demo',
         customerId: '0021001',
-        email: 'demo@vietbank.vn',
+        email: 'demo@example.com',
         phone: '0901 234 567',
         branch: 'Chi nhánh TP.HCM',
         role: selectedRole,
@@ -55,7 +56,7 @@ export default function Login() {
     <div className="auth-card">
       <div className="auth-header">
         <div className="auth-logo">🏦</div>
-        <h2>VietBank Online</h2>
+        <h2>{BRAND.name}</h2>
         <p>Đăng nhập để quản lý tài khoản của bạn</p>
       </div>
 

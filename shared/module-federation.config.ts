@@ -11,6 +11,7 @@ export default createModuleFederationConfig({
     './PermissionGate': './src/components/PermissionGate.tsx',
     './ThemeContext': './src/ThemeContext.tsx',
     './eventBus': './src/eventBus.ts',
+    './brand': './src/config/brand.ts',
   },
   shared: {
     react: { singleton: true, requiredVersion: '>=18.2.0' },

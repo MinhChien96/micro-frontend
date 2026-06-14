@@ -1,20 +1,11 @@
+import { clearAuth, getUser } from '@app/shared/auth';
 import '../styles.css';
-
-const getUser = () => {
-  if (typeof window === 'undefined') return null; // SSR guard
-  try {
-    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
-  } catch {
-    return null;
-  }
-};
 
 export default function UserProfile() {
   const user = getUser();
 
   const handleLogout = () => {
-    localStorage.removeItem('vietbank_user');
-    localStorage.removeItem('vietbank_token');
+    clearAuth();
     window.dispatchEvent(new CustomEvent('auth:changed'));
   };
 

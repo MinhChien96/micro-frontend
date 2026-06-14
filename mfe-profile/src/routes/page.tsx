@@ -1,18 +1,19 @@
+import { setToken, setUser, type User } from '@app/shared/auth';
 import { useEffect } from 'react';
 import ProfileApp from '../components/ProfileApp';
 
-const MOCK_USER = {
+const MOCK_USER: User = {
   id: 'dev-001',
   name: 'Dev User',
   role: 'PREMIUM',
-  email: 'dev@vietbank.vn',
+  email: 'dev@example.com',
   branch: 'HN',
 };
 
 export default function Page() {
   useEffect(() => {
-    localStorage.setItem('vietbank_user', JSON.stringify(MOCK_USER));
-    localStorage.setItem('vietbank_token', 'dev-standalone-token');
+    setUser(MOCK_USER);
+    setToken('dev-standalone-token');
   }, []);
 
   return (

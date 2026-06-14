@@ -1,3 +1,4 @@
+import { BRAND } from '@app/shared/brand';
 import { ToastProvider } from '@app/shared/ui';
 import { Helmet } from '@modern-js/runtime/head';
 import { Outlet } from '@modern-js/runtime/router';
@@ -11,8 +12,8 @@ export default function RootLayout() {
       {/* ToastProvider ở shell root — MFE gọi useToast() qua @app/shared/ui singleton */}
       <ToastProvider>
         <Helmet>
-          <html lang="vi" />
-          <title>VietBank — Ngân hàng số</title>
+          <html lang={BRAND.htmlLang} />
+          <title>{`${BRAND.name} — Ngân hàng số`}</title>
         </Helmet>
         <div className="app">
           <Nav />

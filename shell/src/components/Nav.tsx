@@ -1,3 +1,5 @@
+import { clearAuth } from '@app/shared/auth';
+import { BRAND } from '@app/shared/brand';
 import { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
@@ -35,8 +37,7 @@ export default function Nav() {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('vietbank_user');
-    localStorage.removeItem('vietbank_token');
+    clearAuth();
     window.dispatchEvent(new CustomEvent('auth:changed'));
   }, []);
 
@@ -45,9 +46,9 @@ export default function Nav() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="brand-icon">🏦</span>
-        <span className="brand-name">VietBank</span>
-        <span className="brand-badge">Modern.js · Federated SSR</span>
+        <span className="brand-icon">{BRAND.icon}</span>
+        <span className="brand-name">{BRAND.name}</span>
+        <span className="brand-badge">{BRAND.tagline}</span>
       </div>
 
       <div className="navbar-links">

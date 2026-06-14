@@ -1,13 +1,5 @@
-import type React from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
-
-interface User {
-  id?: string;
-  name: string;
-  role: string;
-  email?: string;
-  branch?: string;
-}
+import { getUser, type User } from '@app/shared/auth';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 
 interface AuthState {
   user: User | null;
@@ -16,23 +8,13 @@ interface AuthState {
   ready: boolean;
 }
 
-const KEY = 'vietbank_user';
-
-const readUser = (): User | null => {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || 'null');
-  } catch {
-    return null;
-  }
-};
-
 const AuthContext = createContext<AuthState>({ user: null, ready: false });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, ready: false });
 
   useEffect(() => {
-    const sync = () => setState({ user: readUser(), ready: true });
+    const sync = () => setState({ user: getUser(), ready: true });
     sync(); // đọc lần đầu sau hydration
     window.addEventListener('auth:changed', sync);
     return () => window.removeEventListener('auth:changed', sync);

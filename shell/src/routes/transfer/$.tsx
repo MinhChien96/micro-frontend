@@ -1,3 +1,4 @@
+import { BRAND } from '@app/shared/brand';
 import { Helmet } from '@modern-js/runtime/head';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import RemoteErrorBoundary from '../../components/RemoteErrorBoundary';
@@ -7,7 +8,7 @@ export default function TransferPage() {
   return (
     <ProtectedRoute>
       <Helmet>
-        <title>Chuyển tiền — VietBank</title>
+        <title>{`Chuyển tiền — ${BRAND.name}`}</title>
       </Helmet>
       <RemoteErrorBoundary remote="mfe_transfer/TransferApp">
         <TransferApp />

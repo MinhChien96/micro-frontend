@@ -1,13 +1,5 @@
+import { getUser } from '@app/shared/auth';
 import { Link } from 'react-router-dom';
-
-const getUser = () => {
-  if (typeof window === 'undefined') return null; // SSR guard
-  try {
-    return JSON.parse(localStorage.getItem('vietbank_user') || 'null');
-  } catch {
-    return null;
-  }
-};
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);

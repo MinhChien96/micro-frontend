@@ -4,9 +4,9 @@ export type { Permission, Role } from './utils/permissions';
 
 // Nguồn chân lý cho localStorage keys — đổi 1 chỗ là đổi toàn hệ thống.
 export const STORAGE_KEYS = {
-  user: 'vietbank_user',
-  token: 'vietbank_token',
-  theme: 'vietbank_theme',
+  user: 'app_user',
+  token: 'app_token',
+  theme: 'app_theme',
 } as const;
 
 export interface User {

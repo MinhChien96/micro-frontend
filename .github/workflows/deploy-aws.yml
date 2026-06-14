@@ -2,7 +2,7 @@
 # Yêu cầu cấu hình trước (ngoài scope repo này):
 #   - OIDC role (secrets.AWS_ROLE_ARN) có quyền S3/CloudFront/ECR/ECS
 #   - vars: AWS_REGION, S3_BUCKET, CDN_DOMAIN, CF_DISTRIBUTION_ID, ECS_CLUSTER
-#   - ECS task definitions + ALB cho 7 service: vietbank-{shell,mfe-*}
+#   - ECS task definitions + ALB cho 7 service: app-{shell,mfe-*}
 # Kiến trúc: static assets (chunks + manifest + node bundles) trên S3/CloudFront;
 # SSR servers chạy ECS (image build từ docker/Dockerfile).
 name: Deploy AWS
@@ -71,7 +71,7 @@ jobs:
 
       - name: Build + push image
         run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/vietbank-${{ matrix.app }}:${{ github.sha }}
+          IMAGE=${{ steps.ecr.outputs.registry }}/app-${{ matrix.app }}:${{ github.sha }}
           docker build -f docker/Dockerfile \
             --build-arg APP=${{ matrix.app }} \
             --build-arg PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/${{ matrix.app }}/" \
@@ -83,5 +83,5 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster ${{ vars.ECS_CLUSTER }} \
-            --service vietbank-${{ matrix.app }} \
+            --service app-${{ matrix.app }} \
             --force-new-deployment
