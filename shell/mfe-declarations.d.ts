@@ -32,3 +32,5 @@ declare module 'mfe_profile/ProfileApp' {
   const ProfileApp: React.ComponentType<any>;
   export default ProfileApp;
 }
+
+// @plop:declaration (generator chèn khai báo remote mới bên trên)

@@ -20,6 +20,7 @@ export default createModuleFederationConfig({
     mfe_profile: `mfe_profile@${m('mfe-profile', 3005)}`,
     mfe_loans: `mfe_loans@${m('mfe-loans', 3006)}`,
     mfe_cards: `mfe_cards@${m('mfe-cards', 3007)}`,
+    // @plop:remote (generator chèn remote mới bên trên)
   },
   runtimePlugins: ['./src/runtime/internalHostRewrite.ts'],
   shared: {

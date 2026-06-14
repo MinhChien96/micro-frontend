@@ -1,0 +1,30 @@
+import { Card, CardHeader } from '@app/shared/ui';
+import type { CSSProperties } from 'react';
+import { Route, Routes } from 'react-router-dom';
+
+// Example MFE — thay nội dung domain thật của bạn vào đây.
+// Component này expose qua MF (./{{pascalCase name}}App); shell render dưới
+// route /{{kebabCase name}}/*. Dùng <Routes> con cho sub-route (vd /{{kebabCase name}}/:id).
+const wrapStyle: CSSProperties = { maxWidth: 680, margin: '0 auto' };
+const descStyle: CSSProperties = { fontSize: 14, color: '#64748b' };
+
+function {{pascalCase name}}Home() {
+  return (
+    <div style={wrapStyle}>
+      <Card>
+        <CardHeader title="{{label}}" subtitle="mfe-{{kebabCase name}}" />
+        <p style={descStyle}>
+          MFE <strong>{{kebabCase name}}</strong> đang chạy. Thay nội dung này bằng tính năng thật.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+export default function {{pascalCase name}}App() {
+  return (
+    <Routes>
+      <Route index element={<{{pascalCase name}}Home />} />
+    </Routes>
+  );
+}

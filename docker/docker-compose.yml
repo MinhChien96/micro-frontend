@@ -83,6 +83,8 @@ services:
     environment: { PORT: 3007, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3007:3007"]
 
+  # @plop:service (generator chèn service MFE mới bên trên)
+
   shell:
     <<: *remote-defaults
     build:

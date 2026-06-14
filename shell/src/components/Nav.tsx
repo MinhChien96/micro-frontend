@@ -29,6 +29,7 @@ const NAV_LINKS = [
     tag: 'mfe-loans',
     prefetch: () => import('mfe_loans/LoansApp'),
   },
+  // @plop:nav-link (generator chèn link MFE mới bên trên)
 ];
 
 export default function Nav() {

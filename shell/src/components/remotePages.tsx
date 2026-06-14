@@ -76,3 +76,4 @@ export const ProfileApp = protectedPage(
   () => import('mfe_profile/ProfileApp'),
   <ProfileSkeleton />,
 );
+// @plop:remote-page (generator chèn export MFE mới bên trên)

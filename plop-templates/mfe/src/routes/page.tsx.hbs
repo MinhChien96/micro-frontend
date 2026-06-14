@@ -1,0 +1,40 @@
+import { setToken, setUser, type User } from '@app/shared/auth';
+import { type CSSProperties, useEffect } from 'react';
+import {{pascalCase name}}App from '../components/{{pascalCase name}}App';
+
+// Trang standalone dev: chạy MFE độc lập (pnpm --filter ./mfe-{{kebabCase name}} start)
+// với user mock — không cần shell.
+const MOCK_USER: User = {
+  id: 'dev-001',
+  name: 'Dev User',
+  role: 'PREMIUM',
+  email: 'dev@example.com',
+  branch: 'HN',
+};
+
+const pageStyle: CSSProperties = { padding: 24 };
+const bannerStyle: CSSProperties = {
+  marginBottom: 16,
+  padding: '8px 14px',
+  borderRadius: 8,
+  background: '#dcfce7',
+  color: '#166534',
+  fontSize: 12,
+  fontWeight: 600,
+};
+
+export default function Page() {
+  useEffect(() => {
+    setUser(MOCK_USER);
+    setToken('dev-standalone-token');
+  }, []);
+
+  return (
+    <div style={pageStyle}>
+      <div style={bannerStyle}>
+        Standalone — mfe-{{kebabCase name}} :{{port}} · Modern.js · Mock: PREMIUM role
+      </div>
+      <{{pascalCase name}}App />
+    </div>
+  );
+}
