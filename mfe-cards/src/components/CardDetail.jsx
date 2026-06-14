@@ -1,7 +1,7 @@
+import PermissionGate from '@app/shared/PermissionGate';
+import { Card, CardHeader, Divider } from '@app/shared/ui';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import PermissionGate from 'shared/PermissionGate';
-import { Card, CardHeader, Divider } from 'shared/ui';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 

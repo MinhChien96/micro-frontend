@@ -12,7 +12,7 @@ RUN corepack enable
 WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN PUBLIC_URL=${PUBLIC_URL} REMOTE_BASE=${REMOTE_BASE} pnpm --filter ${APP} build
+RUN PUBLIC_URL=${PUBLIC_URL} REMOTE_BASE=${REMOTE_BASE} pnpm --filter ./${APP} build
 
 FROM node:24-alpine
 ARG APP

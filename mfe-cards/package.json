@@ -1,5 +1,5 @@
 {
-  "name": "mfe-cards",
+  "name": "@app/mfe-cards",
   "version": "1.0.0",
   "scripts": {
     "start": "modern dev",
@@ -7,6 +7,7 @@
     "serve": "modern serve"
   },
   "dependencies": {
+    "@app/shared": "workspace:*",
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
     "react": "^18.2.0",

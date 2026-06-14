@@ -1,5 +1,5 @@
+import { Button, Card, CardHeader, useToast } from '@app/shared/ui';
 import { useState } from 'react';
-import { Button, Card, CardHeader, useToast } from 'shared/ui';
 import '../styles.css';
 
 const getUser = () => {

@@ -1,5 +1,5 @@
+import { Button, Card, CardHeader, Divider, PageSpinner, StatusBadge } from '@app/shared/ui';
 import { lazy, Suspense, useState } from 'react';
-import { Button, Card, CardHeader, Divider, PageSpinner, StatusBadge } from 'shared/ui';
 import '../styles.css';
 
 const EditProfile = lazy(

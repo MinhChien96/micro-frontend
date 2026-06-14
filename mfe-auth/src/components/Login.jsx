@@ -1,6 +1,6 @@
+import { setToken, setUser } from '@app/shared/auth';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { setToken, setUser } from 'shared/auth';
 import '../styles.css';
 
 const DEMO_ROLES = [

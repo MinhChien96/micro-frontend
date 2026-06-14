@@ -1,6 +1,6 @@
+import { StatusBadge } from '@app/shared/ui';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StatusBadge } from 'shared/ui';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 

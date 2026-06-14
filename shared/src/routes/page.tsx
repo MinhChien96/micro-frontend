@@ -72,7 +72,7 @@ export default function Page() {
           }}
         >
           <Card onClick={undefined} style={undefined}>
-            <CardHeader title="Card demo" subtitle="shared/ui" action={null} />
+            <CardHeader title="Card demo" subtitle="@app/shared/ui" action={null} />
             <p style={{ fontSize: 13 }}>Nội dung card mẫu.</p>
           </Card>
           <SkeletonCard />

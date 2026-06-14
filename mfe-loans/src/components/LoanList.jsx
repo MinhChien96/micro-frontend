@@ -1,6 +1,6 @@
+import PermissionGate from '@app/shared/PermissionGate';
+import { Card, StatusBadge } from '@app/shared/ui';
 import { Link } from 'react-router-dom';
-import PermissionGate from 'shared/PermissionGate';
-import { Card, StatusBadge } from 'shared/ui';
 
 const getUser = () => {
   if (typeof window === 'undefined') return null; // SSR guard

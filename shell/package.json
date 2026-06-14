@@ -1,5 +1,5 @@
 {
-  "name": "shell",
+  "name": "@app/shell",
   "version": "1.0.0",
   "scripts": {
     "start": "modern dev",
@@ -7,12 +7,12 @@
     "serve": "modern serve"
   },
   "dependencies": {
+    "@app/shared": "workspace:*",
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0",
-    "shared": "workspace:*"
+    "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
     "@modern-js/app-tools": "^2.65.0",

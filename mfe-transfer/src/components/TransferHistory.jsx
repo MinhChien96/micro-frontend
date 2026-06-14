@@ -1,7 +1,7 @@
+import { Card, PageSpinner, StatusBadge } from '@app/shared/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, PageSpinner, StatusBadge } from 'shared/ui';
 import { fetchTransferHistory } from '../api/transfer';
 
 function useDebounce(value, delay = 300) {

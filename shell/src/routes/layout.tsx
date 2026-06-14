@@ -1,6 +1,6 @@
+import { ToastProvider } from '@app/shared/ui';
 import { Helmet } from '@modern-js/runtime/head';
 import { Outlet } from '@modern-js/runtime/router';
-import { ToastProvider } from 'shared/ui';
 import { AuthProvider } from '../AuthContext';
 import Nav from '../components/Nav';
 import '../styles.css';
@@ -8,7 +8,7 @@ import '../styles.css';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      {/* ToastProvider ở shell root — MFE gọi useToast() qua shared/ui singleton */}
+      {/* ToastProvider ở shell root — MFE gọi useToast() qua @app/shared/ui singleton */}
       <ToastProvider>
         <Helmet>
           <html lang="vi" />

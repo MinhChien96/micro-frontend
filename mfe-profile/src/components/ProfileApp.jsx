@@ -1,6 +1,6 @@
+import { PageSpinner, ToastProvider } from '@app/shared/ui';
 import { lazy, Suspense } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
-import { PageSpinner, ToastProvider } from 'shared/ui';
 import ProfilePage from './ProfilePage';
 
 const EditProfile = lazy(

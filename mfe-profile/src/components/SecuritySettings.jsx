@@ -1,6 +1,6 @@
+import { Card, CardHeader, Divider } from '@app/shared/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, Divider } from 'shared/ui';
 
 export default function SecuritySettings() {
   const navigate = useNavigate();

@@ -1,9 +1,9 @@
+import eventBus from '@app/shared/eventBus';
+import PermissionGate from '@app/shared/PermissionGate';
+import { Card, CardHeader, Divider, PageSpinner, useToast } from '@app/shared/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import eventBus from 'shared/eventBus';
-import PermissionGate from 'shared/PermissionGate';
-import { Card, CardHeader, Divider, PageSpinner, useToast } from 'shared/ui';
 import { fetchAccounts } from '../api/accounts';
 import { submitTransfer } from '../api/transfer';
 

@@ -53,6 +53,9 @@ importers:
 
   mfe-accounts:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(react@18.3.1)
@@ -84,6 +87,9 @@ importers:
 
   mfe-auth:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -109,6 +115,9 @@ importers:
 
   mfe-cards:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -134,6 +143,9 @@ importers:
 
   mfe-loans:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -159,6 +171,9 @@ importers:
 
   mfe-profile:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -184,6 +199,9 @@ importers:
 
   mfe-transfer:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -234,6 +252,9 @@ importers:
 
   shell:
     dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@modern-js/runtime':
         specifier: ^2.65.0
         version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
@@ -249,9 +270,6 @@ importers:
       react-router-dom:
         specifier: ^6.22.0
         version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      shared:
-        specifier: workspace:*
-        version: link:../shared
     devDependencies:
       '@modern-js/app-tools':
         specifier: ^2.65.0

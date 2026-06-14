@@ -1,3 +1,4 @@
+import { Card, PageSpinner, StatusBadge } from '@app/shared/ui';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
@@ -10,7 +11,6 @@ import {
   useTransition,
 } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, PageSpinner, StatusBadge } from 'shared/ui';
 import { fetchAccount, fetchTransactionPage } from '../api/accounts';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);

@@ -42,7 +42,7 @@ jobs:
       - name: Build + sync static assets lên S3
         run: |
           for app in mfe-auth mfe-accounts mfe-transfer shared mfe-profile mfe-loans mfe-cards; do
-            PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/$app/" pnpm --filter $app build
+            PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/$app/" pnpm --filter ./$app build
             aws s3 sync $app/dist/static  s3://${{ vars.S3_BUCKET }}/$app/static  --delete
             aws s3 sync $app/dist/bundles s3://${{ vars.S3_BUCKET }}/$app/bundles --delete
           done

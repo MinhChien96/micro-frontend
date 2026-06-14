@@ -1,7 +1,7 @@
+import { PageSpinner } from '@app/shared/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { PageSpinner } from 'shared/ui';
 import TransferDashboard from './TransferDashboard';
 
 const queryClient = new QueryClient({

@@ -28,7 +28,7 @@ aws --endpoint-url "$ENDPOINT" s3api put-bucket-cors --bucket "$BUCKET" --cors-c
 echo "==> Build + sync từng remote (PUBLIC_URL trỏ S3)"
 for app in mfe-auth mfe-accounts mfe-transfer shared mfe-profile mfe-loans mfe-cards; do
   echo "--- $app"
-  PUBLIC_URL="$ENDPOINT/$BUCKET/$app/" pnpm --filter "$app" build
+  PUBLIC_URL="$ENDPOINT/$BUCKET/$app/" pnpm --filter "./$app" build
   aws --endpoint-url "$ENDPOINT" s3 sync "$app/dist/static"  "s3://$BUCKET/$app/static"  --delete
   # node bundles cho SSR host (ssrRemoteEntry)
   if [ -d "$app/dist/bundles" ]; then
@@ -37,7 +37,7 @@ for app in mfe-auth mfe-accounts mfe-transfer shared mfe-profile mfe-loans mfe-c
 done
 
 echo "==> Build shell (manifest URLs trỏ S3)"
-REMOTE_BASE="$ENDPOINT/$BUCKET" pnpm --filter shell build
+REMOTE_BASE="$ENDPOINT/$BUCKET" pnpm --filter ./shell build
 
 echo ""
 echo "✅ Static assets đã lên S3 (LocalStack): $ENDPOINT/$BUCKET"

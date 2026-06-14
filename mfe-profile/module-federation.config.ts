@@ -12,7 +12,7 @@ export default createModuleFederationConfig({
   shared: {
     'react/jsx-runtime': { singleton: true, requiredVersion: false },
     'react/jsx-dev-runtime': { singleton: true, requiredVersion: false },
-    'shared/ui': { singleton: true, requiredVersion: false },
+    '@app/shared/ui': { singleton: true, requiredVersion: false },
     react: { singleton: true, requiredVersion: '>=18.2.0' },
     'react-dom': { singleton: true, requiredVersion: '>=18.2.0' },
     'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
