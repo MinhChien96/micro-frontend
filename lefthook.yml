@@ -1,0 +1,14 @@
+# Git hooks (lefthook) — tự chạy sau pnpm install (prepare → lefthook install).
+# Thay cho husky + lint-staged: 1 file, chạy song song, dùng {staged_files}.
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: '*.{ts,tsx,js,jsx,json,jsonc}'
+      run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit {1}
