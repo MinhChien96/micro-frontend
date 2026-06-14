@@ -1,3 +1,4 @@
+import '../tailwind.css';
 import { BRAND } from '@app/shared/brand';
 import { ToastProvider } from '@app/shared/ui';
 import { Helmet } from '@modern-js/runtime/head';

@@ -1,9 +1,11 @@
 import { BRAND } from '@app/shared/brand';
 import { appTools, defineConfig } from '@modern-js/app-tools';
 import { moduleFederationPlugin } from '@module-federation/modern-js-v3';
+import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 
 export default defineConfig({
   plugins: [appTools({ bundler: 'rspack' }), moduleFederationPlugin()],
+  builderPlugins: [pluginTailwindcss()],
   html: {
     title: `${BRAND.name} — Ngân hàng số`,
     meta: {

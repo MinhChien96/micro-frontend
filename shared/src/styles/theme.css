@@ -1,0 +1,49 @@
+/* Tailwind v4 theme tập trung — import sau `@import 'tailwindcss'` ở mỗi app.
+   Tokens sinh utility (bg-bg-card, text-brand...) + CSS var; dark mode override var. */
+
+/* Dark variant theo [data-theme=dark] (ThemeContext set trên documentElement) */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --color-bg-page: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-brand: #2563eb;
+  --color-brand-dark: #1e3a5f;
+  --color-primary: #667eea;
+  --color-navbar: #1a1a2e;
+
+  --animate-shimmer: shimmer 1.5s infinite;
+  --animate-toast-in: toast-in 0.25s ease;
+  --animate-spin-fast: spin 0.7s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Dark mode — override token var; utility bg-bg-card... tự đổi theo */
+[data-theme='dark'] {
+  --color-bg-page: #0f172a;
+  --color-bg-card: #1e293b;
+  --color-text-main: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+}

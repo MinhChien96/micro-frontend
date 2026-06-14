@@ -1,3 +1,4 @@
+import '../tailwind.css';
 import { PageSpinner } from '@app/shared/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';

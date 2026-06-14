@@ -1,3 +1,4 @@
+import '../tailwind.css';
 import { useEffect, useState } from 'react';
 import { getPermissions, getUser, isAuthenticated } from '../auth';
 import { Button, Card, CardHeader, PageSpinner, SkeletonCard, StatusBadge } from '../ui';

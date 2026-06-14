@@ -1,3 +1,4 @@
+import '../tailwind.css';
 import { type Role, setToken, setUser } from '@app/shared/auth';
 import { BRAND } from '@app/shared/brand';
 import { type FormEvent, useState } from 'react';

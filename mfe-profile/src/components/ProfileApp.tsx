@@ -1,3 +1,4 @@
+import '../tailwind.css';
 import { PageSpinner, ToastProvider } from '@app/shared/ui';
 import { lazy, Suspense } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
