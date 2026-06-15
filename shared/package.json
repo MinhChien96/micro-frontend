@@ -8,6 +8,7 @@
     "./ThemeContext": "./src/ThemeContext.tsx",
     "./eventBus": "./src/eventBus.ts",
     "./events": "./src/events.ts",
+    "./observability": "./src/observability/sentry.ts",
     "./brand": "./src/config/brand.ts"
   },
   "scripts": {

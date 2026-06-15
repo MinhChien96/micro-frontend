@@ -1,3 +1,4 @@
+import { captureException } from '@app/shared/observability';
 import React from 'react';
 
 const MAX_RETRIES = 3;
@@ -19,6 +20,11 @@ export default class RemoteErrorBoundary extends React.Component<Props, State> {
 
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    // Gửi Sentry kèm tên remote (no-op nếu chưa cấu hình DSN)
+    captureException(error, { remote: this.props.remote });
   }
 
   handleRetry = () => {
