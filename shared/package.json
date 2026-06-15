@@ -9,6 +9,9 @@
     "./eventBus": "./src/eventBus.ts",
     "./events": "./src/events.ts",
     "./observability": "./src/observability/sentry.ts",
+    "./mocks/handlers": "./src/mocks/handlers.ts",
+    "./mocks/server": "./src/mocks/server.ts",
+    "./mocks/browser": "./src/mocks/browser.ts",
     "./brand": "./src/config/brand.ts"
   },
   "scripts": {

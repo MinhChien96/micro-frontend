@@ -9,8 +9,14 @@ import { AuthProvider } from '../AuthContext';
 import Nav from '../components/Nav';
 
 export default function RootLayout() {
-  // Sentry browser init (no-op nếu chưa set DSN); useEffect → chỉ chạy client
-  useEffect(() => initSentry(), []);
+  useEffect(() => {
+    // Sentry browser init (no-op nếu chưa set DSN)
+    initSentry();
+    // MSW worker — opt-in build-time (MODERN_MSW inline → DCE khi tắt, không bloat bundle)
+    if (process.env.MODERN_MSW === 'true') {
+      import('@app/shared/mocks/browser').then((m) => m.startMockWorker());
+    }
+  }, []);
 
   return (
     <AuthProvider>
