@@ -11,14 +11,6 @@ import { submitTransfer, type TransferForm, type TransferRecord } from '../api/t
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-// Payload eventBus phát từ mfe-accounts/AccountDetail (vb:transferPrefill)
-interface TransferPrefill {
-  accountId: string;
-  accountName: string;
-  accountNumber: string;
-  balance: number;
-}
-
 type TransferFieldConfig = {
   label: string;
   field: keyof TransferForm;
@@ -57,7 +49,7 @@ export default function NewTransfer() {
   const { show: toast } = useToast();
 
   // Event Bus: read prefill context emitted by mfe-accounts/AccountDetail
-  const prefill = eventBus.getLast<TransferPrefill>('vb:transferPrefill');
+  const prefill = eventBus.getLast('app:transferPrefill');
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts'],
@@ -72,7 +64,7 @@ export default function NewTransfer() {
   });
 
   // Clear prefill cache when this component unmounts to avoid stale data on next visit
-  useEffect(() => () => eventBus.clear('vb:transferPrefill'), []);
+  useEffect(() => () => eventBus.clear('app:transferPrefill'), []);
 
   const source = accounts.find((a) => a.id === form.sourceId);
   const update = useCallback(

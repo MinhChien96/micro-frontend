@@ -7,6 +7,7 @@
     "./PermissionGate": "./src/components/PermissionGate.tsx",
     "./ThemeContext": "./src/ThemeContext.tsx",
     "./eventBus": "./src/eventBus.ts",
+    "./events": "./src/events.ts",
     "./brand": "./src/config/brand.ts"
   },
   "scripts": {

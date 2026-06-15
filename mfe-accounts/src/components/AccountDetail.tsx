@@ -192,10 +192,10 @@ export default function AccountDetail() {
       )}
 
       <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-        {/* Event Bus demo: emit vb:transferPrefill → mfe-transfer reads it on mount */}
+        {/* Event Bus demo: emit app:transferPrefill → mfe-transfer reads it on mount */}
         <button
           onClick={() => {
-            eventBus.emit('vb:transferPrefill', {
+            eventBus.emit('app:transferPrefill', {
               accountId: account.id,
               accountName: account.name,
               accountNumber: account.number,

@@ -2,33 +2,34 @@
 // MFE rời đi trước khi subscriber mount → getLast() cho receiver đọc payload
 // mới nhất mà không cần cả hai MFE mount cùng lúc.
 // PHẢI là MF singleton (key '@app/shared/eventBus') để _last cache dùng chung.
-type EventHandler<T> = (detail: T) => void;
+// Type-safe theo AppEvents (xem ./events) — emit/on/getLast khớp key↔payload.
+import type { AppEvents } from './events';
 
-const _last: Record<string, unknown> = {};
+const _last: { [K in keyof AppEvents]?: AppEvents[K] } = {};
 
 const eventBus = {
-  // Publish event kèm payload (tùy chọn).
-  emit<T = unknown>(event: string, detail?: T): void {
+  // Publish event kèm payload (type khớp key).
+  emit<K extends keyof AppEvents>(event: K, detail: AppEvents[K]): void {
     _last[event] = detail;
     if (typeof window === 'undefined') return; // SSR: chỉ cache, không dispatch
     window.dispatchEvent(new CustomEvent(event, { detail, bubbles: true }));
   },
 
   // Subscribe event tương lai. Trả về hàm unsubscribe.
-  on<T = unknown>(event: string, handler: EventHandler<T>): () => void {
+  on<K extends keyof AppEvents>(event: K, handler: (detail: AppEvents[K]) => void): () => void {
     if (typeof window === 'undefined') return () => {}; // SSR: no-op unsubscribe
-    const wrapped = (e: Event) => handler((e as CustomEvent<T>).detail);
+    const wrapped = (e: Event) => handler((e as CustomEvent<AppEvents[K]>).detail);
     window.addEventListener(event, wrapped);
     return () => window.removeEventListener(event, wrapped);
   },
 
   // Đọc payload cuối cùng (null nếu chưa từng emit / đã clear).
-  getLast<T = unknown>(event: string): T | null {
-    return (_last[event] as T | undefined) ?? null;
+  getLast<K extends keyof AppEvents>(event: K): AppEvents[K] | null {
+    return _last[event] ?? null;
   },
 
   // Xóa cache — gọi sau khi tiêu thụ để tránh dữ liệu cũ ở lần mount sau.
-  clear(event: string): void {
+  clear<K extends keyof AppEvents>(event: K): void {
     delete _last[event];
   },
 };
