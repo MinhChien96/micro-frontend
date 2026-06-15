@@ -8,6 +8,7 @@ export const worker = setupWorker(...handlers);
 
 export async function startMockWorker(): Promise<void> {
   if (typeof window === 'undefined') return;
-  if (process.env.MODERN_MSW !== 'true') return;
+  // Gọi từ shell layout chỉ khi MODERN_MSW=true → start trực tiếp (không re-check
+  // process.env vì `process` không tồn tại ở browser khi var chưa inline).
   await worker.start({ onUnhandledRequest: 'bypass' });
 }

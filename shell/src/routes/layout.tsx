@@ -12,8 +12,15 @@ export default function RootLayout() {
   useEffect(() => {
     // Sentry browser init (no-op nếu chưa set DSN)
     initSentry();
-    // MSW worker — opt-in build-time (MODERN_MSW inline → DCE khi tắt, không bloat bundle)
-    if (process.env.MODERN_MSW === 'true') {
+    // MSW worker — opt-in qua MODERN_MSW=true. Modern.js inline literal khi set; khi
+    // KHÔNG set, `process` không tồn tại ở browser → bọc try/catch để no-op an toàn.
+    let mswOn = false;
+    try {
+      mswOn = process.env.MODERN_MSW === 'true';
+    } catch {
+      /* process undefined ở browser khi var chưa set */
+    }
+    if (mswOn) {
       import('@app/shared/mocks/browser').then((m) => m.startMockWorker());
     }
   }, []);
