@@ -1,19 +1,21 @@
 {
-  "name": "shell",
+  "name": "@app/shell",
   "version": "1.0.0",
   "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "modern dev",
+    "build": "modern build",
+    "serve": "modern serve"
   },
   "dependencies": {
+    "@app/shared": "workspace:*",
+    "@modern-js/runtime": "^2.65.0",
+    "@module-federation/modern-js-v3": "^2.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
-    "@module-federation/vite": "^1.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "vite": "^6.3.5"
+    "@modern-js/app-tools": "^2.65.0",
+    "typescript": "^5.0.4"
   }
 }

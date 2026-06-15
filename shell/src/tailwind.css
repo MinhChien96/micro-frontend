@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@import '../../shared/src/styles/theme.css';
+@source './';
+@source '../../shared/src/**/*.{ts,tsx}';
+
+/* Shell chrome — component layer (Tailwind @apply + tokens dark-aware).
+   Code feature mới nên dùng utility-first trực tiếp trong JSX. */
+@layer components {
+  .app {
+    @apply flex min-h-screen flex-col bg-bg-page text-text-main transition-colors;
+  }
+
+  .navbar {
+    @apply sticky top-0 z-[100] flex h-15 items-center gap-6 bg-navbar px-6 text-white shadow-[0_2px_8px_rgba(0,0,0,0.3)];
+  }
+  .navbar-brand {
+    @apply mr-auto flex items-center gap-2;
+  }
+  .brand-icon {
+    @apply text-2xl;
+  }
+  .brand-name {
+    @apply text-lg font-bold text-[#60a5fa];
+  }
+  .brand-badge {
+    @apply rounded bg-[#0f3460] px-1.5 py-0.5 font-mono text-[10px] text-[#a0aec0];
+  }
+  .navbar-links {
+    @apply flex gap-2;
+  }
+  .nav-link {
+    @apply relative flex flex-col items-center rounded-md px-3.5 py-1.5 text-sm text-[#a0aec0] no-underline transition-all;
+  }
+  .nav-link:hover {
+    @apply bg-[#0f3460] text-white;
+  }
+  .nav-link.active {
+    @apply bg-brand-dark text-white;
+  }
+  .mfe-tag {
+    @apply mt-0.5 font-mono text-[9px] text-[#68d391];
+  }
+  .navbar-user {
+    @apply flex items-center gap-3;
+  }
+  .user-info {
+    @apply flex items-center gap-2 text-sm text-white no-underline;
+  }
+  .avatar {
+    @apply flex h-8 w-8 items-center justify-center rounded-full bg-[#e94560] text-sm font-bold;
+  }
+  .btn-logout {
+    @apply cursor-pointer rounded-md border border-[#e94560] bg-transparent px-3 py-1.5 text-[13px] text-[#e94560] transition-all hover:bg-[#e94560] hover:text-white;
+  }
+
+  .main-content {
+    @apply mx-auto w-full max-w-[1200px] flex-1 p-6;
+  }
+
+  .loading-box {
+    @apply flex flex-col items-center justify-center gap-4 p-15 text-[#718096];
+  }
+  .spinner {
+    @apply h-10 w-10 animate-spin rounded-full border-[3px] border-[#e2e8f0] border-t-[#e94560];
+  }
+  .error-box {
+    @apply rounded-lg border border-[#fed7d7] bg-[#fff5f5] p-6 text-center text-[#c53030];
+  }
+}

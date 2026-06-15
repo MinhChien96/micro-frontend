@@ -7,3 +7,4 @@ packages:
   - 'mfe-cards'
   - 'mfe-loans'
   - 'mfe-profile'
+  # @plop:workspace (generator chèn MFE mới bên trên dòng này)

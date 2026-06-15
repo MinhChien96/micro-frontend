@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "groupName": "Modern.js",
+      "matchPackagePatterns": ["^@modern-js/", "^@rsbuild/", "^@rspack/"]
+    },
+    {
+      "groupName": "Module Federation",
+      "matchPackagePatterns": ["^@module-federation/"]
+    },
+    {
+      "groupName": "React",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "@types/react",
+        "@types/react-dom"
+      ]
+    },
+    {
+      "groupName": "Tailwind",
+      "matchPackagePatterns": ["tailwindcss", "^@tailwindcss/"]
+    },
+    {
+      "groupName": "test & tooling",
+      "matchPackageNames": [
+        "@biomejs/biome",
+        "vitest",
+        "@vitest/coverage-v8",
+        "@playwright/test",
+        "lefthook",
+        "plop",
+        "storybook",
+        "@storybook/react-vite",
+        "msw",
+        "@sentry/react"
+      ]
+    }
+  ]
+}

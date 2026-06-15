@@ -1,16 +1,66 @@
 {
   "name": "micro-frontend",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
   "scripts": {
-    "start": "concurrently -n shared,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter shared start\" \"pnpm --filter mfe-auth start\" \"pnpm --filter mfe-accounts start\" \"pnpm --filter mfe-transfer start\" \"pnpm --filter mfe-cards start\" \"pnpm --filter mfe-loans start\" \"pnpm --filter mfe-profile start\" \"pnpm --filter shell start\"",
-    "build": "pnpm -r run build"
+    "start": "concurrently -n shared,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter ./shared start\" \"pnpm --filter ./mfe-auth start\" \"pnpm --filter ./mfe-accounts start\" \"pnpm --filter ./mfe-transfer start\" \"pnpm --filter ./mfe-cards start\" \"pnpm --filter ./mfe-loans start\" \"pnpm --filter ./mfe-profile start\" \"pnpm --filter ./shell start\"",
+    "build": "pnpm -r run build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r --parallel exec tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "storybook": "pnpm --filter ./shared storybook",
+    "gen:mfe": "plop mfe",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "docker:build": "docker compose -f docker/docker-compose.yml build",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "deploy:local": "bash scripts/deploy-localstack.sh",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@biomejs/biome": "^2.5.0",
+    "@changesets/cli": "^2.31.0",
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@playwright/test": "^1.60.0",
+    "@rsbuild/plugin-tailwindcss": "^2.0.3",
+    "@storybook/react-vite": "^10.4.4",
+    "@tailwindcss/vite": "^4.3.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.8",
+    "concurrently": "^8.2.2",
+    "jsdom": "^29.1.1",
+    "lefthook": "^2.1.9",
+    "msw": "^2.14.6",
+    "plop": "^4.0.5",
+    "storybook": "^10.4.4",
+    "tailwindcss": "^4.3.1",
+    "vitest": "^4.1.8",
+    "wait-on": "^9.0.10"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "lefthook"
+    ],
     "peerDependencyRules": {
-      "ignoreMissing": ["@types/react", "@types/react-dom"]
+      "ignoreMissing": [
+        "@types/react",
+        "@types/react-dom"
+      ]
     }
   }
 }

@@ -5,6 +5,14 @@ node_modules/
 # Build output
 dist/
 pages/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Module Federation DTS artifacts
+.mf/
+@mf-types/
 
 # Webpack / Babel cache
 .cache/
@@ -36,3 +44,11 @@ Thumbs.db
 *.local
 *.tgz
 bundle-stats*.html
+
+# Storybook
+storybook-static/
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
