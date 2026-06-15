@@ -1,5 +1,12 @@
 import { getUser, type User } from '@app/shared/auth';
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  startTransition,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 interface AuthState {
   user: User | null;
@@ -14,7 +21,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, ready: false });
 
   useEffect(() => {
-    const sync = () => setState({ user: getUser(), ready: true });
+    // startTransition: update auth (ready/user) là non-urgent → React không ép
+    // Suspense boundary remote (noSSR) đang hydrate phải client-render lại
+    // ("received an update before it finished hydrating").
+    const sync = () => startTransition(() => setState({ user: getUser(), ready: true }));
     sync(); // đọc lần đầu sau hydration
     window.addEventListener('auth:changed', sync);
     return () => window.removeEventListener('auth:changed', sync);

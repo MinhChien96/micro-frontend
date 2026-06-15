@@ -44,7 +44,9 @@ test('federated SSR smoke flow', async ({ page }) => {
   await page.waitForURL('**/login', { timeout: 15_000 });
 
   const fatal = errors.filter((e) =>
-    /invalid hook call|Minified React error|Hydration failed|PAGEERROR|ChunkLoadError/i.test(e),
+    /invalid hook call|Minified React error|Hydration failed|before it finished hydrating|PAGEERROR|ChunkLoadError/i.test(
+      e,
+    ),
   );
   expect(fatal, `Lỗi console nghiêm trọng:\n${fatal.join('\n')}`).toHaveLength(0);
 });
