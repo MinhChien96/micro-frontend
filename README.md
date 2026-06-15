@@ -249,11 +249,25 @@ Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS
 |---|---|---|
 | Biome | `pnpm lint` / `pnpm lint:fix` | lint + format (1 binary) |
 | tsc | `pnpm typecheck` | TypeScript strict mọi package |
-| Vitest | `pnpm test` / `pnpm test:watch` | unit test (jsdom + Testing Library) |
+| Vitest | `pnpm test` / `pnpm test:coverage` | unit test (jsdom + Testing Library) + coverage v8 gate (`shared/src`) |
+| Playwright | `pnpm test:e2e` | smoke E2E (tự boot fleet) |
 | Lefthook | tự chạy | pre-commit (Biome) + commit-msg (commitlint) |
 | Changesets | `pnpm changeset` | versioning độc lập từng package |
+| Renovate | tự động | gom nhóm PR cập nhật dependency ([renovate.json](.github/renovate.json)) |
 
-CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) chạy lint → typecheck → test → build (matrix) trên mọi PR.
+CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) — job `quality` (lint → typecheck → `test:coverage`) + `build` (matrix 8 app) trên mọi PR; job `e2e` chạy nightly + `workflow_dispatch` (boot fleet → Playwright), không chặn PR.
+
+**Styling — Tailwind v4** (design system + shell chrome; 5 MFE banking giữ inline-style làm ví dụ domain):
+
+- Tokens tập trung ở [shared/src/styles/theme.css](shared/src/styles/theme.css) (`@theme` + dark variant `[data-theme=dark]` + keyframes).
+- Mỗi app có `src/tailwind.css` với `@source` quét cả `shared` → class của `@app/shared/ui` render đúng khi component shared chạy trong remote khác (yêu cầu cross-MFE CSS).
+- Bật qua `@rsbuild/plugin-tailwindcss` trong `builderPlugins` của mỗi `modern.config.ts`.
+- Design system xem trực quan: `pnpm storybook` (Storybook 10, :6006).
+
+**Observability & mocking:**
+
+- **Sentry** (browser-only): [shared/src/observability/sentry.ts](shared/src/observability/sentry.ts) — `initSentry()` no-op nếu thiếu `MODERN_PUBLIC_SENTRY_DSN`; `RemoteErrorBoundary` báo lỗi remote qua `captureException`.
+- **MSW**: [shared/src/mocks/](shared/src/mocks/) — mock API cho Vitest (node server) + dev worker opt-in (`MODERN_MSW=true`, cần `pnpm dlx msw init <app>/public`).
 
 **Mở rộng — tạo MFE mới trong 1 lệnh:**
 
@@ -261,9 +275,9 @@ CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) chạy lint → typeche
 pnpm gen:mfe payments 3008 "Thanh toán"
 ```
 
-Generator (Plop) sinh package đầy đủ + **tự đăng ký 10 điểm nối** (workspace, shell remotes/declarations/remotePages/Nav/route, start script, docker-compose, deploy-aws). Chi tiết + bước thủ công còn lại: [docs/add-new-mfe.md](docs/add-new-mfe.md).
+Generator (Plop) sinh package đầy đủ (Tailwind sẵn) + **tự đăng ký 10 điểm nối** (workspace, shell remotes/declarations/remotePages/Nav/route, start script, docker-compose, deploy-aws). Chi tiết + bước thủ công còn lại: [docs/add-new-mfe.md](docs/add-new-mfe.md).
 
-**Test E2E** (smoke, cần Chrome + fleet đang chạy): `pnpm test:e2e` — login → accounts → detail → các MFE → logout, assert 0 console error.
+**Test E2E** (smoke Playwright): `pnpm test:e2e` — webServer tự boot fleet → login → accounts → detail → các MFE → reload authed → logout, assert 0 console error nghiêm trọng (kể cả lỗi Suspense hydration).
 
 ---
 

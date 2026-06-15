@@ -10,8 +10,10 @@
 | `pnpm start` | Chạy toàn bộ MFE + shell (dev SSR) |
 | `pnpm lint` / `pnpm lint:fix` | Biome lint+format |
 | `pnpm typecheck` | `tsc --noEmit` mọi package |
-| `pnpm test` / `pnpm test:watch` | Vitest |
-| `pnpm test:e2e` | Smoke E2E (cần Chrome + fleet đang chạy) |
+| `pnpm test` / `pnpm test:watch` | Vitest (jsdom + Testing Library) |
+| `pnpm test:coverage` | Vitest + coverage v8 (gate vào `shared/src`) |
+| `pnpm test:e2e` | Smoke E2E Playwright (tự boot fleet qua webServer) |
+| `pnpm storybook` | Storybook design system (`@app/shared/ui`) tại :6006 |
 | `pnpm gen:mfe` | Tạo MFE mới (xem [docs/add-new-mfe.md](docs/add-new-mfe.md)) |
 | `pnpm build` | Build mọi package |
 | `pnpm changeset` | Tạo changeset cho versioning |
@@ -22,6 +24,8 @@
 - **TypeScript strict** toàn bộ — không thêm `.js/.jsx` mới.
 - **SSR-safe**: mọi truy cập `window`/`localStorage` phải guard `typeof window === 'undefined'`. Auth/storage đi qua `@app/shared/auth` (đừng hardcode key).
 - **MF singleton**: khi expose/consume module shared, key trong `module-federation.config.ts` PHẢI khớp import specifier (`@app/shared/ui`...).
+- **Env browser**: chỉ var prefix `MODERN_PUBLIC_*` mới được inline vào bundle. Khi var có thể KHÔNG set, đọc qua try/catch (Modern.js không inline → `process` không tồn tại ở browser → crash). Xem `shared/src/observability/sentry.ts`.
+- **Styling**: dùng Tailwind v4 (tokens `@theme` ở `shared/src/styles/theme.css`, dark qua `[data-theme]`). Mỗi app có `src/tailwind.css` với `@source` quét cả `shared` để class của `@app/shared/ui` render cross-MFE.
 
 ## Gate trước khi mở PR
-`pnpm lint && pnpm typecheck && pnpm test && pnpm build` — CI (`.github/workflows/ci.yml`) chạy đúng các bước này.
+`pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build` — CI (`.github/workflows/ci.yml`) chạy đúng các bước này. E2E (`pnpm test:e2e`) chạy nightly + thủ công (`workflow_dispatch`), không chặn PR.

@@ -10,6 +10,8 @@ pnpm gen:mfe payments 3008 "Thanh toán"
 
 Tham số: **name** (kebab-case), **port** (4 số, chưa dùng), **label** (nhãn hiển thị trên Nav).
 
+MFE sinh ra đã có sẵn **Tailwind v4**: `src/tailwind.css` (`@import 'tailwindcss'` + tokens `@theme` của `shared` + `@source` quét cả shared), `builderPlugins: [pluginTailwindcss()]` trong `modern.config.ts`, và App component dùng className Tailwind + import `tailwind.css`.
+
 Generator sinh `mfe-<name>/` đầy đủ (Modern.js SSR, đúng convention + gotchas) và **tự đăng ký 10 điểm nối** qua anchor comment `// @plop:*`:
 
 1. `pnpm-workspace.yaml` — thêm package
