@@ -17,7 +17,9 @@
   "scripts": {
     "start": "modern dev",
     "build": "modern build",
-    "serve": "modern serve"
+    "serve": "modern serve",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@modern-js/runtime": "^2.65.0",

@@ -41,3 +41,6 @@ Thumbs.db
 *.local
 *.tgz
 bundle-stats*.html
+
+# Storybook
+storybook-static/
