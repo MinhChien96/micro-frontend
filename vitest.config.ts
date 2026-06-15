@@ -24,5 +24,21 @@ export default defineConfig({
     setupFiles: [fileURLToPath(new URL('./vitest.setup.ts', import.meta.url))],
     include: ['**/src/**/*.test.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      // Gate vào core tái dùng (shared). 6 MFE banking là example domain —
+      // không coverage-gate (sẽ thay khi làm dự án thật).
+      include: ['shared/src/**/*.{ts,tsx}'],
+      exclude: [
+        '**/*.test.{ts,tsx}',
+        '**/*.stories.tsx',
+        '**/mocks/**',
+        '**/routes/**',
+        '**/*.d.ts',
+      ],
+      // Floor chống regression (≈ mức hiện tại) — nâng dần khi thêm test
+      thresholds: { lines: 30, functions: 22, branches: 15, statements: 28 },
+    },
   },
 });

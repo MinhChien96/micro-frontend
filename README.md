@@ -193,7 +193,7 @@ pnpm start          # 8 dev servers (concurrently) — tất cả SSR mode
 
 - App: http://localhost:3000 — Mỗi MFE chạy standalone: http://localhost:3002 (mock user PREMIUM)…
 - Kiểm chứng SSR: `curl -s localhost:3000/login | grep 0021001` → thấy markup form từ remote.
-- Smoke E2E (cần Chrome): `pnpm test:e2e` — login → accounts → detail → 4 MFE → reload authed → logout, assert 0 console error ([scripts/e2e-smoke.mjs](scripts/e2e-smoke.mjs)).
+- Smoke E2E (Playwright): `pnpm test:e2e` — webServer tự boot fleet → login → accounts → detail → 4 MFE → reload authed → logout, assert 0 console error nghiêm trọng ([e2e/smoke.spec.ts](e2e/smoke.spec.ts), [playwright.config.ts](playwright.config.ts)). CI chạy nightly + `workflow_dispatch`.
 
 ## 10. Deploy giả lập AWS (Docker + LocalStack)
 

@@ -7,6 +7,9 @@ dist/
 pages/
 *.tsbuildinfo
 
+# Coverage
+coverage/
+
 # Module Federation DTS artifacts
 .mf/
 @mf-types/
@@ -44,3 +47,8 @@ bundle-stats*.html
 
 # Storybook
 storybook-static/
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
