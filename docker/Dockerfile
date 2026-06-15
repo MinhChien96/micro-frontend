@@ -22,4 +22,8 @@ RUN corepack enable
 # Chấp nhận cho template; tối ưu sau bằng `modern deploy` (standalone output).
 COPY --from=builder /repo /repo
 WORKDIR /repo/${APP}
+# Liveness: SSR server trả 200 ở `/` = container sống (orchestrator dùng để
+# restart/route). Dedicated /healthz cần @modern-js/server-runtime — xem ADR-0005.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -qO- "http://localhost:${PORT:-3000}/" >/dev/null 2>&1 || exit 1
 CMD ["pnpm", "serve"]

@@ -103,13 +103,14 @@ services:
          "http://localhost:3006":"http://mfe-loans:3006",
          "http://localhost:3007":"http://mfe-cards:3007"}
     ports: ["3000:3000"]
+    # Chờ remotes healthy (HEALTHCHECK kế thừa từ Dockerfile) mới start shell
     depends_on:
-      - mfe-auth
-      - mfe-accounts
-      - mfe-transfer
-      - mfe-profile
-      - mfe-loans
-      - mfe-cards
+      mfe-auth: { condition: service_healthy }
+      mfe-accounts: { condition: service_healthy }
+      mfe-transfer: { condition: service_healthy }
+      mfe-profile: { condition: service_healthy }
+      mfe-loans: { condition: service_healthy }
+      mfe-cards: { condition: service_healthy }
 
 volumes:
   localstack-data:
