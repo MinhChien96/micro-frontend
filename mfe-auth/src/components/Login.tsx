@@ -3,7 +3,6 @@ import { type Role, setToken, setUser } from '@app/shared/auth';
 import { BRAND } from '@app/shared/brand';
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import '../styles.css';
 
 const DEMO_ROLES: { value: Role; label: string; desc: string }[] = [
   { value: 'CUSTOMER', label: 'Khách hàng thường', desc: 'Chuyển trong nước, xem thẻ/vay' },

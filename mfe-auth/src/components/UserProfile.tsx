@@ -1,5 +1,5 @@
+import '../tailwind.css';
 import { clearAuth, getUser } from '@app/shared/auth';
-import '../styles.css';
 
 export default function UserProfile() {
   const user = getUser();

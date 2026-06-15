@@ -5,7 +5,6 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Outlet } from '@modern-js/runtime/router';
 import { AuthProvider } from '../AuthContext';
 import Nav from '../components/Nav';
-import '../styles.css';
 
 export default function RootLayout() {
   return (
