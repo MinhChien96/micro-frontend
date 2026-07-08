@@ -13,7 +13,12 @@
     "./mocks/server": "./src/mocks/server.ts",
     "./mocks/browser": "./src/mocks/browser.ts",
     "./brand": "./src/config/brand.ts",
-    "./stores": "./src/stores/global.store.ts"
+    "./stores": "./src/stores/global.store.ts",
+    "./services": "./src/services/api.ts",
+    "./constants/paths": "./src/constants/paths.ts",
+    "./constants/endpoints": "./src/constants/endpoints.ts",
+    "./mocks/MswGate": "./src/mocks/MswGate.tsx",
+    "./mocks/standalone": "./src/mocks/standalone.ts"
   },
   "scripts": {
     "start": "modern dev",
@@ -26,6 +31,7 @@
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
     "@sentry/react": "^10.57.0",
+    "axios": "^1.18.1",
     "nanoid": "^5.1.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,8 +1,18 @@
 import '../tailwind.css';
-import { type Role, setToken, setUser } from '@app/common/auth';
+import type { Role, User } from '@app/common/auth';
 import { BRAND } from '@app/common/brand';
+import { ENDPOINTS } from '@app/common/constants/endpoints';
+import { apiPost } from '@app/common/services';
+import { batchUpdate, globalStore } from '@app/common/stores';
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+interface LoginResponse {
+  nextStep: 'HOME' | 'OTP';
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
 
 const DEMO_ROLES: { value: Role; label: string; desc: string }[] = [
   { value: 'CUSTOMER', label: 'Khách hàng thường', desc: 'Chuyển trong nước, xem thẻ/vay' },
@@ -31,25 +41,30 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 900));
-
-    if (customerId === '0021001' && password === '123456') {
-      setUser({
-        name: 'Nguyễn Văn Demo',
-        customerId: '0021001',
-        email: 'demo@example.com',
-        phone: '0901 234 567',
-        branch: 'Chi nhánh TP.HCM',
+    try {
+      // Login qua endpoint [public] — apiClient không chờ/gắn token
+      const { deviceId } = globalStore.getState();
+      const res = await apiPost<LoginResponse>(ENDPOINTS.login, {
+        username: customerId,
+        password,
         role: selectedRole,
+        deviceId,
       });
-      setToken(`mock-jwt-${Date.now()}`);
-      window.dispatchEvent(new CustomEvent('auth:changed'));
-      navigate(from, { replace: true });
-    } else {
-      setError('Mã khách hàng hoặc mật khẩu không đúng. Thử: 0021001 / 123456');
+      if (res.nextStep === 'HOME') {
+        // Lưu phiên vào global store singleton → shell + mọi remote thấy ngay
+        batchUpdate({
+          authToken: res.accessToken,
+          refreshToken: res.refreshToken,
+          user: res.user,
+        });
+        navigate(from, { replace: true });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Đăng nhập thất bại';
+      setError(`${message}. Thử: 0021001 / 123456`);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

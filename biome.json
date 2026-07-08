@@ -9,7 +9,8 @@
       "!**/@mf-types",
       "!**/*.css",
       "!pnpm-lock.yaml",
-      "!plop-templates"
+      "!plop-templates",
+      "!**/mockServiceWorker.js"
     ]
   },
   "formatter": {

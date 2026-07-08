@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { setupStandaloneSession } from '@app/common/mocks/standalone';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { fetchAccount, fetchAccounts, fetchTransactionPage } from './accounts';
+
+// api đi qua apiClient thật (chờ apiHost + token) → cấp phiên standalone
+// trước; MSW node server (vitest.setup.ts) đóng vai backend.
+beforeAll(() => {
+  setupStandaloneSession();
+});
 
 describe('accounts api (mock)', () => {
   it('fetchAccounts trả danh sách tài khoản', async () => {

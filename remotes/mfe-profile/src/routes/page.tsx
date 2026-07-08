@@ -1,19 +1,10 @@
-import { setToken, setUser, type User } from '@app/common/auth';
+import { setupStandaloneSession } from '@app/common/mocks/standalone';
 import { useEffect } from 'react';
 import ProfileApp from '../components/ProfileApp';
 
-const MOCK_USER: User = {
-  id: 'dev-001',
-  name: 'Dev User',
-  role: 'PREMIUM',
-  email: 'dev@example.com',
-  branch: 'HN',
-};
-
 export default function Page() {
   useEffect(() => {
-    setUser(MOCK_USER);
-    setToken('dev-standalone-token');
+    setupStandaloneSession('PREMIUM');
   }, []);
 
   return (

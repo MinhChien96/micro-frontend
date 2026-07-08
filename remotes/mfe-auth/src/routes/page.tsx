@@ -1,11 +1,8 @@
-import { isAuthenticated, setToken } from '@app/common/auth';
 import Login from '../components/Login';
 
+// Standalone: Login gọi [public] endpoint nên không cần token sẵn;
+// MSW + apiHost đã setup ở routes/layout.tsx.
 export default function Page() {
-  if (typeof window !== 'undefined' && !isAuthenticated()) {
-    setToken('dev-standalone-token');
-  }
-
   return (
     <div style={{ padding: 24 }}>
       <div

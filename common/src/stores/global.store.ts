@@ -28,8 +28,12 @@ export interface GlobalState {
   deviceId: string;
   lang: Lang;
   theme: Theme;
-  /** Base URL API gateway — shell set lúc boot, mọi remote đọc qua store */
-  apiHost: string;
+  /**
+   * Base URL API gateway — shell set lúc boot ('' = same-origin/MSW).
+   * null = CHƯA cấu hình → apiClient chờ (waitForApiHost) rồi mới gọi,
+   * giải quyết race "remote gọi API trước khi shell kịp set env".
+   */
+  apiHost: string | null;
   /** "Event bus" điều hướng: remote/common set, PrivateLayout của shell consume */
   navigateLink: NavigateLink | null;
   pinnedNav: string[];
@@ -38,14 +42,16 @@ export interface GlobalState {
 const STORAGE_KEY = 'app_global';
 const PERSIST_DEBOUNCE_MS = 150;
 
+// Dùng window.localStorage tường minh (Node 25 có global localStorage giả
+// không đầy đủ method) + try/catch cho môi trường storage bị khóa.
 const hasStorage = (): boolean =>
-  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  typeof window !== 'undefined' && typeof window.localStorage?.setItem === 'function';
 
 function loadPersisted(): Partial<GlobalState> {
   if (!hasStorage()) return {};
   try {
-    const prefs = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
-    const session = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? '{}');
+    const prefs = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}');
+    const session = JSON.parse(window.sessionStorage.getItem(STORAGE_KEY) ?? '{}');
     // session ghi đè prefs → F5 giữ phiên đăng nhập, đóng tab thì mất
     return { ...prefs, ...session };
   } catch {
@@ -54,9 +60,13 @@ function loadPersisted(): Partial<GlobalState> {
 }
 
 function persist(state: GlobalState): void {
-  const { user, authToken, refreshToken, navigateLink: _link, apiHost: _host, ...prefs } = state;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ user, authToken, refreshToken }));
+  try {
+    const { user, authToken, refreshToken, navigateLink: _link, apiHost: _host, ...prefs } = state;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ user, authToken, refreshToken }));
+  } catch {
+    /* storage không khả dụng — bỏ qua, state vẫn sống trong memory */
+  }
 }
 
 function createGlobalStore() {
@@ -67,7 +77,7 @@ function createGlobalStore() {
     deviceId: nanoid(),
     lang: 'vi' as Lang,
     theme: 'light' as Theme,
-    apiHost: '',
+    apiHost: null,
     navigateLink: null,
     pinnedNav: [],
     ...loadPersisted(),

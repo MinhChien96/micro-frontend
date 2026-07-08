@@ -1,19 +1,10 @@
-import { setToken, setUser, type User } from '@app/common/auth';
+import { setupStandaloneSession } from '@app/common/mocks/standalone';
 import { useEffect } from 'react';
 import LoansApp from '../components/LoansApp';
 
-const MOCK_USER: User = {
-  id: 'dev-002',
-  name: 'Dev Corp',
-  role: 'BUSINESS',
-  email: 'dev@example.com',
-  branch: 'HN',
-};
-
 export default function Page() {
   useEffect(() => {
-    setUser(MOCK_USER);
-    setToken('dev-standalone-token');
+    setupStandaloneSession('BUSINESS');
   }, []);
 
   return (
