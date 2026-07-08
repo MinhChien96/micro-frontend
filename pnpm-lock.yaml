@@ -79,23 +79,29 @@ importers:
     dependencies:
       '@modern-js/runtime':
         specifier: ^2.65.0
-        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
+        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(react@18.3.1)
       '@module-federation/modern-js-v3':
         specifier: ^2.5.0
-        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2)
+        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       '@sentry/react':
         specifier: ^10.57.0
         version: 10.57.0(react@18.3.1)
+      nanoid:
+        specifier: ^5.1.16
+        version: 5.1.16
       react:
         specifier: ^18.2.0
         version: 18.3.1
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      zustand:
+        specifier: ^5.0.14
+        version: 5.0.14(@types/react@19.2.17)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
     devDependencies:
       '@modern-js/app-tools':
         specifier: ^2.65.0
-        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
+        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
       typescript:
         specifier: ^5.0.4
         version: 5.9.3
@@ -284,10 +290,10 @@ importers:
         version: link:../common
       '@modern-js/runtime':
         specifier: ^2.65.0
-        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(react@18.3.1)
+        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
       '@module-federation/modern-js-v3':
         specifier: ^2.5.0
-        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -300,7 +306,7 @@ importers:
     devDependencies:
       '@modern-js/app-tools':
         specifier: ^2.65.0
-        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
+        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
       typescript:
         specifier: ^5.0.4
         version: 5.9.3
@@ -5678,6 +5684,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.1.16:
+    resolution: {integrity: sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   nanospinner@1.2.2:
     resolution: {integrity: sha512-Zt/AmG6qRU3e+WnzGGLuMCEAO/dAu45stNbHY223tUxldaDAeE+FxSPsd9Q+j+paejmm0ZbrNVs5Sraqy3dRxA==}
 
@@ -7696,6 +7707,24 @@ packages:
     resolution: {integrity: sha512-U/PBtDf35ff0D8X8D0jfdzHYEPFxAI7jJlxZXwCSez5M3190m+QobIfh+sWDWSHMCWWJN2AWamkegn6vr6YBTw==}
     engines: {node: '>=18'}
 
+  zustand@5.0.14:
+    resolution: {integrity: sha512-/8tAspM5LMPr28b3fwLYrtdj77ECpfZviaP75CMTnwO8ISyaE4GDIG/9rDDYq/cH9D2Xw2A2RXglLInmVBQB/g==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
 snapshots:
 
   '@adobe/css-tools@4.5.0': {}
@@ -9613,7 +9642,7 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.23
       esbuild: 0.25.5
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@swc/core'
@@ -9632,7 +9661,7 @@ snapshots:
     dependencies:
       '@swc/helpers': 0.5.23
       esbuild: 0.25.5
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@swc/core'
@@ -9798,13 +9827,13 @@ snapshots:
       '@modern-js/babel-preset': 2.71.0(@rsbuild/core@1.7.5)
       '@modern-js/flight-server-transform-plugin': 2.71.0
       '@modern-js/utils': 2.71.0
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.16(react-refresh@0.14.2)(type-fest@0.21.3)(webpack@5.107.2)
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.16(react-refresh@0.14.2)(type-fest@0.21.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       '@rsbuild/core': 1.7.5
       '@rsbuild/plugin-assets-retry': 1.5.2(@rsbuild/core@1.7.5)
       '@rsbuild/plugin-babel': 1.1.2(@rsbuild/core@1.7.5)
       '@rsbuild/plugin-check-syntax': 1.6.1(@rsbuild/core@1.7.5)
-      '@rsbuild/plugin-css-minimizer': 1.1.1(@rsbuild/core@1.7.5)(esbuild@0.25.5)(webpack@5.107.2)
-      '@rsbuild/plugin-less': 1.6.3(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2)
+      '@rsbuild/plugin-css-minimizer': 1.1.1(@rsbuild/core@1.7.5)(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+      '@rsbuild/plugin-less': 1.6.3(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       '@rsbuild/plugin-pug': 1.3.3(@rsbuild/core@1.7.5)
       '@rsbuild/plugin-react': 1.4.6(@rsbuild/core@1.7.5)
       '@rsbuild/plugin-rem': 1.0.5(@rsbuild/core@1.7.5)
@@ -9820,7 +9849,7 @@ snapshots:
       '@swc/core': 1.15.8(@swc/helpers@0.5.23)
       '@swc/helpers': 0.5.23
       autoprefixer: 10.4.23(postcss@8.5.15)
-      babel-loader: 9.2.1(@babel/core@7.29.0)(webpack@5.107.2)
+      babel-loader: 9.2.1(@babel/core@7.29.0)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       babel-plugin-import: 1.13.8
       babel-plugin-styled-components: 1.13.3(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))
       babel-plugin-transform-react-remove-prop-types: 0.4.24
@@ -9829,7 +9858,7 @@ snapshots:
       es-module-lexer: 1.7.0
       glob: 9.3.5
       html-minifier-terser: 7.2.0
-      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2)
+      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       jiti: 1.21.7
       lodash: 4.18.1
       magic-string: 0.30.21
@@ -9844,11 +9873,11 @@ snapshots:
       postcss-page-break: 3.0.4(postcss@8.5.15)
       react-refresh: 0.14.2
       rspack-manifest-plugin: 5.0.3(@rspack/core@1.7.11(@swc/helpers@0.5.23))
-      terser-webpack-plugin: 5.3.14(@swc/core@1.15.8(@swc/helpers@0.5.23))(esbuild@0.25.5)(webpack@5.107.2)
+      terser-webpack-plugin: 5.3.14(@swc/core@1.15.8(@swc/helpers@0.5.23))(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       ts-deepmerge: 7.0.2
-      ts-loader: 9.4.4(typescript@5.9.3)(webpack@5.107.2)
+      ts-loader: 9.4.4(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
-      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2))(webpack@5.107.2)
+      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@parcel/css'
@@ -9987,7 +10016,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.9.3
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10012,7 +10041,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.9.3
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10037,7 +10066,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.9.3
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10062,7 +10091,7 @@ snapshots:
       upath: 2.0.1
     optionalDependencies:
       typescript: 5.9.3
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10182,7 +10211,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       tapable: 2.3.0
     optionalDependencies:
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10199,7 +10228,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       tapable: 2.3.0
     optionalDependencies:
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
     transitivePeerDependencies:
       - '@rspack/core'
       - bufferutil
@@ -10243,7 +10272,7 @@ snapshots:
     dependencies:
       '@module-federation/bridge-react-webpack-plugin': 2.5.1(node-fetch@2.7.0(encoding@0.1.13))
       '@module-federation/dts-plugin': 2.5.1(node-fetch@2.7.0(encoding@0.1.13))(typescript@5.9.3)
-      '@module-federation/inject-external-runtime-core-plugin': 2.5.1(@module-federation/runtime-tools@2.5.1(node-fetch@2.7.0(encoding@0.1.13)))
+      '@module-federation/inject-external-runtime-core-plugin': 2.5.1(@module-federation/runtime-tools@2.5.1(node-fetch@3.3.0))
       '@module-federation/managers': 2.5.1(node-fetch@2.7.0(encoding@0.1.13))
       '@module-federation/manifest': 2.5.1(node-fetch@2.7.0(encoding@0.1.13))(typescript@5.9.3)
       '@module-federation/runtime-tools': 2.5.1(node-fetch@2.7.0(encoding@0.1.13))
@@ -10619,7 +10648,7 @@ snapshots:
     dependencies:
       playwright: 1.60.0
 
-  '@pmmmwh/react-refresh-webpack-plugin@0.5.16(react-refresh@0.14.2)(type-fest@0.21.3)(webpack@5.107.2)':
+  '@pmmmwh/react-refresh-webpack-plugin@0.5.16(react-refresh@0.14.2)(type-fest@0.21.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))':
     dependencies:
       ansi-html: 0.0.9
       core-js-pure: 3.49.0
@@ -10804,9 +10833,9 @@ snapshots:
     optionalDependencies:
       '@rsbuild/core': 1.7.5
 
-  '@rsbuild/plugin-css-minimizer@1.1.1(@rsbuild/core@1.7.5)(esbuild@0.25.5)(webpack@5.107.2)':
+  '@rsbuild/plugin-css-minimizer@1.1.1(@rsbuild/core@1.7.5)(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))':
     dependencies:
-      css-minimizer-webpack-plugin: 7.0.2(esbuild@0.25.5)(webpack@5.107.2)
+      css-minimizer-webpack-plugin: 7.0.2(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       reduce-configs: 1.1.2
     optionalDependencies:
       '@rsbuild/core': 1.7.5
@@ -10819,11 +10848,11 @@ snapshots:
       - lightningcss
       - webpack
 
-  '@rsbuild/plugin-less@1.6.3(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2)':
+  '@rsbuild/plugin-less@1.6.3(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))':
     dependencies:
       deepmerge: 4.3.1
       less: 4.6.4
-      less-loader: 12.3.3(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.6.4)(webpack@5.107.2)
+      less-loader: 12.3.3(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.6.4)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       reduce-configs: 1.1.2
     optionalDependencies:
       '@rsbuild/core': 1.7.5
@@ -10962,9 +10991,9 @@ snapshots:
   '@rsbuild/webpack@1.6.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)':
     dependencies:
       '@rsbuild/core': 1.7.5
-      copy-webpack-plugin: 11.0.0(webpack@5.107.2)
-      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2)
-      mini-css-extract-plugin: 2.9.4(webpack@5.107.2)
+      copy-webpack-plugin: 11.0.0(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+      mini-css-extract-plugin: 2.9.4(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       picocolors: 1.1.1
       reduce-configs: 1.1.2
       tsconfig-paths-webpack-plugin: 4.2.0
@@ -11109,7 +11138,7 @@ snapshots:
     optionalDependencies:
       rollup: 4.60.4
       vite: 8.0.16(@types/node@22.19.21)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.47.1)(yaml@2.9.0)
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
 
   '@storybook/global@5.0.0': {}
 
@@ -11385,7 +11414,7 @@ snapshots:
       tailwindcss: 4.3.1
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
 
   '@tanstack/query-core@5.100.13': {}
 
@@ -11923,7 +11952,7 @@ snapshots:
       - debug
       - supports-color
 
-  babel-loader@9.2.1(@babel/core@7.29.0)(webpack@5.107.2):
+  babel-loader@9.2.1(@babel/core@7.29.0)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       '@babel/core': 7.29.0
       find-cache-dir: 4.0.0
@@ -12358,7 +12387,7 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
-  copy-webpack-plugin@11.0.0(webpack@5.107.2):
+  copy-webpack-plugin@11.0.0(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       fast-glob: 3.3.3
       glob-parent: 6.0.2
@@ -12458,7 +12487,7 @@ snapshots:
     dependencies:
       postcss: 8.5.15
 
-  css-minimizer-webpack-plugin@7.0.2(esbuild@0.25.5)(webpack@5.107.2):
+  css-minimizer-webpack-plugin@7.0.2(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       cssnano: 7.1.9(postcss@8.5.15)
@@ -13285,7 +13314,7 @@ snapshots:
       relateurl: 0.2.7
       terser: 5.47.1
 
-  html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2):
+  html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
@@ -13681,7 +13710,7 @@ snapshots:
       lefthook-windows-arm64: 2.1.9
       lefthook-windows-x64: 2.1.9
 
-  less-loader@12.3.3(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.6.4)(webpack@5.107.2):
+  less-loader@12.3.3(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.6.4)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       less: 4.6.4
     optionalDependencies:
@@ -13909,7 +13938,7 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  mini-css-extract-plugin@2.9.4(webpack@5.107.2):
+  mini-css-extract-plugin@2.9.4(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       schema-utils: 4.3.3
       tapable: 2.3.3
@@ -13999,6 +14028,8 @@ snapshots:
   mute-stream@3.0.0: {}
 
   nanoid@3.3.12: {}
+
+  nanoid@5.1.16: {}
 
   nanospinner@1.2.2:
     dependencies:
@@ -14916,7 +14947,7 @@ snapshots:
       neo-async: 2.6.2
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
       webpack-sources: 3.5.0
 
   react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2):
@@ -14925,7 +14956,7 @@ snapshots:
       neo-async: 2.6.2
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
       webpack-sources: 3.5.0
 
   react-side-effect@2.1.2(react@18.3.1):
@@ -15566,7 +15597,7 @@ snapshots:
 
   term-size@2.2.1: {}
 
-  terser-webpack-plugin@5.3.14(@swc/core@1.15.8(@swc/helpers@0.5.23))(esbuild@0.25.5)(webpack@5.107.2):
+  terser-webpack-plugin@5.3.14(@swc/core@1.15.8(@swc/helpers@0.5.23))(esbuild@0.25.5)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -15578,7 +15609,7 @@ snapshots:
       '@swc/core': 1.15.8(@swc/helpers@0.5.23)
       esbuild: 0.25.5
 
-  terser-webpack-plugin@5.6.1(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)(webpack@5.107.2):
+  terser-webpack-plugin@5.6.1(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -15592,16 +15623,15 @@ snapshots:
       html-minifier-terser: 7.2.0
       postcss: 8.5.15
 
-  terser-webpack-plugin@5.6.1(esbuild@0.25.5)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
+  terser-webpack-plugin@5.6.1(esbuild@0.25.5)(webpack@5.107.2):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.47.1
-      webpack: 5.107.2(esbuild@0.25.5)(postcss@8.5.15)
+      webpack: 5.107.2(esbuild@0.25.5)
     optionalDependencies:
       esbuild: 0.25.5
-      postcss: 8.5.15
 
   terser@5.47.1:
     dependencies:
@@ -15689,7 +15719,7 @@ snapshots:
 
   ts-deepmerge@7.0.2: {}
 
-  ts-loader@9.4.4(typescript@5.9.3)(webpack@5.107.2):
+  ts-loader@9.4.4(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.23.0
@@ -15895,12 +15925,12 @@ snapshots:
 
   webpack-sources@3.5.0: {}
 
-  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2))(webpack@5.107.2):
+  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)):
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.107.2(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)
     optionalDependencies:
-      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2)
+      html-webpack-plugin: 5.6.6(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
 
   webpack-virtual-modules@0.6.2: {}
 
@@ -15926,7 +15956,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)(webpack@5.107.2)
+      terser-webpack-plugin: 5.6.1(@swc/core@1.15.8(@swc/helpers@0.5.23))(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.5)(html-minifier-terser@7.2.0)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
       watchpack: 2.5.1
       webpack-sources: 3.5.0
     transitivePeerDependencies:
@@ -15943,7 +15973,7 @@ snapshots:
       - postcss
       - uglify-js
 
-  webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15):
+  webpack@5.107.2(esbuild@0.25.5):
     dependencies:
       '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
@@ -15965,7 +15995,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.25.5)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+      terser-webpack-plugin: 5.6.1(esbuild@0.25.5)(webpack@5.107.2)
       watchpack: 2.5.1
       webpack-sources: 3.5.0
     transitivePeerDependencies:
@@ -16103,3 +16133,9 @@ snapshots:
   yocto-queue@1.2.2: {}
 
   yoctocolors-cjs@2.1.3: {}
+
+  zustand@5.0.14(@types/react@19.2.17)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1)):
+    optionalDependencies:
+      '@types/react': 19.2.17
+      react: 18.3.1
+      use-sync-external-store: 1.6.0(react@18.3.1)

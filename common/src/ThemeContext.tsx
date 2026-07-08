@@ -1,5 +1,5 @@
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
-import { STORAGE_KEYS } from './auth';
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import { setTheme, useGlobalStore } from './stores/global.store';
 
 interface ThemeValue {
   isDark: boolean;
@@ -8,20 +8,24 @@ interface ThemeValue {
 
 const ThemeContext = createContext<ThemeValue>({ isDark: false, toggle: () => {} });
 
+// Theme state sống trong global store (persist localStorage, giữ qua logout);
+// provider chỉ còn nhiệm vụ phản chiếu vào [data-theme] cho Tailwind dark variant.
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // SSR guard: initializer chạy cả trên server → không đọc localStorage khi thiếu window
-  const [isDark, setIsDark] = useState<boolean>(
-    () => typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.theme) === 'dark',
-  );
+  const theme = useGlobalStore((s) => s.theme);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem(STORAGE_KEYS.theme, isDark ? 'dark' : 'light');
-  }, [isDark]);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
-  const toggle = () => setIsDark((d) => !d);
+  const value = useMemo<ThemeValue>(
+    () => ({
+      isDark: theme === 'dark',
+      toggle: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
+    }),
+    [theme],
+  );
 
-  return <ThemeContext.Provider value={{ isDark, toggle }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = (): ThemeValue => useContext(ThemeContext);

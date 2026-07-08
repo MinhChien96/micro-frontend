@@ -1,13 +1,7 @@
+import { clearAuthState, globalStore, setAuthToken, setGlobalUser } from './stores/global.store';
 import { getPermissionsForRole, type Permission, type Role } from './utils/permissions';
 
 export type { Permission, Role } from './utils/permissions';
-
-// Nguồn chân lý cho localStorage keys — đổi 1 chỗ là đổi toàn hệ thống.
-export const STORAGE_KEYS = {
-  user: 'app_user',
-  token: 'app_token',
-  theme: 'app_theme',
-} as const;
 
 export interface User {
   id?: string;
@@ -20,31 +14,19 @@ export interface User {
   phone?: string;
 }
 
-// SSR guard: server không có localStorage → luôn coi là chưa đăng nhập
-const hasStorage = (): boolean =>
-  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+// Facade mỏng quanh global store (zustand singleton — xem stores/global.store.ts).
+// Giữ API cũ để component không phải đổi; phiên nằm trong sessionStorage
+// (đóng tab là hết), preferences nằm localStorage.
 
-export const getUser = (): User | null => {
-  if (!hasStorage()) return null;
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.user) || 'null') as User | null;
-  } catch {
-    return null;
-  }
-};
+export const getUser = (): User | null => globalStore.getState().user;
 
-export const setUser = (user: User): void =>
-  localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+export const setUser = (user: User): void => setGlobalUser(user);
 
-export const getToken = (): string | null =>
-  hasStorage() ? localStorage.getItem(STORAGE_KEYS.token) : null;
+export const getToken = (): string | null => globalStore.getState().authToken;
 
-export const setToken = (token: string): void => localStorage.setItem(STORAGE_KEYS.token, token);
+export const setToken = (token: string): void => setAuthToken(token);
 
-export const clearAuth = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.user);
-  localStorage.removeItem(STORAGE_KEYS.token);
-};
+export const clearAuth = (): void => clearAuthState();
 
 export const isAuthenticated = (): boolean => !!getToken();
 

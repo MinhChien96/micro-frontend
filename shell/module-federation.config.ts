@@ -23,6 +23,7 @@ export default createModuleFederationConfig({
     'react/jsx-runtime': { singleton: true, requiredVersion: false },
     'react/jsx-dev-runtime': { singleton: true, requiredVersion: false },
     '@app/common/ui': { singleton: true, requiredVersion: false },
+    '@app/common/stores': { singleton: true, requiredVersion: false },
     '@app/common/eventBus': { singleton: true, requiredVersion: false },
     react: { singleton: true, requiredVersion: '>=18.2.0' },
     'react-dom': { singleton: true, requiredVersion: '>=18.2.0' },
