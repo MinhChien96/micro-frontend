@@ -1,6 +1,8 @@
 import { BRAND } from '@app/common/brand';
+import { Paths } from '@app/common/constants/paths';
 import { Helmet } from '@modern-js/runtime/head';
-import { Link } from '@modern-js/runtime/router';
+import { Link, Navigate } from '@modern-js/runtime/router';
+import { useAuth } from '../../AuthContext';
 
 const PRODUCTS = [
   {
@@ -29,8 +31,11 @@ const PRODUCTS = [
   },
 ];
 
-// Trang public — SSR đầy đủ nội dung phục vụ SEO (bot thấy HTML hoàn chỉnh).
+// Landing public; đã đăng nhập thì về thẳng màn nghiệp vụ (bank: root redirect).
 export default function HomePage() {
+  const user = useAuth();
+  if (user) return <Navigate to={Paths.accounts} replace />;
+
   return (
     <div className="landing">
       <Helmet>

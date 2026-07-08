@@ -8,7 +8,6 @@ import { Helmet } from '@modern-js/runtime/head';
 import { Outlet } from '@modern-js/runtime/router';
 import { useEffect } from 'react';
 import { AuthProvider } from '../AuthContext';
-import Nav from '../components/Nav';
 
 // MSW bật khi: dev, hoặc build với MODERN_MSW=true (demo/e2e prod).
 // Dự án thật: set MODERN_API_BASE_URL trỏ gateway, không set MODERN_MSW.
@@ -37,6 +36,8 @@ function readApiBase(): string {
 
 const mswOn = isMswEnabled();
 
+// Root layout: CHỈ providers toàn cục. Chrome (nav/header) thuộc về
+// __public/layout và __private/layout — 2 nhóm có khung khác nhau (bank pattern).
 export default function RootLayout() {
   useEffect(() => {
     initSentry(); // no-op nếu chưa set DSN
@@ -54,10 +55,7 @@ export default function RootLayout() {
         </Helmet>
         <MswGate enabled={mswOn}>
           <div className="app">
-            <Nav />
-            <main className="main-content">
-              <Outlet />
-            </main>
+            <Outlet />
           </div>
         </MswGate>
       </ToastProvider>

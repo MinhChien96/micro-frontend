@@ -1,18 +1,18 @@
 import { BRAND } from '@app/common/brand';
 import { Helmet } from '@modern-js/runtime/head';
-import ProtectedRoute from '../../components/ProtectedRoute';
-import RemoteErrorBoundary from '../../components/RemoteErrorBoundary';
-import { ProfileApp } from '../../components/remotePages';
+import RemoteErrorBoundary from '../../../components/RemoteErrorBoundary';
+import { ProfileApp } from '../../../components/remotePages';
 
-export default function ProfilePage() {
+// Splat route — mfe-profile tự quản router con (hồ sơ, bảo mật, chỉnh sửa).
+export default function ProfileAppPage() {
   return (
-    <ProtectedRoute>
+    <>
       <Helmet>
         <title>{`Hồ sơ — ${BRAND.name}`}</title>
       </Helmet>
       <RemoteErrorBoundary remote="mfe_profile/ProfileApp">
         <ProfileApp />
       </RemoteErrorBoundary>
-    </ProtectedRoute>
+    </>
   );
 }

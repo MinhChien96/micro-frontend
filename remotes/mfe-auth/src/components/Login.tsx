@@ -7,11 +7,18 @@ import { batchUpdate, globalStore } from '@app/common/stores';
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-interface LoginResponse {
+// Login là STATE MACHINE theo nextStep server trả về (bank pattern):
+// CREDENTIALS → (OTP) → HOME. Thêm bước mới (đổi mật khẩu lần đầu...) =
+// thêm case nextStep, không đổi khung.
+interface LoginStepResponse {
   nextStep: 'HOME' | 'OTP';
-  accessToken: string;
-  refreshToken: string;
-  user: User;
+  // OTP step
+  otpSession?: string;
+  otpHint?: string;
+  // HOME step
+  accessToken?: string;
+  refreshToken?: string;
+  user?: User;
 }
 
 const DEMO_ROLES: { value: Role; label: string; desc: string }[] = [
@@ -36,29 +43,46 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // OTP step state
+  const [step, setStep] = useState<'CREDENTIALS' | 'OTP'>('CREDENTIALS');
+  const [otpSession, setOtpSession] = useState('');
+  const [otpHint, setOtpHint] = useState('');
+  const [otp, setOtp] = useState('');
+
+  // Xử lý chung cho mọi response của state machine login
+  const applyStep = (res: LoginStepResponse) => {
+    if (res.nextStep === 'OTP' && res.otpSession) {
+      setOtpSession(res.otpSession);
+      setOtpHint(res.otpHint ?? '');
+      setOtp('');
+      setStep('OTP');
+      return;
+    }
+    if (res.nextStep === 'HOME' && res.accessToken && res.user) {
+      // Lưu phiên vào global store singleton → shell + mọi remote thấy ngay
+      batchUpdate({
+        authToken: res.accessToken,
+        refreshToken: res.refreshToken ?? null,
+        user: res.user,
+      });
+      navigate(from, { replace: true });
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       // Login qua endpoint [public] — apiClient không chờ/gắn token
       const { deviceId } = globalStore.getState();
-      const res = await apiPost<LoginResponse>(ENDPOINTS.login, {
+      const res = await apiPost<LoginStepResponse>(ENDPOINTS.login, {
         username: customerId,
         password,
         role: selectedRole,
         deviceId,
       });
-      if (res.nextStep === 'HOME') {
-        // Lưu phiên vào global store singleton → shell + mọi remote thấy ngay
-        batchUpdate({
-          authToken: res.accessToken,
-          refreshToken: res.refreshToken,
-          user: res.user,
-        });
-        navigate(from, { replace: true });
-      }
+      applyStep(res);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Đăng nhập thất bại';
       setError(`${message}. Thử: 0021001 / 123456`);
@@ -66,6 +90,77 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const handleVerifyOtp = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await apiPost<LoginStepResponse>(ENDPOINTS.verifyOtp, { otpSession, otp });
+      applyStep(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Xác thực OTP thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === 'OTP') {
+    return (
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">🔐</div>
+          <h2>Xác thực OTP</h2>
+          <p>Nhập mã OTP đã gửi về số điện thoại của bạn</p>
+        </div>
+
+        <form onSubmit={handleVerifyOtp} className="auth-form">
+          {error && <div className="auth-error">{error}</div>}
+
+          <div className="form-group">
+            <label htmlFor="otp-input">Mã OTP (6 số)</label>
+            <input
+              id="otp-input"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              placeholder="••••••"
+              autoComplete="one-time-code"
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading || otp.length !== 6}>
+            {loading ? 'Đang xác thực...' : 'Xác nhận'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setStep('CREDENTIALS');
+              setError('');
+            }}
+            style={{
+              marginTop: 8,
+              background: 'none',
+              border: 'none',
+              color: '#2563eb',
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            ← Quay lại đăng nhập
+          </button>
+        </form>
+
+        {otpHint && (
+          <div className="auth-hint">{otpHint} (demo — hệ thống thật gửi SMS/Smart OTP)</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="auth-card">

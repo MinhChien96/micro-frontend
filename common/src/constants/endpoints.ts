@@ -9,6 +9,7 @@ export const withTransferService = (path: string): string => `/api/transfers${pa
 // Prefix "[public]": apiClient KHÔNG chờ/gắn token (login, refresh...).
 export const ENDPOINTS = {
   login: `[public]${withAuthService('/login')}`,
+  verifyOtp: `[public]${withAuthService('/verify-otp')}`,
   refreshToken: `[public]${withAuthService('/refresh-token')}`,
   logout: withAuthService('/logout'),
 } as const;

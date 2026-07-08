@@ -18,7 +18,8 @@
     "./constants/paths": "./src/constants/paths.ts",
     "./constants/endpoints": "./src/constants/endpoints.ts",
     "./mocks/MswGate": "./src/mocks/MswGate.tsx",
-    "./mocks/standalone": "./src/mocks/standalone.ts"
+    "./mocks/standalone": "./src/mocks/standalone.ts",
+    "./AutoSignOut": "./src/components/AutoSignOut.tsx"
   },
   "scripts": {
     "start": "modern dev",

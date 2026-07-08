@@ -32,13 +32,32 @@ const unauthorized = () => err(401, 'Token hết hạn hoặc không hợp lệ'
 export const handlers = [
   http.get('/api/ping', () => ok({ ok: true, ts: Date.now() })),
 
-  // Đăng nhập: đúng 0021001/123456 → nextStep HOME + cặp token + user.
-  // role lấy từ body (demo 3 hồ sơ khách hàng).
+  // Đăng nhập là STATE MACHINE (bank pattern): server quyết định bước kế —
+  // đúng 0021001/123456 → nextStep OTP (kèm otpSession); client verify-otp
+  // xong mới nhận token. role demo nhúng vào otpSession (mock stateless).
   http.post('/api/auth/login', async ({ request }) => {
     await delay(500);
     const body = (await request.json()) as { username?: string; password?: string; role?: string };
     if (body.username !== '0021001' || body.password !== '123456') {
       return err(401, 'Mã khách hàng hoặc mật khẩu không đúng', 'INVALID_CREDENTIALS');
+    }
+    return ok({
+      nextStep: 'OTP',
+      otpSession: `otp:${body.role || 'CUSTOMER'}:${Date.now()}`,
+      otpHint: 'Mã OTP demo: 123456',
+    });
+  }),
+
+  // Xác thực OTP → nextStep HOME + cặp token + user
+  http.post('/api/auth/verify-otp', async ({ request }) => {
+    await delay(400);
+    const body = (await request.json()) as { otpSession?: string; otp?: string };
+    const [prefix, role] = (body.otpSession ?? '').split(':');
+    if (prefix !== 'otp' || !role) {
+      return err(401, 'Phiên OTP không hợp lệ, vui lòng đăng nhập lại', 'INVALID_OTP_SESSION');
+    }
+    if (body.otp !== '123456') {
+      return err(401, 'Mã OTP không đúng', 'INVALID_OTP');
     }
     return ok({
       nextStep: 'HOME',
@@ -50,7 +69,7 @@ export const handlers = [
         email: 'demo@example.com',
         phone: '0901 234 567',
         branch: 'Chi nhánh TP.HCM',
-        role: body.role || 'CUSTOMER',
+        role,
       },
     });
   }),

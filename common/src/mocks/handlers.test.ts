@@ -7,8 +7,9 @@ import { handlers } from './handlers';
 describe('MSW handlers', () => {
   const paths = handlers.map((h) => (h.info as { path: string }).path);
 
-  it('khai báo endpoint auth (login/refresh/logout)', () => {
+  it('khai báo endpoint auth (login/otp/refresh/logout)', () => {
     expect(paths).toContain('/api/auth/login');
+    expect(paths).toContain('/api/auth/verify-otp');
     expect(paths).toContain('/api/auth/refresh-token');
     expect(paths).toContain('/api/auth/logout');
   });

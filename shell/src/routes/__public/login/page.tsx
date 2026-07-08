@@ -1,9 +1,9 @@
 import { BRAND } from '@app/common/brand';
 import { Helmet } from '@modern-js/runtime/head';
 import { Navigate, useLocation } from '@modern-js/runtime/router';
-import { useAuth } from '../../AuthContext';
-import RemoteErrorBoundary from '../../components/RemoteErrorBoundary';
-import { Login } from '../../components/remotePages';
+import { useAuth } from '../../../AuthContext';
+import RemoteErrorBoundary from '../../../components/RemoteErrorBoundary';
+import { Login } from '../../../components/remotePages';
 
 // Login KHÔNG noSSR: form từ remote mfe_auth được render ngay trong HTML
 // server (SEO + first paint). Redirect-if-authed chỉ xảy ra sau hydration
