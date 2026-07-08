@@ -79,13 +79,16 @@ importers:
     dependencies:
       '@modern-js/runtime':
         specifier: ^2.65.0
-        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(react@18.3.1)
+        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
       '@module-federation/modern-js-v3':
         specifier: ^2.5.0
-        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2)
       '@sentry/react':
         specifier: ^10.57.0
         version: 10.57.0(react@18.3.1)
+      '@tanstack/react-query':
+        specifier: ^5.100.13
+        version: 5.100.13(react@18.3.1)
       axios:
         specifier: ^1.18.1
         version: 1.18.1
@@ -110,7 +113,7 @@ importers:
     devDependencies:
       '@modern-js/app-tools':
         specifier: ^2.65.0
-        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
+        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
       typescript:
         specifier: ^5.0.4
         version: 5.9.3
@@ -299,10 +302,13 @@ importers:
         version: link:../common
       '@modern-js/runtime':
         specifier: ^2.65.0
-        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2))(react@18.3.1)
+        version: 2.71.0(react-dom@18.3.1(react@18.3.1))(react-server-dom-webpack@19.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15)))(react@18.3.1)
       '@module-federation/modern-js-v3':
         specifier: ^2.5.0
-        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2)
+        version: 2.5.1(@rsbuild/core@1.7.5)(@rspack/core@1.7.11(@swc/helpers@0.5.23))(react-dom@18.3.1(react@18.3.1))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(webpack@5.107.2(esbuild@0.25.5)(postcss@8.5.15))
+      '@tanstack/react-query':
+        specifier: ^5.101.2
+        version: 5.101.2(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -315,7 +321,7 @@ importers:
     devDependencies:
       '@modern-js/app-tools':
         specifier: ^2.65.0
-        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
+        version: 2.71.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(encoding@0.1.13)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.60.4)(styled-components@5.3.11(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(tsconfig-paths@4.2.0)(tslib@2.8.1)(type-fest@0.21.3)(typescript@5.9.3)
       typescript:
         specifier: ^5.0.4
         version: 5.9.3
@@ -3271,8 +3277,16 @@ packages:
   '@tanstack/query-core@5.100.13':
     resolution: {integrity: sha512-mlKVKMTzZWGTKAC1CKOgt7axAjJ921emkEvYIp27I/PdP1yEYL/BteLY8iK35gn8hoYeKB4mgJ/ve3lrDI6/Fw==}
 
+  '@tanstack/query-core@5.101.2':
+    resolution: {integrity: sha512-hH5MLoJhF7KaIGd7q3xTXGXvslI+GYlM1Z/35aSHHWaCJWB7XvTSHYuV3eM7tw+aE0mT/xMro4M4Q9rCGHT0lw==}
+
   '@tanstack/react-query@5.100.13':
     resolution: {integrity: sha512-HSBr8CycQEAoXsJR7KNDawBnINJEJ96Eme8oE0hCXjyodE2I97vg3IDzDJBDu18LsbzpVVJcKo80eqLfVCykxw==}
+    peerDependencies:
+      react: ^18 || ^19
+
+  '@tanstack/react-query@5.101.2':
+    resolution: {integrity: sha512-seDkr6kzGzX1okaaTtZPtgA688CDPlXUz1C6xSg0ESqn04Vuc8tlrYms1s3de+znBqhPVxFRfpAfUf+6XvfPWg==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -11457,9 +11471,16 @@ snapshots:
 
   '@tanstack/query-core@5.100.13': {}
 
+  '@tanstack/query-core@5.101.2': {}
+
   '@tanstack/react-query@5.100.13(react@18.3.1)':
     dependencies:
       '@tanstack/query-core': 5.100.13
+      react: 18.3.1
+
+  '@tanstack/react-query@5.101.2(react@18.3.1)':
+    dependencies:
+      '@tanstack/query-core': 5.101.2
       react: 18.3.1
 
   '@tanstack/react-virtual@3.13.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':

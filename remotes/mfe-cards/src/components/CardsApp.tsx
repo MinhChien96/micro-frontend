@@ -1,31 +1,17 @@
-import '../tailwind.css';
-import { PageSpinner } from '@app/common/ui';
-import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
-import CardList from './CardList';
+import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import CardsRoutes from './CardsRoutes';
 
-const CardDetail = lazy(
-  () =>
-    import(
-      /* webpackChunkName: "card-detail" */
-      /* webpackPrefetch: true */
-      './CardDetail'
-    ),
-);
-
-// Không có <Router> — Router context đến từ shell (HashRouter)
+// CHỈ dùng cho chế độ STANDALONE: tự cấp router module (react-router-dom
+// local) cho zone. Khi chạy trong shell, shell truyền module router của nó
+// qua routes/__private/cards/$.tsx (Pattern B).
 export default function CardsApp() {
   return (
-    <Routes>
-      <Route index element={<CardList />} />
-      <Route
-        path=":id"
-        element={
-          <Suspense fallback={<PageSpinner label="Đang tải thông tin thẻ..." />}>
-            <CardDetail />
-          </Suspense>
-        }
-      />
-    </Routes>
+    <CardsRoutes
+      Routes={Routes}
+      Route={Route}
+      Link={Link}
+      useNavigate={useNavigate}
+      useParams={useParams}
+    />
   );
 }

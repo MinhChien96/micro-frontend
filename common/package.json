@@ -21,7 +21,8 @@
     "./AutoSignOut": "./src/components/AutoSignOut.tsx",
     "./PermissionCheck": "./src/components/PermissionCheck.tsx",
     "./permissions": "./src/permissions/index.ts",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./QueryProvider": "./src/components/QueryProvider.tsx"
   },
   "scripts": {
     "start": "modern dev",
@@ -34,6 +35,7 @@
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
     "@sentry/react": "^10.57.0",
+    "@tanstack/react-query": "^5.100.13",
     "axios": "^1.18.1",
     "i18next": "^26.3.5",
     "nanoid": "^5.1.16",

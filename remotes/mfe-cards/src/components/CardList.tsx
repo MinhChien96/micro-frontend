@@ -1,5 +1,5 @@
 import { getUser } from '@app/common/auth';
-import { Link } from 'react-router-dom';
+import { useCardsRouter } from '../contexts/CardsRouteContext';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -47,6 +47,8 @@ const MOCK_CARDS = [
 ];
 
 export default function CardList() {
+  // Router lấy từ zone context (Pattern B) — không import react-router-dom
+  const { Link } = useCardsRouter();
   const user = getUser();
 
   return (

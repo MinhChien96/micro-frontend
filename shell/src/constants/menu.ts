@@ -18,7 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: Paths.accounts,
     labelKey: 'nav.accounts',
     tag: 'mfe-accounts',
-    prefetch: { remote: 'mfe_accounts', expose: 'AccountsApp' },
+    prefetch: { remote: 'mfe_accounts', expose: 'AccountList' },
   },
   {
     to: Paths.transfer,
@@ -30,7 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: Paths.cards,
     labelKey: 'nav.cards',
     tag: 'mfe-cards',
-    prefetch: { remote: 'mfe_cards', expose: 'CardsApp' },
+    prefetch: { remote: 'mfe_cards', expose: 'CardsRoutes' },
   },
   {
     to: Paths.loans,

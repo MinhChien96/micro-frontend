@@ -32,9 +32,17 @@ const remotePage = (remoteName: string, exposeKey: string, skeleton: ReactNode) 
 };
 
 export const Login = remotePage('mfe_auth', 'Login', LoginFallback);
-export const AccountsApp = remotePage('mfe_accounts', 'AccountsApp', <AccountsSkeleton />);
+
+// Pattern A — mfe-accounts expose từng màn, shell truyền navigator/accountId
+export const AccountList = remotePage('mfe_accounts', 'AccountList', <AccountsSkeleton />);
+export const AccountDetail = remotePage('mfe_accounts', 'AccountDetail', <AccountsSkeleton />);
+export const TransactionList = remotePage('mfe_accounts', 'TransactionList', <AccountsSkeleton />);
+
+// Pattern B — mfe-cards expose cửa vào zone, tự quản router con
+export const CardsRoutes = remotePage('mfe_cards', 'CardsRoutes', <CardsSkeleton />);
+
+// Splat đơn giản — remote tự render <Routes> (dựa react-router singleton)
 export const TransferApp = remotePage('mfe_transfer', 'TransferApp', <TransferSkeleton />);
-export const CardsApp = remotePage('mfe_cards', 'CardsApp', <CardsSkeleton />);
 export const LoansApp = remotePage('mfe_loans', 'LoansApp', <LoansSkeleton />);
 export const ProfileApp = remotePage('mfe_profile', 'ProfileApp', <ProfileSkeleton />);
 // @plop:remote-page (generator chèn export MFE mới bên trên)

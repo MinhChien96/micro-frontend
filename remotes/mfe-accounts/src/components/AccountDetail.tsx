@@ -1,7 +1,7 @@
 import eventBus from '@app/common/eventBus';
 import { Card, CardHeader, Divider, PageSpinner, StatusBadge } from '@app/common/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router-dom';
 import { fetchAccount, fetchTransactions } from '../api/accounts';
 
 const fmt = (n: number) =>
@@ -12,10 +12,14 @@ const fmtDate = (d: string) =>
     new Date(d),
   );
 
-export default function AccountDetail() {
-  const { id = '' } = useParams();
-  const navigate = useNavigate();
+// Pattern A (bank): shell sở hữu route /accounts/:id — truyền accountId + navigator
+// xuống; component không tự import router runtime (chỉ type).
+interface AccountDetailProps {
+  accountId: string;
+  navigator: NavigateFunction;
+}
 
+export default function AccountDetail({ accountId: id, navigator: navigate }: AccountDetailProps) {
   const { data: account, isLoading: loadingAccount } = useQuery({
     queryKey: ['account', id],
     queryFn: () => fetchAccount(id),
@@ -138,12 +142,20 @@ export default function AccountDetail() {
         }}
       >
         <CardHeader title="Giao dịch gần đây" />
-        <Link
-          to={`${id}/transactions`}
-          style={{ fontSize: 13, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}
+        <button
+          type="button"
+          onClick={() => navigate(`/accounts/${id}/transactions`)}
+          style={{
+            fontSize: 13,
+            color: '#2563eb',
+            fontWeight: 500,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
           Xem toàn bộ lịch sử →
-        </Link>
+        </button>
       </div>
 
       {loadingTxns ? (
@@ -218,8 +230,9 @@ export default function AccountDetail() {
         >
           Chuyển tiền từ đây
         </button>
-        <Link
-          to={`${id}/transactions`}
+        <button
+          type="button"
+          onClick={() => navigate(`/accounts/${id}/transactions`)}
           style={{
             flex: 1,
             textAlign: 'center',
@@ -227,13 +240,14 @@ export default function AccountDetail() {
             background: '#f1f5f9',
             color: '#1e3a5f',
             borderRadius: 10,
-            textDecoration: 'none',
+            border: 'none',
+            cursor: 'pointer',
             fontWeight: 600,
             fontSize: 14,
           }}
         >
           Lịch sử giao dịch
-        </Link>
+        </button>
       </div>
     </div>
   );

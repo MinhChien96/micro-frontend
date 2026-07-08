@@ -10,7 +10,7 @@ import {
   useState,
   useTransition,
 } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import type { NavigateFunction } from 'react-router-dom';
 import { fetchAccount, fetchTransactionPage, type Transaction } from '../api/accounts';
 
 const fmt = (n: number) =>
@@ -72,13 +72,21 @@ const TransactionRow = memo(function TransactionRow({ tx }: { tx: Transaction })
   );
 });
 
-export default function TransactionList() {
-  const { id = '' } = useParams();
-  const navigate = useNavigate();
+interface TransactionListProps {
+  accountId: string;
+  navigator: NavigateFunction;
+}
 
+export default function TransactionList({
+  accountId: id,
+  navigator: navigate,
+}: TransactionListProps) {
   // ── useInfiniteQuery: load trang theo trang, không load hết 1 lúc ──
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ['transactions', id],
+    // key PHẢI khác ['transactions', id] của AccountDetail (useQuery trả mảng,
+    // đây là infinite {pages}) — chung QueryClient toàn hệ thống nên trùng key
+    // khác shape là crash
+    queryKey: ['transactions-paged', id],
     queryFn: ({ pageParam }) => fetchTransactionPage({ accountId: id, pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,

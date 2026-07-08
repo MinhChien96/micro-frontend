@@ -10,6 +10,7 @@
     "@app/common": "workspace:*",
     "@modern-js/runtime": "^2.65.0",
     "@module-federation/modern-js-v3": "^2.5.0",
+    "@tanstack/react-query": "^5.101.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0"

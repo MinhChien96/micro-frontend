@@ -2,6 +2,7 @@ import '../tailwind.css';
 import { BRAND } from '@app/common/brand';
 import { MswGate } from '@app/common/mocks/MswGate';
 import { initSentry } from '@app/common/observability';
+import { QueryProvider } from '@app/common/QueryProvider';
 import { setApiHost } from '@app/common/stores';
 import { ToastProvider } from '@app/common/ui';
 import { Helmet } from '@modern-js/runtime/head';
@@ -49,15 +50,18 @@ export default function RootLayout() {
     <AuthProvider>
       {/* ToastProvider ở shell root — MFE gọi useToast() qua @app/common/ui singleton */}
       <ToastProvider>
-        <Helmet>
-          <html lang={BRAND.htmlLang} />
-          <title>{`${BRAND.name} — Ngân hàng số`}</title>
-        </Helmet>
-        <MswGate enabled={mswOn}>
-          <div className="app">
-            <Outlet />
-          </div>
-        </MswGate>
+        {/* MỘT QueryClient toàn hệ thống — remote dùng chung (react-query singleton) */}
+        <QueryProvider>
+          <Helmet>
+            <html lang={BRAND.htmlLang} />
+            <title>{`${BRAND.name} — Ngân hàng số`}</title>
+          </Helmet>
+          <MswGate enabled={mswOn}>
+            <div className="app">
+              <Outlet />
+            </div>
+          </MswGate>
+        </QueryProvider>
       </ToastProvider>
     </AuthProvider>
   );

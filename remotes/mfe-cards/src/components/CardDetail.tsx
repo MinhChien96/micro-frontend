@@ -2,7 +2,7 @@ import PermissionCheck from '@app/common/PermissionCheck';
 import { ActionEnum } from '@app/common/permissions';
 import { Card, CardHeader, Divider } from '@app/common/ui';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCardsRouter } from '../contexts/CardsRouteContext';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -62,6 +62,8 @@ const MOCK_CARDS = {
 };
 
 export default function CardDetail() {
+  // Router lấy từ zone context (Pattern B) — không import react-router-dom
+  const { useNavigate, useParams } = useCardsRouter();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const card = MOCK_CARDS[id as keyof typeof MOCK_CARDS];

@@ -28,5 +28,7 @@ export default createModuleFederationConfig({
     react: { singleton: true, requiredVersion: '>=18.2.0' },
     'react-dom': { singleton: true, requiredVersion: '>=18.2.0' },
     'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },
+    // shell mount QueryProvider (common) — remote dùng chung context này
+    '@tanstack/react-query': { singleton: true, requiredVersion: '^5.28.0' },
   },
 });
