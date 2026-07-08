@@ -24,7 +24,6 @@ const RemoteLoadError = ({ remote, error }: { remote: string; error?: Error }) =
   </div>
 );
 
-// Public — SSR thật sự: markup form Login của remote nằm trong HTML server (SEO).
 export const Login = createLazyComponent({
   instance: getInstance(),
   loader: () => import('mfe_auth/Login'),
@@ -35,8 +34,6 @@ export const Login = createLazyComponent({
   ),
 });
 
-// Protected — noSSR: server stream shell + skeleton, nội dung hydrate client
-// (auth nằm trong localStorage nên server không có user, SSR content vô nghĩa).
 const protectedPage = (
   id: string,
   loader: () => Promise<{ default: React.ComponentType }>,
@@ -46,7 +43,6 @@ const protectedPage = (
     instance: getInstance(),
     loader,
     export: 'default',
-    noSSR: true,
     loading: skeleton,
     fallback: ({ error }: { error?: Error }) => <RemoteLoadError remote={id} error={error} />,
   });

@@ -2,8 +2,6 @@ import { createModuleFederationConfig } from '@module-federation/modern-js-v3';
 
 // URL manifest browser-facing. REMOTE_BASE dùng khi deploy (CDN/S3);
 // không set → fallback localhost theo port từng MFE (dev).
-// Server-side trong Docker/ECS dùng MF_INTERNAL_HOST_MAP để rewrite host
-// (xem src/runtime/internalHostRewrite.ts) — KHÔNG đổi URL ở đây.
 const base = process.env.REMOTE_BASE;
 const m = (dir: string, port: number) =>
   base
@@ -22,7 +20,6 @@ export default createModuleFederationConfig({
     mfe_cards: `mfe_cards@${m('mfe-cards', 3007)}`,
     // @plop:remote (generator chèn remote mới bên trên)
   },
-  runtimePlugins: ['./src/runtime/internalHostRewrite.ts'],
   shared: {
     // @app/common/ui + @app/common/eventBus PHẢI singleton: ToastContext và _last cache
     // của eventBus là module-level state — mỗi bundle một bản là vỡ cross-MFE.
