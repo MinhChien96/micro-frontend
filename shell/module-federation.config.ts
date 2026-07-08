@@ -24,12 +24,12 @@ export default createModuleFederationConfig({
   },
   runtimePlugins: ['./src/runtime/internalHostRewrite.ts'],
   shared: {
-    // @app/shared/ui + @app/shared/eventBus PHẢI singleton: ToastContext và _last cache
+    // @app/common/ui + @app/common/eventBus PHẢI singleton: ToastContext và _last cache
     // của eventBus là module-level state — mỗi bundle một bản là vỡ cross-MFE.
     'react/jsx-runtime': { singleton: true, requiredVersion: false },
     'react/jsx-dev-runtime': { singleton: true, requiredVersion: false },
-    '@app/shared/ui': { singleton: true, requiredVersion: false },
-    '@app/shared/eventBus': { singleton: true, requiredVersion: false },
+    '@app/common/ui': { singleton: true, requiredVersion: false },
+    '@app/common/eventBus': { singleton: true, requiredVersion: false },
     react: { singleton: true, requiredVersion: '>=18.2.0' },
     'react-dom': { singleton: true, requiredVersion: '>=18.2.0' },
     'react-router-dom': { singleton: true, requiredVersion: '^6.22.0' },

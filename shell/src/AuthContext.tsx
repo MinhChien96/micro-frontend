@@ -1,4 +1,4 @@
-import { getUser, type User } from '@app/shared/auth';
+import { getUser, type User } from '@app/common/auth';
 import {
   createContext,
   type ReactNode,

@@ -1,4 +1,4 @@
-import { BRAND } from '@app/shared/brand';
+import { BRAND } from '@app/common/brand';
 import { appTools, defineConfig } from '@modern-js/app-tools';
 import { moduleFederationPlugin } from '@module-federation/modern-js-v3';
 import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';

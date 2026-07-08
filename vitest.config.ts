@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 // MF remote (mfe_*/App) không resolve trong Vitest (không có MF runtime) → alias stub.
-// @app/shared/* resolve thật qua workspace exports map (pnpm symlink).
+// @app/common/* resolve thật qua workspace exports map (pnpm symlink).
 const remoteStub = fileURLToPath(new URL('./shell/test/stubs/RemoteStub.tsx', import.meta.url));
 
 export default defineConfig({
@@ -27,9 +27,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      // Gate vào core tái dùng (shared). 6 MFE banking là example domain —
+      // Gate vào core tái dùng (common). 6 MFE banking là example domain —
       // không coverage-gate (sẽ thay khi làm dự án thật).
-      include: ['shared/src/**/*.{ts,tsx}'],
+      include: ['common/src/**/*.{ts,tsx}'],
       exclude: [
         '**/*.test.{ts,tsx}',
         '**/*.stories.tsx',

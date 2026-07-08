@@ -1,4 +1,4 @@
-import { captureException } from '@app/shared/observability';
+import { captureException } from '@app/common/observability';
 import React from 'react';
 
 const MAX_RETRIES = 3;

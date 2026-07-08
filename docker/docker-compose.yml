@@ -25,7 +25,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-auth, PUBLIC_URL: "http://localhost:3001/" }
+      args: { APP: remotes/mfe-auth, PUBLIC_URL: "http://localhost:3001/" }
     environment: { PORT: 3001, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3001:3001"]
 
@@ -34,7 +34,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-accounts, PUBLIC_URL: "http://localhost:3002/" }
+      args: { APP: remotes/mfe-accounts, PUBLIC_URL: "http://localhost:3002/" }
     environment: { PORT: 3002, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3002:3002"]
 
@@ -43,16 +43,16 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-transfer, PUBLIC_URL: "http://localhost:3003/" }
+      args: { APP: remotes/mfe-transfer, PUBLIC_URL: "http://localhost:3003/" }
     environment: { PORT: 3003, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3003:3003"]
 
-  shared:
+  common:
     <<: *remote-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: shared, PUBLIC_URL: "http://localhost:3004/" }
+      args: { APP: common, PUBLIC_URL: "http://localhost:3004/" }
     environment: { PORT: 3004, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3004:3004"]
 
@@ -61,7 +61,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-profile, PUBLIC_URL: "http://localhost:3005/" }
+      args: { APP: remotes/mfe-profile, PUBLIC_URL: "http://localhost:3005/" }
     environment: { PORT: 3005, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3005:3005"]
 
@@ -70,7 +70,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-loans, PUBLIC_URL: "http://localhost:3006/" }
+      args: { APP: remotes/mfe-loans, PUBLIC_URL: "http://localhost:3006/" }
     environment: { PORT: 3006, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3006:3006"]
 
@@ -79,7 +79,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: mfe-cards, PUBLIC_URL: "http://localhost:3007/" }
+      args: { APP: remotes/mfe-cards, PUBLIC_URL: "http://localhost:3007/" }
     environment: { PORT: 3007, MODERN_MF_AUTO_CORS: "true" }
     ports: ["3007:3007"]
 

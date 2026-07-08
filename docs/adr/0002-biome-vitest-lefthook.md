@@ -2,7 +2,7 @@
 
 ## Quyết định
 - **Biome** cho lint + format (1 binary, nhanh, không đụng Rspack). Không type-aware lint → bù bằng `tsc --noEmit` strict làm gate riêng.
-- **Vitest** + Testing Library + jsdom cho unit test. MF remote (`mfe_*/App`) không resolve trong test → alias về stub; `@app/shared/*` resolve thật qua workspace exports.
+- **Vitest** + Testing Library + jsdom cho unit test. MF remote (`mfe_*/App`) không resolve trong test → alias về stub; `@app/common/*` resolve thật qua workspace exports.
 - **Lefthook** (thay husky + lint-staged): 1 file YAML, pre-commit chạy `biome --write` staged files, commit-msg chạy commitlint.
 - **Changesets** cho versioning độc lập từng package.
 

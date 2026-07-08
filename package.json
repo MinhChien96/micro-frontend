@@ -7,7 +7,7 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "start": "concurrently -n shared,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter ./shared start\" \"pnpm --filter ./mfe-auth start\" \"pnpm --filter ./mfe-accounts start\" \"pnpm --filter ./mfe-transfer start\" \"pnpm --filter ./mfe-cards start\" \"pnpm --filter ./mfe-loans start\" \"pnpm --filter ./mfe-profile start\" \"pnpm --filter ./shell start\"",
+    "start": "concurrently -n common,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter ./common start\" \"pnpm --filter ./remotes/mfe-auth start\" \"pnpm --filter ./remotes/mfe-accounts start\" \"pnpm --filter ./remotes/mfe-transfer start\" \"pnpm --filter ./remotes/mfe-cards start\" \"pnpm --filter ./remotes/mfe-loans start\" \"pnpm --filter ./remotes/mfe-profile start\" \"pnpm --filter ./shell start\"",
     "build": "pnpm -r run build",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -17,7 +17,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "storybook": "pnpm --filter ./shared storybook",
+    "storybook": "pnpm --filter ./common storybook",
     "gen:mfe": "plop mfe",
     "changeset": "changeset",
     "version-packages": "changeset version",

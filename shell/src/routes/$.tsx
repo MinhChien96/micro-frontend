@@ -1,4 +1,4 @@
-import { BRAND } from '@app/shared/brand';
+import { BRAND } from '@app/common/brand';
 import { Helmet } from '@modern-js/runtime/head';
 import { Link } from '@modern-js/runtime/router';
 

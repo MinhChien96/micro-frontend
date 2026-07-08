@@ -1,5 +1,5 @@
-import { clearAuth } from '@app/shared/auth';
-import { BRAND } from '@app/shared/brand';
+import { clearAuth } from '@app/common/auth';
+import { BRAND } from '@app/common/brand';
 import { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';

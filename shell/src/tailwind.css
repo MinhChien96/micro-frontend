@@ -1,7 +1,7 @@
 @import 'tailwindcss';
-@import '../../shared/src/styles/theme.css';
+@import '../../common/src/styles/theme.css';
 @source './';
-@source '../../shared/src/**/*.{ts,tsx}';
+@source '../../common/src/**/*.{ts,tsx}';
 
 /* Shell chrome — component layer (Tailwind @apply + tokens dark-aware).
    Code feature mới nên dùng utility-first trực tiếp trong JSX. */

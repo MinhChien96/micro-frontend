@@ -2,7 +2,7 @@
 
 > **Base template chuẩn production cho micro-frontend**: shell + 6 remotes đều là **Modern.js (ByteDance/TikTok) + Rspack**, Module Federation 2.0, **federated SSR toàn tuyến** (SEO-ready), scoped namespace `@app/*`, **TypeScript strict**, tooling đầy đủ (Biome + Vitest + Lefthook + Changesets), **generator `pnpm gen:mfe`** tạo MFE mới tự đăng ký, deploy giả lập AWS (LocalStack + Docker) + reference workflow AWS thật.
 
-> 🧩 **Đây là template** — domain banking (accounts/transfer/cards/loans/profile/auth) chỉ là **example để tham khảo**. Đổi brand ở `@app/shared/brand`, scope `@app/*` → `@<org>`, thay/ thêm MFE bằng `pnpm gen:mfe`. Xem [docs/adr/0004](docs/adr/0004-scoped-namespace-brand.md).
+> 🧩 **Đây là template** — domain banking (accounts/transfer/cards/loans/profile/auth) chỉ là **example để tham khảo**. Đổi brand ở `@app/common/brand`, scope `@app/*` → `@<org>`, thay/ thêm MFE bằng `pnpm gen:mfe`. Xem [docs/adr/0004](docs/adr/0004-scoped-namespace-brand.md).
 
 **Đăng nhập demo:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
 
@@ -141,8 +141,8 @@ Trong [shell/module-federation.config.ts](shell/module-federation.config.ts) và
 | `react`, `react-dom` | Một React instance — không thì "invalid hook call" |
 | `react-router-dom` | Remote render `<Routes>` con phải attach vào Router context của shell |
 | `react/jsx-runtime` | Chống lệch element symbol nếu version React khác nhau giữa host/remote |
-| `@app/shared/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
-| `@app/shared/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
+| `@app/common/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
+| `@app/common/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
 
 ## 5. Routing
 
@@ -237,7 +237,7 @@ Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS
 | `The root layout component is required` | Modern.js ≥2.71 bắt buộc `src/routes/layout.tsx` (Outlet tối thiểu). |
 | Hydration mismatch quanh auth | Không đọc localStorage lúc render đầu — dùng pattern `{ user, ready }` của AuthContext. |
 | `localStorage.getItem is not a function` trong SSR log | Code chạy server thiếu guard `typeof window === 'undefined'`. |
-| Toast / eventBus `getLast()` không cross-MFE | Thiếu `@app/shared/ui` / `@app/shared/eventBus` trong MF `shared:` map (host **và** remote). |
+| Toast / eventBus `getLast()` không cross-MFE | Thiếu `@app/common/ui` / `@app/common/eventBus` trong MF `shared:` map (host **và** remote). |
 
 ---
 
@@ -260,7 +260,7 @@ CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) — job `quality` (lint
 **Styling — Tailwind v4** (design system + shell chrome; 5 MFE banking giữ inline-style làm ví dụ domain):
 
 - Tokens tập trung ở [shared/src/styles/theme.css](shared/src/styles/theme.css) (`@theme` + dark variant `[data-theme=dark]` + keyframes).
-- Mỗi app có `src/tailwind.css` với `@source` quét cả `shared` → class của `@app/shared/ui` render đúng khi component shared chạy trong remote khác (yêu cầu cross-MFE CSS).
+- Mỗi app có `src/tailwind.css` với `@source` quét cả `shared` → class của `@app/common/ui` render đúng khi component shared chạy trong remote khác (yêu cầu cross-MFE CSS).
 - Bật qua `@rsbuild/plugin-tailwindcss` trong `builderPlugins` của mỗi `modern.config.ts`.
 - Design system xem trực quan: `pnpm storybook` (Storybook 10, :6006).
 

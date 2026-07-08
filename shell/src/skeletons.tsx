@@ -1,4 +1,4 @@
-import { SkeletonCard, SkeletonList } from '@app/shared/ui';
+import { SkeletonCard, SkeletonList } from '@app/common/ui';
 
 interface BarProps {
   w?: number | string;

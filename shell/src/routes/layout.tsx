@@ -1,7 +1,7 @@
 import '../tailwind.css';
-import { BRAND } from '@app/shared/brand';
-import { initSentry } from '@app/shared/observability';
-import { ToastProvider } from '@app/shared/ui';
+import { BRAND } from '@app/common/brand';
+import { initSentry } from '@app/common/observability';
+import { ToastProvider } from '@app/common/ui';
 import { Helmet } from '@modern-js/runtime/head';
 import { Outlet } from '@modern-js/runtime/router';
 import { useEffect } from 'react';
@@ -21,13 +21,13 @@ export default function RootLayout() {
       /* process undefined ở browser khi var chưa set */
     }
     if (mswOn) {
-      import('@app/shared/mocks/browser').then((m) => m.startMockWorker());
+      import('@app/common/mocks/browser').then((m) => m.startMockWorker());
     }
   }, []);
 
   return (
     <AuthProvider>
-      {/* ToastProvider ở shell root — MFE gọi useToast() qua @app/shared/ui singleton */}
+      {/* ToastProvider ở shell root — MFE gọi useToast() qua @app/common/ui singleton */}
       <ToastProvider>
         <Helmet>
           <html lang={BRAND.htmlLang} />

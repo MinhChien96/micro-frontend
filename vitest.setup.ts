@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { server } from '@app/shared/mocks/server';
+import { server } from '@app/common/mocks/server';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 // MSW: intercept HTTP trong mọi test (bypass request không có handler)

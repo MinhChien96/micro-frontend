@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        app: [shared, shell, mfe-auth, mfe-accounts, mfe-transfer, mfe-cards, mfe-loans, mfe-profile]
+        app: [common, shell, remotes/mfe-auth, remotes/mfe-accounts, remotes/mfe-transfer, remotes/mfe-cards, remotes/mfe-loans, remotes/mfe-profile]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

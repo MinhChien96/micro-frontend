@@ -26,13 +26,14 @@ aws --endpoint-url "$ENDPOINT" s3api put-bucket-cors --bucket "$BUCKET" --cors-c
 }'
 
 echo "==> Build + sync từng remote (PUBLIC_URL trỏ S3)"
-for app in mfe-auth mfe-accounts mfe-transfer shared mfe-profile mfe-loans mfe-cards; do
+for dir in remotes/mfe-auth remotes/mfe-accounts remotes/mfe-transfer common remotes/mfe-profile remotes/mfe-loans remotes/mfe-cards; do
+  app=$(basename "$dir")
   echo "--- $app"
-  PUBLIC_URL="$ENDPOINT/$BUCKET/$app/" pnpm --filter "./$app" build
-  aws --endpoint-url "$ENDPOINT" s3 sync "$app/dist/static"  "s3://$BUCKET/$app/static"  --delete
+  PUBLIC_URL="$ENDPOINT/$BUCKET/$app/" pnpm --filter "./$dir" build
+  aws --endpoint-url "$ENDPOINT" s3 sync "$dir/dist/static"  "s3://$BUCKET/$app/static"  --delete
   # node bundles cho SSR host (ssrRemoteEntry)
-  if [ -d "$app/dist/bundles" ]; then
-    aws --endpoint-url "$ENDPOINT" s3 sync "$app/dist/bundles" "s3://$BUCKET/$app/bundles" --delete
+  if [ -d "$dir/dist/bundles" ]; then
+    aws --endpoint-url "$ENDPOINT" s3 sync "$dir/dist/bundles" "s3://$BUCKET/$app/bundles" --delete
   fi
 done
 

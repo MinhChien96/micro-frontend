@@ -13,7 +13,7 @@ nhất quán cross-MFE, observability lỗi runtime, mock backend cho dev/test, 
   (không dùng PostCSS config riêng).
 - Tokens tập trung ở `shared/src/styles/theme.css` (`@theme` + `@custom-variant dark` +
   keyframes), import lại vào `src/tailwind.css` của từng app.
-- **Cross-MFE CSS**: mỗi app `@source` quét cả `shared/src/**` → class của `@app/shared/ui`
+- **Cross-MFE CSS**: mỗi app `@source` quét cả `shared/src/**` → class của `@app/common/ui`
   (Tailwind) render đúng khi component shared chạy bên trong remote khác. Đây là ràng buộc
   bắt buộc — thiếu thì Toast/Spinner/Button vỡ style khi cross-MFE.
 - **Phạm vi**: design system (`shared/ui`) + shell chrome + `mfe-auth` + generator dùng
@@ -30,7 +30,7 @@ nhất quán cross-MFE, observability lỗi runtime, mock backend cho dev/test, 
 
 ### Storybook 10 (design system)
 - Chỉ cho package `shared` (`@storybook/react-vite` + `@tailwindcss/vite` trong `viteFinal`),
-  decorator dark toolbar. Là nơi review trực quan `@app/shared/ui`.
+  decorator dark toolbar. Là nơi review trực quan `@app/common/ui`.
 
 ### MSW 2 (mock API)
 - `shared/src/mocks/`: handlers + node `server` (Vitest, qua `vitest.setup.ts`) + browser

@@ -1,0 +1,35 @@
+{
+  "name": "@app/common",
+  "version": "1.0.0",
+  "exports": {
+    "./auth": "./src/auth.ts",
+    "./ui": "./src/ui/index.ts",
+    "./PermissionGate": "./src/components/PermissionGate.tsx",
+    "./ThemeContext": "./src/ThemeContext.tsx",
+    "./eventBus": "./src/eventBus.ts",
+    "./events": "./src/events.ts",
+    "./observability": "./src/observability/sentry.ts",
+    "./mocks/handlers": "./src/mocks/handlers.ts",
+    "./mocks/server": "./src/mocks/server.ts",
+    "./mocks/browser": "./src/mocks/browser.ts",
+    "./brand": "./src/config/brand.ts"
+  },
+  "scripts": {
+    "start": "modern dev",
+    "build": "modern build",
+    "serve": "modern serve",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@modern-js/runtime": "^2.65.0",
+    "@module-federation/modern-js-v3": "^2.5.0",
+    "@sentry/react": "^10.57.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@modern-js/app-tools": "^2.65.0",
+    "typescript": "^5.0.4"
+  }
+}
