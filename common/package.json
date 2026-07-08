@@ -4,7 +4,6 @@
   "exports": {
     "./auth": "./src/auth.ts",
     "./ui": "./src/ui/index.ts",
-    "./PermissionGate": "./src/components/PermissionGate.tsx",
     "./ThemeContext": "./src/ThemeContext.tsx",
     "./eventBus": "./src/eventBus.ts",
     "./events": "./src/events.ts",
@@ -19,7 +18,9 @@
     "./constants/endpoints": "./src/constants/endpoints.ts",
     "./mocks/MswGate": "./src/mocks/MswGate.tsx",
     "./mocks/standalone": "./src/mocks/standalone.ts",
-    "./AutoSignOut": "./src/components/AutoSignOut.tsx"
+    "./AutoSignOut": "./src/components/AutoSignOut.tsx",
+    "./PermissionCheck": "./src/components/PermissionCheck.tsx",
+    "./permissions": "./src/permissions/index.ts"
   },
   "scripts": {
     "start": "modern dev",

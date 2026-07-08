@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { getPermissions } from '../auth';
-import type { Permission } from '../utils/permissions';
+import type { ActionEnum } from '../permissions/entitledAction';
+import { canAllActions, canAnyAction } from '../permissions/utils';
+import { useGlobalStore } from '../stores/global.store';
 
-const UpgradeBadge = ({ requiredRole = 'PREMIUM' }: { requiredRole?: string }) => (
+export const UpgradeBadge = ({ requiredRole = 'PREMIUM' }: { requiredRole?: string }) => (
   <span
     style={{
       display: 'inline-block',
@@ -20,27 +21,39 @@ const UpgradeBadge = ({ requiredRole = 'PREMIUM' }: { requiredRole?: string }) =
   </span>
 );
 
-interface PermissionGateProps {
-  /** permission như "transfer:international" */
-  permission: Permission;
-  /** node hiển thị khi không có quyền (mặc định: null) */
+interface PermissionCheckProps {
+  /** một hoặc nhiều ActionEnum (mô hình P/S/F — xem @app/common/permissions) */
+  actions: ActionEnum | ActionEnum[];
+  /** 'OR' (mặc định): đủ 1 quyền; 'AND': phải đủ tất cả */
+  logic?: 'OR' | 'AND';
+  /** node hiển thị khi không đủ quyền (mặc định: null) */
   fallback?: ReactNode;
-  /** label trong UpgradeBadge (mặc định: 'PREMIUM') */
+  /** label trong UpgradeBadge khi showLocked */
   requiredRole?: string;
   /** true + không có fallback → render nút bị khóa */
   showLocked?: boolean;
   children: ReactNode;
 }
 
-/** Ẩn/hiện children dựa trên permission của user hiện tại. */
-export default function PermissionGate({
-  permission,
+/**
+ * Ẩn/hiện children theo entitledActions của user (bank: <PermissionCheck>).
+ * Reactive theo global store — user đổi (login role khác) là UI cập nhật ngay.
+ */
+export default function PermissionCheck({
+  actions,
+  logic = 'OR',
   fallback = null,
   requiredRole = 'PREMIUM',
   showLocked = false,
   children,
-}: PermissionGateProps) {
-  const allowed = getPermissions().includes(permission);
+}: PermissionCheckProps) {
+  const user = useGlobalStore((s) => s.user);
+  const list = Array.isArray(actions) ? actions : [actions];
+  const allowed = user
+    ? logic === 'AND'
+      ? canAllActions(list, user)
+      : canAnyAction(list, user)
+    : false;
 
   if (allowed) return <>{children}</>;
   if (fallback) return <>{fallback}</>;
@@ -70,5 +83,3 @@ export default function PermissionGate({
 
   return null;
 }
-
-export { UpgradeBadge };

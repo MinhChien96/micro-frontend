@@ -1,4 +1,5 @@
-import PermissionGate from '@app/common/PermissionGate';
+import PermissionCheck from '@app/common/PermissionCheck';
+import { ActionEnum } from '@app/common/permissions';
 import { Card, CardHeader, Divider } from '@app/common/ui';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -303,8 +304,8 @@ export default function CardDetail() {
           <span style={{ fontSize: 20 }}>🔑</span> Đổi mã PIN
         </button>
 
-        <PermissionGate
-          permission="cards:manage_limit"
+        <PermissionCheck
+          actions={ActionEnum.fCardManageLimit}
           requiredRole="PREMIUM"
           fallback={
             <div
@@ -357,7 +358,7 @@ export default function CardDetail() {
           >
             <span style={{ fontSize: 20 }}>💳</span> Thay đổi hạn mức
           </button>
-        </PermissionGate>
+        </PermissionCheck>
       </div>
 
       {/* PIN modal */}

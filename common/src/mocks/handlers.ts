@@ -1,5 +1,6 @@
 import { delay, HttpResponse, http } from 'msw';
 import { MOCK_ACCOUNTS, MOCK_TRANSACTIONS, TXN_PAGE_SIZE } from './data/accounts';
+import { entitlementsForRole } from './data/entitlements';
 import { type MockTransferRecord, transferHistory } from './data/transfers';
 
 // ============================================================================
@@ -70,6 +71,8 @@ export const handlers = [
         phone: '0901 234 567',
         branch: 'Chi nhánh TP.HCM',
         role,
+        // Quyền P/S/F — frontend check bằng canAction (không suy từ role)
+        entitledActions: entitlementsForRole(role),
       },
     });
   }),

@@ -1,5 +1,6 @@
 import { getUser } from '@app/common/auth';
-import PermissionGate from '@app/common/PermissionGate';
+import PermissionCheck from '@app/common/PermissionCheck';
+import { ActionEnum } from '@app/common/permissions';
 import { Card, StatusBadge } from '@app/common/ui';
 import { Link } from 'react-router-dom';
 
@@ -71,8 +72,8 @@ export default function LoanList() {
       </div>
 
       {/* Apply for new loan — PREMIUM+ only */}
-      <PermissionGate
-        permission="loans:apply"
+      <PermissionCheck
+        actions={ActionEnum.fLoanRegister}
         requiredRole="PREMIUM"
         fallback={
           <div
@@ -123,7 +124,7 @@ export default function LoanList() {
         >
           + Đăng ký khoản vay mới
         </button>
-      </PermissionGate>
+      </PermissionCheck>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {MOCK_LOANS.map((loan) => {

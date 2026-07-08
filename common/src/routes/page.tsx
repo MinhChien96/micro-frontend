@@ -1,13 +1,12 @@
 import '../tailwind.css';
 import { useEffect, useState } from 'react';
-import { getPermissions, getUser, isAuthenticated } from '../auth';
+import { getUser, isAuthenticated } from '../auth';
 import { Button, Card, CardHeader, PageSpinner, SkeletonCard, StatusBadge } from '../ui';
 
 function AuthDebugView() {
   const [data, setData] = useState(() => ({
     user: getUser(),
     token: isAuthenticated() ? '(present)' : null,
-    permissions: getPermissions(),
   }));
 
   useEffect(() => {
@@ -15,7 +14,6 @@ function AuthDebugView() {
       setData({
         user: getUser(),
         token: isAuthenticated() ? '(present)' : null,
-        permissions: getPermissions(),
       });
     window.addEventListener('auth:changed', handler);
     return () => window.removeEventListener('auth:changed', handler);

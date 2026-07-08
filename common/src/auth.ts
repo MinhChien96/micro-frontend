@@ -1,12 +1,16 @@
+import type { EntitledAction } from './permissions/entitledAction';
+import type { Role } from './permissions/roles';
 import { clearAuthState, globalStore, setAuthToken, setGlobalUser } from './stores/global.store';
-import { getPermissionsForRole, type Permission, type Role } from './utils/permissions';
 
-export type { Permission, Role } from './utils/permissions';
+export type { Role } from './permissions/roles';
 
 export interface User {
   id?: string;
   name: string;
+  /** nhãn hồ sơ demo — quyền THẬT nằm ở entitledActions */
   role: Role;
+  /** danh sách quyền P/S/F backend trả về — nguồn sự thật cho canAction */
+  entitledActions?: EntitledAction[];
   email?: string;
   branch?: string;
   // Trường example domain (banking) — tùy biến theo dự án thật
@@ -29,12 +33,3 @@ export const setToken = (token: string): void => setAuthToken(token);
 export const clearAuth = (): void => clearAuthState();
 
 export const isAuthenticated = (): boolean => !!getToken();
-
-export const getPermissions = (): readonly Permission[] => {
-  const user = getUser();
-  if (!user) return [];
-  return getPermissionsForRole(String(user.role).toUpperCase());
-};
-
-export const hasPermission = (permission: Permission): boolean =>
-  getPermissions().includes(permission);

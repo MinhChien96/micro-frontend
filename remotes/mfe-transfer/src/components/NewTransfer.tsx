@@ -1,6 +1,6 @@
-import type { Permission } from '@app/common/auth';
 import eventBus from '@app/common/eventBus';
-import PermissionGate from '@app/common/PermissionGate';
+import PermissionCheck from '@app/common/PermissionCheck';
+import { ActionEnum } from '@app/common/permissions';
 import { Card, CardHeader, Divider, PageSpinner, useToast } from '@app/common/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useCallback, useEffect, useState } from 'react';
@@ -29,9 +29,9 @@ const BANKS = [
   'TPBank',
   'VIB',
 ];
-const TRANSFER_TYPES = [
-  { key: 'domestic', label: 'Trong nước', permission: null },
-  { key: 'international', label: 'Quốc tế', permission: 'transfer:international' },
+const TRANSFER_TYPES: { key: string; label: string; action: ActionEnum | null }[] = [
+  { key: 'domestic', label: 'Trong nước', action: null },
+  { key: 'international', label: 'Quốc tế', action: ActionEnum.fTransferInternational },
 ];
 const STEPS = ['Chọn tài khoản nguồn', 'Nhập thông tin', 'Xác nhận'];
 const INITIAL_FORM = {
@@ -218,7 +218,7 @@ export default function NewTransfer() {
 
       {/* Transfer type toggle */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {TRANSFER_TYPES.map(({ key, label, permission }) => {
+        {TRANSFER_TYPES.map(({ key, label, action }) => {
           const btn = (
             <button
               onClick={() => {
@@ -240,11 +240,11 @@ export default function NewTransfer() {
               {label}
             </button>
           );
-          if (!permission) return <span key={key}>{btn}</span>;
+          if (!action) return <span key={key}>{btn}</span>;
           return (
-            <PermissionGate
+            <PermissionCheck
               key={key}
-              permission={permission as Permission}
+              actions={action}
               requiredRole="PREMIUM"
               fallback={
                 <button
@@ -266,7 +266,7 @@ export default function NewTransfer() {
               }
             >
               {btn}
-            </PermissionGate>
+            </PermissionCheck>
           );
         })}
       </div>
