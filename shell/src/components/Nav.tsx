@@ -3,6 +3,7 @@ import { BRAND } from '@app/common/brand';
 import { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { prefetchRemote } from '../remote/load';
 
 const ROLE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   PREMIUM: { label: 'Ưu tiên', bg: '#fef3c7', color: '#d97706' },
@@ -14,20 +15,25 @@ const NAV_LINKS = [
     to: '/accounts',
     label: 'Tài khoản',
     tag: 'mfe-accounts',
-    prefetch: () => import('mfe_accounts/AccountsApp'),
+    prefetch: () => prefetchRemote('mfe_accounts', 'AccountsApp'),
   },
   {
     to: '/transfer',
     label: 'Chuyển tiền',
     tag: 'mfe-transfer',
-    prefetch: () => import('mfe_transfer/TransferApp'),
+    prefetch: () => prefetchRemote('mfe_transfer', 'TransferApp'),
   },
-  { to: '/cards', label: 'Thẻ', tag: 'mfe-cards', prefetch: () => import('mfe_cards/CardsApp') },
+  {
+    to: '/cards',
+    label: 'Thẻ',
+    tag: 'mfe-cards',
+    prefetch: () => prefetchRemote('mfe_cards', 'CardsApp'),
+  },
   {
     to: '/loans',
     label: 'Vay vốn',
     tag: 'mfe-loans',
-    prefetch: () => import('mfe_loans/LoansApp'),
+    prefetch: () => prefetchRemote('mfe_loans', 'LoansApp'),
   },
   // @plop:nav-link (generator chèn link MFE mới bên trên)
 ];

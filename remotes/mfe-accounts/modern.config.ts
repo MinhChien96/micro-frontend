@@ -5,7 +5,9 @@ import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 export default defineConfig({
   plugins: [appTools({ bundler: 'rspack' }), moduleFederationPlugin()],
   builderPlugins: [pluginTailwindcss()],
-  output: { assetPrefix: process.env.PUBLIC_URL || '/' },
+  // assetPrefix TUYỆT ĐỐI: chunks của remote phải load từ origin của remote,
+  // không phải origin shell (shell nhúng remote cross-origin).
+  output: { assetPrefix: process.env.PUBLIC_URL || 'http://localhost:3002/' },
   server: {
     port: Number(process.env.PORT) || 3002,
   },
