@@ -2,10 +2,12 @@ import '../tailwind.css';
 import type { Role, User } from '@app/common/auth';
 import { BRAND } from '@app/common/brand';
 import { ENDPOINTS } from '@app/common/constants/endpoints';
+import { useAppTranslation } from '@app/common/i18n';
 import { apiPost } from '@app/common/services';
 import { batchUpdate, globalStore } from '@app/common/stores';
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { authResources } from '../i18n/resources';
 
 // Login là STATE MACHINE theo nextStep server trả về (bank pattern):
 // CREDENTIALS → (OTP) → HOME. Thêm bước mới (đổi mật khẩu lần đầu...) =
@@ -32,6 +34,7 @@ const DEMO_ROLES: { value: Role; label: string; desc: string }[] = [
 ];
 
 export default function Login() {
+  const { t } = useAppTranslation('auth', authResources);
   const navigate = useNavigate();
   const location = useLocation();
   const from =
@@ -110,15 +113,15 @@ export default function Login() {
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">🔐</div>
-          <h2>Xác thực OTP</h2>
-          <p>Nhập mã OTP đã gửi về số điện thoại của bạn</p>
+          <h2>{t('auth.otpTitle')}</h2>
+          <p>{t('auth.otpSubtitle')}</p>
         </div>
 
         <form onSubmit={handleVerifyOtp} className="auth-form">
           {error && <div className="auth-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="otp-input">Mã OTP (6 số)</label>
+            <label htmlFor="otp-input">{t('auth.otpLabel')}</label>
             <input
               id="otp-input"
               type="text"
@@ -133,7 +136,7 @@ export default function Login() {
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading || otp.length !== 6}>
-            {loading ? 'Đang xác thực...' : 'Xác nhận'}
+            {loading ? t('auth.otpSubmitting') : t('auth.otpSubmit')}
           </button>
 
           <button
@@ -151,7 +154,7 @@ export default function Login() {
               cursor: 'pointer',
             }}
           >
-            ← Quay lại đăng nhập
+            {t('auth.otpBack')}
           </button>
         </form>
 
@@ -167,14 +170,14 @@ export default function Login() {
       <div className="auth-header">
         <div className="auth-logo">🏦</div>
         <h2>{BRAND.name}</h2>
-        <p>Đăng nhập để quản lý tài khoản của bạn</p>
+        <p>{t('auth.subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="auth-form">
         {error && <div className="auth-error">{error}</div>}
 
         <div className="form-group">
-          <label>Mã khách hàng (CIF)</label>
+          <label>{t('auth.cif')}</label>
           <input
             type="text"
             value={customerId}
@@ -186,7 +189,7 @@ export default function Login() {
         </div>
 
         <div className="form-group">
-          <label>Mật khẩu Internet Banking</label>
+          <label>{t('auth.password')}</label>
           <input
             type="password"
             value={password}
@@ -263,10 +266,10 @@ export default function Login() {
                   animation: 'spin 0.7s linear infinite',
                 }}
               />
-              Đang đăng nhập...
+              {t('auth.submitting')}
             </span>
           ) : (
-            'Đăng nhập'
+            t('auth.submit')
           )}
         </button>
       </form>

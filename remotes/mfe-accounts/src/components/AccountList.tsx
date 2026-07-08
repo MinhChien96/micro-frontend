@@ -1,9 +1,11 @@
 import { getUser } from '@app/common/auth';
+import { useAppTranslation } from '@app/common/i18n';
 import { Card, PageSpinner, StatusBadge } from '@app/common/ui';
 import { useQuery } from '@tanstack/react-query';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { type Account, type AccountType, fetchAccounts } from '../api/accounts';
+import { accountsResources } from '../i18n/resources';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -60,6 +62,7 @@ const AccountItem = memo(function AccountItem({ acc }: { acc: Account }) {
 });
 
 export default function AccountList() {
+  const { t } = useAppTranslation('accounts', accountsResources);
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['accounts'],
     queryFn: fetchAccounts,
@@ -91,7 +94,7 @@ export default function AccountList() {
       )}
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 24 }}>
-        <h2 style={{ margin: 0, fontSize: 22, color: '#0f172a' }}>Tài khoản của tôi</h2>
+        <h2 style={{ margin: 0, fontSize: 22, color: '#0f172a' }}>{t('accounts.title')}</h2>
         <span style={{ fontSize: 14, color: '#64748b' }}>
           Tổng: <strong style={{ color: '#1e3a5f' }}>{fmt(totalBalance)}</strong>
         </span>

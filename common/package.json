@@ -20,7 +20,8 @@
     "./mocks/standalone": "./src/mocks/standalone.ts",
     "./AutoSignOut": "./src/components/AutoSignOut.tsx",
     "./PermissionCheck": "./src/components/PermissionCheck.tsx",
-    "./permissions": "./src/permissions/index.ts"
+    "./permissions": "./src/permissions/index.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "scripts": {
     "start": "modern dev",
@@ -34,9 +35,11 @@
     "@module-federation/modern-js-v3": "^2.5.0",
     "@sentry/react": "^10.57.0",
     "axios": "^1.18.1",
+    "i18next": "^26.3.5",
     "nanoid": "^5.1.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-i18next": "^17.0.8",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

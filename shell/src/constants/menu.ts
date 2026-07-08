@@ -5,7 +5,8 @@ import { Paths } from '@app/common/constants/paths';
 // `permissions` sẽ nối với hệ P/S/F (canAction) — item không đủ quyền bị ẩn.
 export interface NavItem {
   to: string;
-  label: string;
+  /** key i18n trong shell resources (bank: titleKey) */
+  labelKey: string;
   /** tag hiển thị tên MFE sở hữu màn hình (giá trị giáo dục của template) */
   tag: string;
   /** remote + expose để prefetch khi hover */
@@ -15,25 +16,25 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   {
     to: Paths.accounts,
-    label: 'Tài khoản',
+    labelKey: 'nav.accounts',
     tag: 'mfe-accounts',
     prefetch: { remote: 'mfe_accounts', expose: 'AccountsApp' },
   },
   {
     to: Paths.transfer,
-    label: 'Chuyển tiền',
+    labelKey: 'nav.transfer',
     tag: 'mfe-transfer',
     prefetch: { remote: 'mfe_transfer', expose: 'TransferApp' },
   },
   {
     to: Paths.cards,
-    label: 'Thẻ',
+    labelKey: 'nav.cards',
     tag: 'mfe-cards',
     prefetch: { remote: 'mfe_cards', expose: 'CardsApp' },
   },
   {
     to: Paths.loans,
-    label: 'Vay vốn',
+    labelKey: 'nav.loans',
     tag: 'mfe-loans',
     prefetch: { remote: 'mfe_loans', expose: 'LoansApp' },
   },
