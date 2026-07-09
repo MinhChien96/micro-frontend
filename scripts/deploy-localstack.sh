@@ -31,10 +31,6 @@ for dir in remotes/mfe-auth remotes/mfe-accounts remotes/mfe-transfer common rem
   echo "--- $app"
   PUBLIC_URL="$ENDPOINT/$BUCKET/$app/" pnpm --filter "./$dir" build
   aws --endpoint-url "$ENDPOINT" s3 sync "$dir/dist/static"  "s3://$BUCKET/$app/static"  --delete
-  # node bundles cho SSR host (ssrRemoteEntry)
-  if [ -d "$dir/dist/bundles" ]; then
-    aws --endpoint-url "$ENDPOINT" s3 sync "$dir/dist/bundles" "s3://$BUCKET/$app/bundles" --delete
-  fi
 done
 
 echo "==> Build shell (manifest URLs trỏ S3)"
@@ -43,4 +39,4 @@ REMOTE_BASE="$ENDPOINT/$BUCKET" pnpm --filter ./shell build
 echo ""
 echo "✅ Static assets đã lên S3 (LocalStack): $ENDPOINT/$BUCKET"
 echo "   Kiểm tra:  aws --endpoint-url $ENDPOINT s3 ls s3://$BUCKET/mfe-accounts/static/"
-echo "   Chạy shell SSR đọc từ S3:  cd shell && MF_INTERNAL_HOST_MAP='{\"$ENDPOINT\":\"$ENDPOINT\"}' pnpm serve"
+echo "   Shell build với REMOTE_BASE=$ENDPOINT/$BUCKET → manifest trỏ S3 (CSR, không cần server)"

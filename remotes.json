@@ -1,0 +1,53 @@
+{
+  "$comment": "Registry các remote (mô phỏng bank remotes.json — nơi khai báo git URL từng repo khi tách polyrepo; script pull-remotes sẽ clone về remotes/). Ở template monorepo, file này là tài liệu tra cứu + nguồn cho tooling.",
+  "remotes": [
+    {
+      "name": "mfe_auth",
+      "dir": "remotes/mfe-auth",
+      "port": 3001,
+      "team": "auth-team",
+      "exposes": ["Login", "UserProfile"],
+      "repo": "git@github.com:your-org/mfe-auth.git"
+    },
+    {
+      "name": "mfe_accounts",
+      "dir": "remotes/mfe-accounts",
+      "port": 3002,
+      "team": "accounts-team",
+      "exposes": ["AccountList", "AccountDetail", "TransactionList"],
+      "repo": "git@github.com:your-org/mfe-accounts.git"
+    },
+    {
+      "name": "mfe_transfer",
+      "dir": "remotes/mfe-transfer",
+      "port": 3003,
+      "team": "payments-team",
+      "exposes": ["TransferApp"],
+      "repo": "git@github.com:your-org/mfe-transfer.git"
+    },
+    {
+      "name": "mfe_profile",
+      "dir": "remotes/mfe-profile",
+      "port": 3005,
+      "team": "customer-team",
+      "exposes": ["ProfileApp"],
+      "repo": "git@github.com:your-org/mfe-profile.git"
+    },
+    {
+      "name": "mfe_loans",
+      "dir": "remotes/mfe-loans",
+      "port": 3006,
+      "team": "lending-team",
+      "exposes": ["LoansApp"],
+      "repo": "git@github.com:your-org/mfe-loans.git"
+    },
+    {
+      "name": "mfe_cards",
+      "dir": "remotes/mfe-cards",
+      "port": 3007,
+      "team": "cards-team",
+      "exposes": ["CardsRoutes"],
+      "repo": "git@github.com:your-org/mfe-cards.git"
+    }
+  ]
+}

@@ -1,14 +1,13 @@
-# Giả lập hạ tầng AWS trên máy local:
-#   - Mỗi service SSR = 1 container (tương đương 1 ECS service)
-#   - LocalStack = S3 (CDN static assets, dùng bởi scripts/deploy-localstack.sh)
-# Env matrix:
-#   PUBLIC_URL (build arg)     → URL browser-facing, bake vào publicPath/ssrPublicPath
-#   PORT                       → port prod server (modern serve đọc qua modern.config.ts)
-#   MODERN_MF_AUTO_CORS        → CORS middleware cho manifest/chunks cross-origin
-#   MF_INTERNAL_HOST_MAP       → (chỉ shell) rewrite host server-side: localhost → service name
+# Giả lập hạ tầng production trên máy local (mô hình bank):
+#   - Mỗi app = 1 container nginx serve STATIC (build CSR)
+#   - Shell nhận remote qua runtime registration → redeploy 1 remote
+#     (docker compose up -d --build mfe-cards) KHÔNG cần rebuild shell
+#   - LocalStack = S3 (deploy static lên CDN, dùng bởi scripts/deploy-localstack.sh)
+# PUBLIC_URL (build arg) = URL browser-facing → chunks load đúng origin từng app
+# MODERN_MSW=true (shell) = bundle demo dùng MSW làm backend
 name: app-mfe
 
-x-remote-defaults: &remote-defaults
+x-app-defaults: &app-defaults
   restart: unless-stopped
 
 services:
@@ -21,89 +20,65 @@ services:
       - localstack-data:/var/lib/localstack
 
   mfe-auth:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-auth, PUBLIC_URL: "http://localhost:3001/" }
-    environment: { PORT: 3001, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3001:3001"]
+    ports: ["3001:8080"]
 
   mfe-accounts:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-accounts, PUBLIC_URL: "http://localhost:3002/" }
-    environment: { PORT: 3002, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3002:3002"]
+    ports: ["3002:8080"]
 
   mfe-transfer:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-transfer, PUBLIC_URL: "http://localhost:3003/" }
-    environment: { PORT: 3003, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3003:3003"]
-
-  common:
-    <<: *remote-defaults
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args: { APP: common, PUBLIC_URL: "http://localhost:3004/" }
-    environment: { PORT: 3004, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3004:3004"]
+    ports: ["3003:8080"]
 
   mfe-profile:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-profile, PUBLIC_URL: "http://localhost:3005/" }
-    environment: { PORT: 3005, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3005:3005"]
+    ports: ["3005:8080"]
 
   mfe-loans:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-loans, PUBLIC_URL: "http://localhost:3006/" }
-    environment: { PORT: 3006, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3006:3006"]
+    ports: ["3006:8080"]
 
   mfe-cards:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
       args: { APP: remotes/mfe-cards, PUBLIC_URL: "http://localhost:3007/" }
-    environment: { PORT: 3007, MODERN_MF_AUTO_CORS: "true" }
-    ports: ["3007:3007"]
+    ports: ["3007:8080"]
 
   # @plop:service (generator chèn service MFE mới bên trên)
 
   shell:
-    <<: *remote-defaults
+    <<: *app-defaults
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args: { APP: shell, PUBLIC_URL: "http://localhost:3000/" }
-    environment:
-      PORT: 3000
-      # Server-side fetch manifest + node bundles qua hostname nội bộ Docker;
-      # browser vẫn dùng localhost:300x (publicPath không đổi)
-      MF_INTERNAL_HOST_MAP: >-
-        {"http://localhost:3001":"http://mfe-auth:3001",
-         "http://localhost:3002":"http://mfe-accounts:3002",
-         "http://localhost:3003":"http://mfe-transfer:3003",
-         "http://localhost:3005":"http://mfe-profile:3005",
-         "http://localhost:3006":"http://mfe-loans:3006",
-         "http://localhost:3007":"http://mfe-cards:3007"}
-    ports: ["3000:3000"]
-    # Chờ remotes healthy (HEALTHCHECK kế thừa từ Dockerfile) mới start shell
+      # MODERN_MSW=true: bản demo tự chạy không cần backend thật.
+      # Dự án thật: bỏ MODERN_MSW, set MODERN_API_BASE_URL (xem .env.example)
+      args: { APP: shell, PUBLIC_URL: "http://localhost:3000/", MODERN_MSW: "true" }
+    ports: ["3000:8080"]
+    # Chờ remotes healthy (nginx /health) mới start shell
     depends_on:
       mfe-auth: { condition: service_healthy }
       mfe-accounts: { condition: service_healthy }

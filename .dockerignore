@@ -8,5 +8,4 @@ node_modules
 pages
 *.log
 .DS_Store
-docker
 README.md

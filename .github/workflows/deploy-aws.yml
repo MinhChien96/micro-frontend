@@ -1,32 +1,32 @@
-# Reference workflow — deploy thật lên AWS.
-# Yêu cầu cấu hình trước (ngoài scope repo này):
-#   - OIDC role (secrets.AWS_ROLE_ARN) có quyền S3/CloudFront/ECR/ECS
-#   - vars: AWS_REGION, S3_BUCKET, CDN_DOMAIN, CF_DISTRIBUTION_ID, ECS_CLUSTER
-#   - ECS task definitions + ALB cho 7 service: app-{shell,mfe-*}
-# Kiến trúc: static assets (chunks + manifest + node bundles) trên S3/CloudFront;
-# SSR servers chạy ECS (image build từ docker/Dockerfile).
-name: Deploy AWS
+# ============================================================================
+# REFERENCE deploy AWS cho mô hình CSR static (bank-style, không ECS):
+#   build từng app (PUBLIC_URL trỏ CDN) → sync S3 → invalidate CloudFront.
+# Chỉ chạy thủ công (workflow_dispatch). Yêu cầu:
+#   secrets.AWS_ROLE_ARN (OIDC), vars: AWS_REGION, S3_BUCKET, CDN_DOMAIN,
+#   CF_DISTRIBUTION_ID
+# Shell build với REMOTE_BASE=CDN → manifest URLs trỏ CDN; deploy lại 1 remote
+# chỉ cần chạy lại job với app đó (shell KHÔNG cần rebuild).
+# ============================================================================
+name: deploy-aws (reference)
 
-# CHỈ chạy thủ công: cần AWS secrets/vars + ECS/ALB cấu hình trước.
-# Bật push trigger khi hạ tầng AWS đã sẵn sàng.
 on:
   workflow_dispatch:
+    inputs:
+      apps:
+        description: "Danh sách app (space-separated dir), rỗng = tất cả"
+        required: false
+        default: ""
 
 permissions:
   id-token: write
   contents: read
-
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
   static-assets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -39,49 +39,27 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Build + sync static assets lên S3
+      - name: Build + sync static lên S3 (per app)
         run: |
-          for app in mfe-auth mfe-accounts mfe-transfer shared mfe-profile mfe-loans mfe-cards; do
-            PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/$app/" pnpm --filter ./$app build
-            aws s3 sync $app/dist/static  s3://${{ vars.S3_BUCKET }}/$app/static  --delete
-            aws s3 sync $app/dist/bundles s3://${{ vars.S3_BUCKET }}/$app/bundles --delete
+          DEFAULT="remotes/mfe-auth remotes/mfe-accounts remotes/mfe-transfer remotes/mfe-cards remotes/mfe-loans remotes/mfe-profile shell"
+          APPS="${{ github.event.inputs.apps }}"
+          for dir in ${APPS:-$DEFAULT}; do
+            name=$(basename "$dir")
+            echo "--- $name ($dir)"
+            PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/$name/" \
+            REMOTE_BASE="https://${{ vars.CDN_DOMAIN }}" \
+              pnpm --filter "./$dir" build
+            # html + manifest KHÔNG cache; static hashed cache dài (khớp docker/nginx.conf)
+            aws s3 sync "$dir/dist/static" "s3://${{ vars.S3_BUCKET }}/$name/static" --delete \
+              --cache-control "public,max-age=31536000,immutable"
+            aws s3 cp "$dir/dist/static/mf-manifest.json" "s3://${{ vars.S3_BUCKET }}/$name/static/mf-manifest.json" \
+              --cache-control "no-cache,no-store,must-revalidate"
+            aws s3 sync "$dir/dist/html" "s3://${{ vars.S3_BUCKET }}/$name/html" --delete \
+              --cache-control "no-cache,no-store,must-revalidate"
           done
 
-      - name: Invalidate CloudFront
+      - name: Invalidate CloudFront (manifest + html)
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} --paths "/*"
-
-  ssr-services:
-    needs: static-assets
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app: [shell, mfe-auth, mfe-accounts, mfe-transfer, mfe-profile, mfe-loans, mfe-cards]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - uses: aws-actions/amazon-ecr-login@v2
-        id: ecr
-
-      - name: Build + push image
-        run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/app-${{ matrix.app }}:${{ github.sha }}
-          docker build -f docker/Dockerfile \
-            --build-arg APP=${{ matrix.app }} \
-            --build-arg PUBLIC_URL="https://${{ vars.CDN_DOMAIN }}/${{ matrix.app }}/" \
-            --build-arg REMOTE_BASE="https://${{ vars.CDN_DOMAIN }}" \
-            -t "$IMAGE" .
-          docker push "$IMAGE"
-
-      - name: Deploy ECS service
-        run: |
-          aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service app-${{ matrix.app }} \
-            --force-new-deployment
+            --distribution-id ${{ vars.CF_DISTRIBUTION_ID }} \
+            --paths "/*/static/mf-manifest.json" "/*/html/*"
