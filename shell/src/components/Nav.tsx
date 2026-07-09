@@ -33,14 +33,14 @@ export default function Nav({ onLogout }: { onLogout: () => void }) {
       </div>
 
       <div className="navbar-links">
-        {NAV_ITEMS.map(({ to, labelKey, tag, prefetch }) => (
+        {NAV_ITEMS.map(({ to, labelKey, label, tag, prefetch }) => (
           <Link
             key={to}
             to={to}
             className={`nav-link ${isActive(to) ? 'active' : ''}`}
             onMouseEnter={prefetch && (() => prefetchRemote(prefetch.remote, prefetch.expose))}
           >
-            {t(labelKey)}
+            {labelKey ? t(labelKey) : label}
             <span className="mfe-tag">{tag}</span>
           </Link>
         ))}

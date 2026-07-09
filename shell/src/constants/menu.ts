@@ -5,8 +5,10 @@ import { Paths } from '@app/common/constants/paths';
 // `permissions` sẽ nối với hệ P/S/F (canAction) — item không đủ quyền bị ẩn.
 export interface NavItem {
   to: string;
-  /** key i18n trong shell resources (bank: titleKey) */
-  labelKey: string;
+  /** key i18n trong shell resources (bank: titleKey) — ưu tiên hơn label */
+  labelKey?: string;
+  /** nhãn literal (fallback khi chưa có i18n key — vd MFE mới từ generator) */
+  label?: string;
   /** tag hiển thị tên MFE sở hữu màn hình (giá trị giáo dục của template) */
   tag: string;
   /** remote + expose để prefetch khi hover */

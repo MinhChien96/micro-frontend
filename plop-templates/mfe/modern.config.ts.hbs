@@ -5,15 +5,10 @@ import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 export default defineConfig({
   plugins: [appTools({ bundler: 'rspack' }), moduleFederationPlugin()],
   builderPlugins: [pluginTailwindcss()],
-  output: { assetPrefix: process.env.PUBLIC_URL || '/' },
-  tools: {
-    bundlerChain(chain, { isServer }) {
-      // Externalize node-only utils khỏi web bundle (race trong MF ssrPlugin) — KHÔNG xóa.
-      if (!isServer) chain.externals({ '@module-federation/node/utils': 'NOT_USED_IN_BROWSER' });
-    },
-  },
+  // assetPrefix TUYỆT ĐỐI: chunks của remote phải load từ origin của remote,
+  // không phải origin shell (shell nhúng remote cross-origin).
+  output: { assetPrefix: process.env.PUBLIC_URL || 'http://localhost:{{port}}/' },
   server: {
-    ssr: { mode: 'stream' },
     port: Number(process.env.PORT) || {{port}},
   },
 });

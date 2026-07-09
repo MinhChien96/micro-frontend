@@ -1,17 +1,9 @@
-import { setToken, setUser, type User } from '@app/common/auth';
+import { setupStandaloneSession } from '@app/common/mocks/standalone';
 import { type CSSProperties, useEffect } from 'react';
 import {{pascalCase name}}App from '../components/{{pascalCase name}}App';
 
-// Trang standalone dev: chạy MFE độc lập (pnpm --filter ./mfe-{{kebabCase name}} start)
-// với user mock — không cần shell.
-const MOCK_USER: User = {
-  id: 'dev-001',
-  name: 'Dev User',
-  role: 'PREMIUM',
-  email: 'dev@example.com',
-  branch: 'HN',
-};
-
+// Trang standalone dev: chạy MFE độc lập không cần shell
+//   pnpm --filter ./remotes/mfe-{{kebabCase name}} start
 const pageStyle: CSSProperties = { padding: 24 };
 const bannerStyle: CSSProperties = {
   marginBottom: 16,
@@ -25,8 +17,7 @@ const bannerStyle: CSSProperties = {
 
 export default function Page() {
   useEffect(() => {
-    setUser(MOCK_USER);
-    setToken('dev-standalone-token');
+    setupStandaloneSession('PREMIUM');
   }, []);
 
   return (

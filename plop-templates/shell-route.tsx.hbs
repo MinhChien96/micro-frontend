@@ -1,18 +1,19 @@
 import { BRAND } from '@app/common/brand';
 import { Helmet } from '@modern-js/runtime/head';
-import ProtectedRoute from '../../components/ProtectedRoute';
-import RemoteErrorBoundary from '../../components/RemoteErrorBoundary';
-import { {{pascalCase name}}App } from '../../components/remotePages';
+import RemoteErrorBoundary from '../../../components/RemoteErrorBoundary';
+import { {{pascalCase name}}App } from '../../../components/remotePages';
 
+// Splat route — remote tự quản router con. Guard đăng nhập + Nav do
+// __private/layout.tsx (PrivateLayout) đảm nhiệm.
 export default function {{pascalCase name}}Page() {
   return (
-    <ProtectedRoute>
+    <>
       <Helmet>
         <title>{`{{label}} — ${BRAND.name}`}</title>
       </Helmet>
       <RemoteErrorBoundary remote="mfe_{{snakeCase name}}/{{pascalCase name}}App">
         <{{pascalCase name}}App />
       </RemoteErrorBoundary>
-    </ProtectedRoute>
+    </>
   );
 }
