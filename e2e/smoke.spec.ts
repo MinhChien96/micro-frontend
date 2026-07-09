@@ -28,8 +28,9 @@ test('mfe runtime smoke flow', async ({ page }) => {
   await page.click('button[type="submit"]');
   await page.waitForURL('**/accounts', { timeout: 30_000 });
 
-  // 4. AccountList (data qua MSW backend) → detail (splat route)
-  await page.locator('a[href*="/accounts/"]').first().click();
+  // 4. AccountList (data qua MSW backend) → detail (Pattern A: Card onClick → navigator)
+  await page.waitForSelector('text=Tài khoản thanh toán', { timeout: 15_000 });
+  await page.click('text=Tài khoản thanh toán');
   await page.waitForURL('**/accounts/**', { timeout: 15_000 });
 
   // 5. Các MFE còn lại (eventBus/toast singleton hoạt động)
@@ -40,7 +41,7 @@ test('mfe runtime smoke flow', async ({ page }) => {
 
   // 6. Hard reload trang protected khi đã đăng nhập (phiên sessionStorage)
   await page.goto('/accounts', { waitUntil: 'networkidle' });
-  await page.waitForSelector('a[href*="/accounts/"]', { timeout: 15_000 });
+  await page.waitForSelector('text=Tài khoản thanh toán', { timeout: 15_000 });
 
   // 7. Logout → về login, phiên bị xóa
   await page.click('button:has-text("Đăng xuất")');
