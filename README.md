@@ -1,284 +1,111 @@
-# Micro Frontend Base Template — Modern.js Federated SSR
+# Micro-Frontend Base Template — Modern.js + Runtime Module Federation
 
-> **Base template chuẩn production cho micro-frontend**: shell + 6 remotes đều là **Modern.js (ByteDance/TikTok) + Rspack**, Module Federation 2.0, **federated SSR toàn tuyến** (SEO-ready), scoped namespace `@app/*`, **TypeScript strict**, tooling đầy đủ (Biome + Vitest + Lefthook + Changesets), **generator `pnpm gen:mfe`** tạo MFE mới tự đăng ký, deploy giả lập AWS (LocalStack + Docker) + reference workflow AWS thật.
+> **Template chuẩn production cho micro-frontend**, port kiến trúc từ một hệ
+> thống Internet Banking đang chạy thật: shell + 6 remotes trên **Modern.js
+> (ByteDance) + Rspack**, Module Federation 2.0 **đăng ký động lúc runtime**
+> (deploy remote KHÔNG rebuild shell), global store singleton (zustand), tầng
+> axios + refresh-token queue, phân quyền **P/S/F entitled-actions**, i18n đa
+> instance, MSW làm mock backend, TypeScript strict, generator `pnpm gen:mfe`,
+> deploy static nginx/S3.
 
-> 🧩 **Đây là template** — domain banking (accounts/transfer/cards/loans/profile/auth) chỉ là **example để tham khảo**. Đổi brand ở `@app/common/brand`, scope `@app/*` → `@<org>`, thay/ thêm MFE bằng `pnpm gen:mfe`. Xem [docs/adr/0004](docs/adr/0004-scoped-namespace-brand.md).
+> 🧩 **Đây là template** — domain banking (accounts/transfer/cards/loans/
+> profile/auth) chỉ là **example**. Đổi brand ở `@app/common/brand`, scope
+> `@app/*` → `@<org>/*`, thay/thêm MFE bằng `pnpm gen:mfe`.
+>
+> 🔎 Cần **SSR/SEO**? Bản federated-SSR của template nằm ở branch
+> [`feat/modernjs-ssg-mfe`](../../tree/feat/modernjs-ssg-mfe).
 
-**Đăng nhập demo:** CIF `0021001` · Mật khẩu `123456` · Chọn role CUSTOMER / PREMIUM / BUSINESS
+**Chạy thử trong 2 phút:**
 
----
-
-## Mục lục
-
-1. [Tổng quan kiến trúc](#1-tổng-quan-kiến-trúc)
-2. [Tại sao Modern.js (và khi nào dùng Next.js)](#2-tại-sao-modernjs-và-khi-nào-dùng-nextjs)
-3. [Cấu trúc workspace](#3-cấu-trúc-workspace)
-4. [Federated SSR hoạt động như thế nào](#4-federated-ssr-hoạt-động-như-thế-nào)
-5. [Routing](#5-routing)
-6. [SEO](#6-seo)
-7. [Auth & Protected Routes](#7-auth--protected-routes)
-8. [Shared package — hai vai trò](#8-shared-package--hai-vai-trò)
-9. [Chạy local](#9-chạy-local)
-10. [Deploy giả lập AWS (Docker + LocalStack)](#10-deploy-giả-lập-aws-docker--localstack)
-11. [Deploy AWS thật (reference)](#11-deploy-aws-thật-reference)
-12. [Troubleshooting](#12-troubleshooting)
-13. [Tooling, test & mở rộng](#13-tooling-test--mở-rộng)
-
-> Tài liệu thêm: [CONTRIBUTING.md](CONTRIBUTING.md) · [Thêm MFE mới](docs/add-new-mfe.md) · [ADR](docs/adr/)
+```bash
+pnpm install && pnpm dev     # menu chọn remote (Enter = tất cả) → http://localhost:3000
+# Đăng nhập: CIF 0021001 · Mật khẩu 123456 · OTP 123456
+# Chọn role CUSTOMER / PREMIUM / BUSINESS để thấy phân quyền P/S/F hoạt động
+```
 
 ---
 
-## 1. Tổng quan kiến trúc
+## Tài liệu
+
+| Tài liệu | Dành cho |
+|---|---|
+| **[docs/getting-started.md](docs/getting-started.md)** | Người mới — cài, chạy, thêm màn hình đầu tiên, troubleshooting |
+| **[docs/architecture.md](docs/architecture.md)** | Deep-dive cơ chế: boot, MF runtime, routing 2 pattern, store, api, auth, i18n, deploy + **cheatsheet "muốn sửa X vào đâu"** |
+| [docs/add-new-mfe.md](docs/add-new-mfe.md) | Generator `pnpm gen:mfe` + 8 điểm nối |
+| [docs/adr/](docs/adr/) | Các quyết định kiến trúc (vì sao chọn gì) |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Quy ước code, lệnh, PR gate |
+
+---
+
+## Bức tranh tổng thể
 
 ```
                         BROWSER
                            │
             ┌──────────────▼──────────────┐
-            │   shell  :3000  (Modern.js) │  SSR stream + hydrate
-            │   host — module federation  │
+            │   shell :3000 (Modern.js)   │  CSR host — sở hữu URL/auth/nav
+            │   registerRemotes RUNTIME   │  qua mf-manifest.json (?t= no-cache)
             └──┬───────┬───────┬──────────┘
-               │ mf-manifest.json (HTTP)
+               │  deploy remote mới → shell KHÔNG rebuild
    ┌───────────┼───────┬───────┼───────────┬───────────┐
    ▼           ▼       ▼       ▼           ▼           ▼
  mfe-auth  mfe-accounts mfe-transfer  mfe-cards   mfe-loans  mfe-profile
   :3001      :3002       :3003         :3007       :3006      :3005
- (Modern.js + Rspack remotes — mỗi app SSR-capable, deploy độc lập)
+ (mỗi remote = 1 "repo" của 1 team, chạy standalone được, deploy độc lập)
 
- shared :3004 — UI library + auth helpers + eventBus
- (workspace package, bundle vào từng app + share-scope singleton)
+ @app/common — chất keo singleton: globalStore (zustand) · apiClient (axios
+ + refresh queue) · UI kit Tailwind · permissions P/S/F · i18nService · eventBus
 ```
 
-- **Shell (host)**: SSR stream HTML → bot/người dùng nhận nội dung ngay; routing top-level + auth + Nav + Toast.
-- **Remotes**: mỗi team một repo-trong-repo, expose một `*App` component qua `mf-manifest.json` (MF 2.0), tự chạy standalone khi dev.
-- **Hai đường tải remote**:
-  - *Browser*: tải `static/remoteEntry.js` + chunks qua `publicPath`.
-  - *Server (SSR)*: tải `bundles/remoteEntry.js` (build node riêng) qua `ssrPublicPath` — shell render markup của remote ngay trên server.
+## Những gì có trong hộp
 
-## 2. Tại sao Modern.js (và khi nào dùng Next.js)
-
-| | Modern.js | Next.js |
-|---|---|---|
-| Module Federation | First-class (plugin chính chủ, SSR support) | `nextjs-mf` **đã deprecated** (EOL cuối 2026, không hỗ trợ App Router) |
-| Federated SSR | ✅ stream SSR cả host lẫn remote | ❌ không có đường chính chủ |
-| Khi nào dùng | App MFE, cần SEO nội dung remote | App độc lập không federate, hoặc shell CSR-only load remote bằng `@module-federation/enhanced/runtime` |
-
-**Kết luận cho base này**: toàn bộ stack là Modern.js. Next.js *có thể* làm host CSR (load remote client-side bằng MF runtime API — đã từng implement trong git history, xem commit nhánh này), nhưng muốn SEO nội dung federated thì Modern.js là đường duy nhất được hỗ trợ chính thức.
-
-## 3. Cấu trúc workspace
-
-| Package | Port | Vai trò | Exposes |
-|---|---|---|---|
-| `shell` | 3000 | Host SSR, routing, auth, Toast | — |
-| `mfe-auth` | 3001 | Đăng nhập | `./Login`, `./UserProfile` |
-| `mfe-accounts` | 3002 | Tài khoản + giao dịch | `./AccountsApp` |
-| `mfe-transfer` | 3003 | Chuyển tiền | `./TransferApp` |
-| `shared` | 3004 | UI lib + auth + eventBus | `./ui ./auth ./PermissionGate ./ThemeContext ./eventBus` |
-| `mfe-profile` | 3005 | Hồ sơ | `./ProfileApp`, `./ProfilePage` |
-| `mfe-loans` | 3006 | Vay vốn | `./LoansApp` |
-| `mfe-cards` | 3007 | Thẻ | `./CardsApp` |
-
-File quan trọng mỗi app:
-
-```
-modern.config.ts             # rspack + moduleFederationPlugin + server.ssr stream + PORT
-module-federation.config.ts  # name, exposes, shared singletons, (shell: remotes + runtimePlugins)
-src/routes/                  # file-based routing (layout.tsx bắt buộc từ Modern.js 2.71)
-src/routes/page.tsx          # trang standalone dev (mock user) cho remote
-```
-
-## 4. Federated SSR hoạt động như thế nào
-
-Bật SSR chỉ cần **một dòng** trong `modern.config.ts` (MF plugin tự phát hiện):
-
-```ts
-server: { ssr: { mode: 'stream' }, port: Number(process.env.PORT) || 3002 },
-```
-
-Build sẽ tạo thêm bundle node và merge metadata vào manifest:
-
-```
-dist/
-├── static/mf-manifest.json   # metaData.ssrRemoteEntry + ssrPublicPath (merge sẵn)
-├── static/remoteEntry.js     # browser
-└── bundles/remoteEntry.js    # node — host SSR require bundle này
-```
-
-Shell tiêu thụ remote qua `createLazyComponent` ([shell/src/components/remotePages.tsx](shell/src/components/remotePages.tsx)):
-
-```tsx
-// Public — SSR THẬT: markup của remote nằm trong HTML server (SEO)
-export const Login = createLazyComponent({
-  instance: getInstance(),
-  loader: () => import('mfe_auth/Login'),
-  export: 'default',
-  loading: LoginFallback,
-});
-
-// Protected — noSSR: server stream shell + skeleton, content hydrate client
-export const AccountsApp = createLazyComponent({ ..., noSSR: true, loading: <AccountsSkeleton /> });
-```
-
-### Bài toán dual-URL (Docker/ECS)
-
-`ssrPublicPath` được bake từ `PUBLIC_URL` lúc build remote (URL browser-facing, vd `http://localhost:3002/`). Khi shell chạy trong container, nó **không reach được** `localhost:3002` của máy host. Giải pháp: runtime plugin [shell/src/runtime/internalHostRewrite.ts](shell/src/runtime/internalHostRewrite.ts) rewrite host **chỉ ở phía server** theo env:
-
-```
-MF_INTERNAL_HOST_MAP='{"http://localhost:3002":"http://mfe-accounts:3002", ...}'
-```
-
-Browser vẫn dùng URL public (không rewrite). Dev local không set env → plugin no-op. Deploy CDN thật (CloudFront) không cần map vì CDN reachable từ cả hai phía.
-
-### Resilience: remote chết không kéo chết host
-
-MF runtime 2.5.x throw lỗi manifest trong promise không ai await → unhandled rejection → Node exit. Plugin trên còn cài guard `process.on('unhandledRejection')` server-side: **nuốt riêng lỗi Federation** (UI đã có ErrorBoundary/fallback hiển thị "Không thể tải MFE"), mọi lỗi khác giữ nguyên fail-fast. Kết quả: kill một remote → route đó hiện fallback, các route khác + shell sống bình thường.
-
-### Share scope — quy tắc sắt
-
-Trong [shell/module-federation.config.ts](shell/module-federation.config.ts) và các remote:
-
-| Module | Vì sao phải singleton |
+| Nhóm | Năng lực |
 |---|---|
-| `react`, `react-dom` | Một React instance — không thì "invalid hook call" |
-| `react-router-dom` | Remote render `<Routes>` con phải attach vào Router context của shell |
-| `react/jsx-runtime` | Chống lệch element symbol nếu version React khác nhau giữa host/remote |
-| `@app/common/ui` | `ToastContext` là module-level — toast cross-MFE chỉ chạy khi 1 instance |
-| `@app/common/eventBus` | `_last` cache là module-level — `getLast()` cross-MFE cần 1 instance |
+| **MF runtime** | `lazyRemoteWithFallback` (register force + `?t=`, auto-reload chống stale, fallback RemoteUnavailable) · error-handling plugin (dev không cần bật đủ remote) · prefetch khi hover |
+| **Routing** | 2 pattern của bank: **A** — shell giữ từng route, remote nhận `navigator` (mfe-accounts) · **B** — remote sở hữu cả nhánh, shell truyền module router (mfe-cards zone) · pathless groups `__public/__private` |
+| **State** | globalStore zustand singleton 3 lớp · persist tách sessionStorage (phiên) / localStorage (prefs) · navigateLink điều hướng ngược |
+| **API** | 1 axios instance toàn hệ thống · `[public]` prefix · wait apiHost/token · unwrap envelope `{data}` · APIError chuẩn hóa · **401 → refresh-token queue state machine** |
+| **Auth** | Login state machine theo `nextStep` (OTP demo) · AutoSignOut idle 5' + countdown · guard tập trung ở PrivateLayout |
+| **Phân quyền** | P/S/F entitled-actions (ActionEnum + PSFMapping + canAction) · `<PermissionCheck>` reactive |
+| **i18n** | Mỗi module 1 instance i18next, đổi lang đồng loạt không reload (vi/en) |
+| **Mock backend** | MSW (worker dev + node test) — auth/accounts/transfers đầy đủ; tắt bằng cách trỏ `MODERN_API_BASE_URL` |
+| **DX** | `pnpm dev` menu chọn remote · env chia section + `sync-env` · `pnpm gen:mfe` (8 điểm nối tự wire) · Storybook UI kit · Tailwind v4 tokens |
+| **Chất lượng** | Biome · Vitest + coverage gate (common) · Playwright e2e · Lefthook + commitlint · Renovate · Sentry hook sẵn |
+| **Deploy** | Static nginx per app (Docker compose) · S3/CloudFront reference workflow · chuỗi chống-stale 3 lớp |
 
-## 5. Routing
-
-- Shell dùng **file-based routing** của Modern.js; route của MFE dùng **`$.tsx` (splat)** — match cả `/accounts` lẫn `/accounts/:id/...`:
+## Cấu trúc workspace
 
 ```
-shell/src/routes/
-├── layout.tsx        # AuthProvider > ToastProvider > Nav > <Outlet/>
-├── page.tsx          # / — landing public (SSR full nội dung)
-├── login/page.tsx    # /login — form SSR từ remote mfe_auth
-├── accounts/$.tsx    # /accounts/* → ProtectedRoute + AccountsApp
-├── transfer/$.tsx ...
-└── $.tsx             # 404
+common/     @app/common — thư viện dùng chung (singleton qua MF share)
+shell/      host :3000 — routes (__public/__private), remote/ (load runtime), menu
+remotes/    mfe-auth · mfe-accounts · mfe-transfer · mfe-cards · mfe-loans · mfe-profile
+scripts/    sync-env.mjs · dev-select.mjs · deploy-localstack.sh
+docker/     Dockerfile (static+nginx) · nginx.conf · docker-compose.yml
+plop-templates/  template generator MFE
+docs/ e2e/  tài liệu · Playwright smoke
 ```
 
-- Remote expose `*App` chứa `<Routes>` **con** (không tạo Router mới) — nhận Router context từ shell qua `react-router-dom` singleton.
+## Lệnh chính
 
-## 6. SEO
-
-- **SSR stream**: bot nhận HTML đầy đủ ngay từ server — kể cả form Login do remote `mfe_auth` render (`curl localhost:3000/login | grep 0021001` để kiểm chứng).
-- **Per-route title/meta** bằng Helmet (SSR-safe):
-
-```tsx
-import { Helmet } from '@modern-js/runtime/head';
-<Helmet><title>Tài khoản — VietBank</title><meta name="description" content="..." /></Helmet>
-```
-
-- Trang protected không cần SEO → `noSSR: true`, server chỉ stream shell + skeleton (nhanh + không lộ data).
-
-## 7. Auth & Protected Routes
-
-- Auth demo bằng localStorage (`vietbank_user` / `vietbank_token`) + event `auth:changed`.
-- Server **không có** localStorage → [AuthContext](shell/src/AuthContext.tsx) expose `{ user, ready }`: SSR và first paint luôn `{ user: null, ready: false }` (không hydration mismatch), client đọc localStorage trong `useEffect` rồi set `ready: true`.
-- [ProtectedRoute](shell/src/components/ProtectedRoute.tsx): `!ready` → render children (skeleton); `ready && !user` → `<Navigate to="/login">`.
-- Mọi helper đọc localStorage trong code remote/shared đều có guard `typeof window === 'undefined'`.
-
-## 8. Shared package — hai vai trò
-
-1. **Workspace package** (đường chính): các app `import { Button } from 'shared/ui'` → resolve qua `exports` map trong [shared/package.json](shared/package.json), bundle vào từng app, **đồng thời** khai báo trong MF `shared:` map để runtime dedupe thành singleton.
-2. **Remote parity build** (:3004): build/serve như một remote đầy đủ — giữ để demo expose từ shared và làm trang showcase standalone. Không app nào load `shared@...` qua MF lúc runtime.
-
-## 9. Chạy local
-
-```bash
-pnpm install
-pnpm start          # 8 dev servers (concurrently) — tất cả SSR mode
-```
-
-- App: http://localhost:3000 — Mỗi MFE chạy standalone: http://localhost:3002 (mock user PREMIUM)…
-- Kiểm chứng SSR: `curl -s localhost:3000/login | grep 0021001` → thấy markup form từ remote.
-- Smoke E2E (Playwright): `pnpm test:e2e` — webServer tự boot fleet → login → accounts → detail → 4 MFE → reload authed → logout, assert 0 console error nghiêm trọng ([e2e/smoke.spec.ts](e2e/smoke.spec.ts), [playwright.config.ts](playwright.config.ts)). CI chạy nightly + `workflow_dispatch`.
-
-## 10. Deploy giả lập AWS (Docker + LocalStack)
-
-Mô phỏng: **container = ECS service**, **LocalStack S3 = CDN static assets**.
-
-```bash
-pnpm docker:build    # build 8 image (docker/Dockerfile dùng chung, ARG APP)
-pnpm docker:up       # 7 SSR services + LocalStack — http://localhost:3000
-pnpm docker:down
-```
-
-Shell container nhận `MF_INTERNAL_HOST_MAP` để fetch manifest/bundles qua hostname nội bộ (`http://mfe-accounts:3002`), browser vẫn dùng `localhost:300x` — xem [docker/docker-compose.yml](docker/docker-compose.yml).
-
-Đẩy static assets lên S3 LocalStack (giả lập CDN):
-
-```bash
-pnpm deploy:local    # scripts/deploy-localstack.sh
-# build từng remote với PUBLIC_URL=http://localhost:4566/vietbank-static/<app>/
-# rồi s3 sync dist/static + dist/bundles
-```
-
-## 11. Deploy AWS thật (reference)
-
-[.github/workflows/deploy-aws.yml](.github/workflows/deploy-aws.yml) — 2 job:
-
-1. **static-assets**: build các remote với `PUBLIC_URL=https://<CDN_DOMAIN>/<app>/` → `aws s3 sync` static + bundles → invalidate CloudFront.
-2. **ssr-services** (matrix 7 app): build image từ `docker/Dockerfile` → push ECR → `aws ecs update-service`.
-
-Cần chuẩn bị ngoài repo: OIDC role (`secrets.AWS_ROLE_ARN`), `vars`: `AWS_REGION`, `S3_BUCKET`, `CDN_DOMAIN`, `CF_DISTRIBUTION_ID`, `ECS_CLUSTER`, và ECS task definitions + ALB cho 7 service `app-*`. Trên CDN thật **không cần** `MF_INTERNAL_HOST_MAP` (CloudFront reachable từ cả server lẫn browser).
-
-## 12. Troubleshooting
-
-| Triệu chứng | Nguyên nhân / Fix |
+| Lệnh | Việc |
 |---|---|
-| `Không thể tải MFE — remote ... có đang chạy không?` | Remote chết hoặc port bị chiếm. `curl localhost:300x/static/mf-manifest.json` rồi `pnpm --filter <mfe> start` xem log. |
-| Browser fetch manifest bị CORS (prod server) | Container remote cần `MODERN_MF_AUTO_CORS=true` (đã set trong compose). |
-| SSR log `ECONNREFUSED localhost:300x` trong Docker | Thiếu/sai `MF_INTERNAL_HOST_MAP` — server phải fetch qua service name. |
-| `"path" is a built-in Node.js module...` khi dev | Race trong MF ssrPlugin kéo `@module-federation/node` vào web bundle — đã chặn bằng `chain.externals` trong mọi `modern.config.ts` (giữ nguyên dòng đó). |
-| Dev server chết hàng loạt, log `write EPIPE` từ dts-plugin | MF DTS generation (dev-only) crash RPC child process → đã tắt `dts: false` trong mọi `module-federation.config.ts` (type khai báo tay ở `shell/mfe-declarations.d.ts`). |
-| `SSR Error ... <Router> inside another <Router>` lác đác khi dev | Triệu chứng transient khi node-bundle đang rebuild / server chết giữa chừng — restart fleet sạch; không phải lỗi code (fleet khỏe không có lỗi này). |
-| `The root layout component is required` | Modern.js ≥2.71 bắt buộc `src/routes/layout.tsx` (Outlet tối thiểu). |
-| Hydration mismatch quanh auth | Không đọc localStorage lúc render đầu — dùng pattern `{ user, ready }` của AuthContext. |
-| `localStorage.getItem is not a function` trong SSR log | Code chạy server thiếu guard `typeof window === 'undefined'`. |
-| Toast / eventBus `getLast()` không cross-MFE | Thiếu `@app/common/ui` / `@app/common/eventBus` trong MF `shared:` map (host **và** remote). |
+| `pnpm dev` | Menu chọn remote chạy kèm shell |
+| `pnpm start` | Chạy tất cả (Playwright webServer dùng lệnh này) |
+| `pnpm gen:mfe` | Sinh MFE mới + tự đăng ký |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test:coverage` | Gate PR |
+| `pnpm test:e2e` | Smoke e2e (tự boot fleet) |
+| `pnpm storybook` | UI kit :6006 |
+| `pnpm docker:build && pnpm docker:up` | Giả lập production (nginx per app) |
 
----
+## Nguồn gốc kiến trúc
 
-## 13. Tooling, test & mở rộng
+Template này port các pattern đang chạy production tại một hệ thống Internet
+Banking doanh nghiệp (Modern.js + MF runtime động + store singleton + axios
+refresh queue + P/S/F permissions + i18n đa instance). Khác biệt chính: store
+dùng **zustand** thay effector, mock backend dùng **MSW** thay mock-server
+rời, demo domain + UI kit Tailwind riêng.
+Xem [docs/adr/0007](docs/adr/0007-csr-bank-architecture.md).
 
-**Chất lượng code** (chi tiết: [CONTRIBUTING.md](CONTRIBUTING.md)):
-
-| Công cụ | Lệnh | Vai trò |
-|---|---|---|
-| Biome | `pnpm lint` / `pnpm lint:fix` | lint + format (1 binary) |
-| tsc | `pnpm typecheck` | TypeScript strict mọi package |
-| Vitest | `pnpm test` / `pnpm test:coverage` | unit test (jsdom + Testing Library) + coverage v8 gate (`shared/src`) |
-| Playwright | `pnpm test:e2e` | smoke E2E (tự boot fleet) |
-| Lefthook | tự chạy | pre-commit (Biome) + commit-msg (commitlint) |
-| Changesets | `pnpm changeset` | versioning độc lập từng package |
-| Renovate | tự động | gom nhóm PR cập nhật dependency ([renovate.json](.github/renovate.json)) |
-
-CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) — job `quality` (lint → typecheck → `test:coverage`) + `build` (matrix 8 app) trên mọi PR; job `e2e` chạy nightly + `workflow_dispatch` (boot fleet → Playwright), không chặn PR.
-
-**Styling — Tailwind v4** (design system + shell chrome; 5 MFE banking giữ inline-style làm ví dụ domain):
-
-- Tokens tập trung ở [shared/src/styles/theme.css](shared/src/styles/theme.css) (`@theme` + dark variant `[data-theme=dark]` + keyframes).
-- Mỗi app có `src/tailwind.css` với `@source` quét cả `shared` → class của `@app/common/ui` render đúng khi component shared chạy trong remote khác (yêu cầu cross-MFE CSS).
-- Bật qua `@rsbuild/plugin-tailwindcss` trong `builderPlugins` của mỗi `modern.config.ts`.
-- Design system xem trực quan: `pnpm storybook` (Storybook 10, :6006).
-
-**Observability & mocking:**
-
-- **Sentry** (browser-only): [shared/src/observability/sentry.ts](shared/src/observability/sentry.ts) — `initSentry()` no-op nếu thiếu `MODERN_PUBLIC_SENTRY_DSN`; `RemoteErrorBoundary` báo lỗi remote qua `captureException`.
-- **MSW**: [shared/src/mocks/](shared/src/mocks/) — mock API cho Vitest (node server) + dev worker opt-in (`MODERN_MSW=true`, cần `pnpm dlx msw init <app>/public`).
-
-**Mở rộng — tạo MFE mới trong 1 lệnh:**
-
-```bash
-pnpm gen:mfe payments 3008 "Thanh toán"
-```
-
-Generator (Plop) sinh package đầy đủ (Tailwind sẵn) + **tự đăng ký 10 điểm nối** (workspace, shell remotes/declarations/remotePages/Nav/route, start script, docker-compose, deploy-aws). Chi tiết + bước thủ công còn lại: [docs/add-new-mfe.md](docs/add-new-mfe.md).
-
-**Test E2E** (smoke Playwright): `pnpm test:e2e` — webServer tự boot fleet → login → accounts → detail → các MFE → reload authed → logout, assert 0 console error nghiêm trọng (kể cả lỗi Suspense hydration).
-
----
-
-**Lịch sử kiến trúc** (git history): webpack MF → Vite → Modern.js CSR (`d377b08`) → Next.js shell + MF runtime → Modern.js federated SSR → **base template (scoped `@app/*`, TS strict, tooling + generator) — hiện tại**.
+**Lịch sử kiến trúc** (git branches): webpack MF → Vite
+(`feat/enterprise-architecture`) → Modern.js federated SSR
+(`feat/modernjs-ssg-mfe`) → **CSR + runtime MF theo bank — hiện tại**.
