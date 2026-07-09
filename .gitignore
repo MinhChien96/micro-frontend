@@ -18,10 +18,14 @@ coverage/
 .cache/
 .webpack/
 
-# Environment — chỉ commit .env.example, không commit file thật
+# Environment — commit .env.example + file per môi trường (.env.sit/.uat/.staging
+# — placeholder domain, như bank); KHÔNG commit .env/.env.local (giá trị cá nhân)
 .env
 .env.*
 !.env.example
+!.env.sit
+!.env.uat
+!.env.staging
 
 # Logs
 *.log

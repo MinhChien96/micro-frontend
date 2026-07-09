@@ -9,8 +9,13 @@
   "scripts": {
     "start": "concurrently -n common,auth,accounts,transfer,cards,loans,profile,shell -c yellow,blue,green,cyan,purple,orange,pink,red \"pnpm --filter ./common start\" \"pnpm --filter ./remotes/mfe-auth start\" \"pnpm --filter ./remotes/mfe-accounts start\" \"pnpm --filter ./remotes/mfe-transfer start\" \"pnpm --filter ./remotes/mfe-cards start\" \"pnpm --filter ./remotes/mfe-loans start\" \"pnpm --filter ./remotes/mfe-profile start\" \"pnpm --filter ./shell start\"",
     "dev": "node scripts/dev-select.mjs",
+    "dev:sit": "node scripts/dev-select.mjs sit",
+    "dev:uat": "node scripts/dev-select.mjs uat",
     "sync-env": "node scripts/sync-env.mjs",
     "build": "pnpm -r run build",
+    "build:sit": "node scripts/with-env.mjs sit pnpm -r build",
+    "build:uat": "node scripts/with-env.mjs uat pnpm -r build",
+    "build:staging": "node scripts/with-env.mjs staging pnpm -r build",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",

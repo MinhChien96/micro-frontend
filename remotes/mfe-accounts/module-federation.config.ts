@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createModuleFederationConfig } from '@module-federation/modern-js-v3';
+import { resolvePublicPath } from './public-path';
 
 // Quy ước bank: exposes SINH TỰ ĐỘNG từ src/components/export.remote.ts —
 // mỗi dòng `import X from "./path"` thành expose "./X" → "./src/components/path".
@@ -19,9 +20,7 @@ function generateExposes(): Record<string, string> {
   return exposes;
 }
 
-// URL tuyệt đối cho chunks của remote — bake lúc build (bank pattern):
-// thiếu nó, browser resolve remoteEntry.js tương đối theo origin của SHELL → 404.
-const publicPath = process.env.PUBLIC_URL || 'http://localhost:3002/';
+const publicPath = resolvePublicPath();
 
 export default createModuleFederationConfig({
   name: 'mfe_accounts',

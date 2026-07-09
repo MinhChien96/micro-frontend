@@ -23,6 +23,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: Number(process.env.PORT) || 3000,
+    // SHELL_PORT ưu tiên hơn PORT: khi spawn --parallel (dev-select/with-env),
+    // PORT trong env cha sẽ dính vào MỌI app — SHELL_PORT chỉ nhắm shell.
+    port: Number(process.env.SHELL_PORT || process.env.PORT) || 3000,
   },
 });
